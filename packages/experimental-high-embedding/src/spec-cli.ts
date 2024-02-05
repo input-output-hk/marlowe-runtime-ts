@@ -1,5 +1,5 @@
 import { Readable } from "node:stream";
-import { lit, num, objOf, str, unk } from "./typeguards";
+import { lit, num, objOf, str, unk } from "./typeguards.js";
 import {
   Action,
   Address,
@@ -13,7 +13,7 @@ import {
   Token,
   Value,
   token,
-} from "./marlowe";
+} from "./index.js";
 import jsonBigInt from "json-bigint";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.

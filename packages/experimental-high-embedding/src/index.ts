@@ -1,5 +1,14 @@
 import { sha1 } from "object-hash";
-import { arrayOf, bigint, bool, lit, num, objOf, str, unk } from "./typeguards";
+import {
+  arrayOf,
+  bigint,
+  bool,
+  lit,
+  num,
+  objOf,
+  str,
+  unk,
+} from "./typeguards.js";
 import jsonBigInt from "json-bigint";
 
 type IntoAccount = { intoAccount: (to: Party) => DepositAction };
@@ -150,7 +159,7 @@ export abstract class Payee {
   match<T>(
     matchAccount: (p: AccountPayee) => T,
     matchParty: (p: PartyPayee) => T
-  ) {
+  ): T {
     if (this instanceof PartyPayee) {
       return matchParty(this);
     }

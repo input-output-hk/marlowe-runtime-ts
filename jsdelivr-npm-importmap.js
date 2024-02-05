@@ -82,6 +82,8 @@ const importMap = {
       "https://cdn.jsdelivr.net/npm/@marlowe.io/marlowe-object@0.3.0-beta/dist/bundled/esm/guards.js",
     "@marlowe.io/testing-kit":
       "https://cdn.jsdelivr.net/npm/@marlowe.io/testing-kit@0.3.0-beta/dist/bundled/esm/testing-kit.js",
+    "@marlowe.io/experimental-high-embedding":
+      "https://cdn.jsdelivr.net/npm/@marlowe.io/experimental-high-embedding@0.3.0-beta/dist/bundled/esm/experimental-high-embedding.js",
     "lucid-cardano": "https://unpkg.com/lucid-cardano@0.10.7/web/mod.js",
   },
 };

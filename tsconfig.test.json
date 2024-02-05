@@ -13,12 +13,14 @@
     { "path": "./packages/marlowe-object/src" },
     { "path": "./examples/nodejs/src" },
     { "path": "./packages/testing-kit/src" },
+    { "path": "./packages/experimental-high-embedding/src" },
 
     { "path": "./packages/runtime/lifecycle/test" },
     { "path": "./packages/runtime/client/rest/test" },
     { "path": "./packages/language/core/v1/test" },
     { "path": "./packages/language/examples/test" },
     { "path": "./packages/marlowe-object/test" },
-    { "path": "./packages/wallet/test" }
+    { "path": "./packages/wallet/test" },
+    { "path": "./packages/experimental-high-embedding/test" }
   ]
 }

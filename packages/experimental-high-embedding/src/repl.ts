@@ -19,7 +19,7 @@ import {
   choiceId,
   Bound,
   choice,
-} from "./marlowe";
+} from "./index.js";
 
 const buyer = Role("buyer");
 

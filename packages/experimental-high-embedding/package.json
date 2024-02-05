@@ -1,25 +1,42 @@
 {
-  "name": "marlowe-ts",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "jest"
+  "name": "@marlowe.io/experimental-high-embedding",
+  "version": "0.4.0-beta-rc1",
+  "description": "Experimental high-level embedding of Marlowe contracts in TypeScript",
+  "repository": "https://github.com/input-output-hk/marlowe-ts-sdk",
+  "publishConfig": {
+    "access": "public"
   },
-  "author": "",
-  "license": "ISC",
+  "contributors": [
+    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)"
+  ],
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc --build src",
+    "clean": "shx rm -rf dist",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config test/jest.unit.config.mjs"
+  },
+  "type": "module",
+  "module": "./dist/esm/index.js",
+  "main": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/bundled/cjs/experimental-high-embedding.cjs",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
   "dependencies": {
     "@types/json-bigint": "^1.0.1",
     "json-bigint": "^1.0.0",
-    "node-ts": "^6.0.0",
-    "object-hash": "^3.0.0",
-    "ts-node": "^10.9.1"
+    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
     "@types/node": "^20.2.5",
-    "@types/object-hash": "^3.0.2",
-    "jest": "^29.5.0",
-    "ts-jest": "^29.1.0"
+    "@types/object-hash": "^3.0.2"
   }
 }

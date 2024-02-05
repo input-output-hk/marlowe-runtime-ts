@@ -18,7 +18,7 @@ import {
   When,
   ada,
   emptyState,
-} from "./marlowe";
+} from "@marlowe.io/experimental-high-embedding";
 import jsonBigInt from "json-bigint";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.

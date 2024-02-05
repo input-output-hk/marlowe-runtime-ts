@@ -7,7 +7,7 @@ import {
   SingleAssetValue,
   token,
   When,
-} from "./marlowe";
+} from "../index.js";
 
 interface SwapRequest {
   partyA: Party;

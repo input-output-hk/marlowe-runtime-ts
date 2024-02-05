@@ -1,5 +1,14 @@
 import fs from "node:fs/promises";
-import { arrayOf, assert, lit, num, obj, objOf, str, unk } from "./typeguards";
+import {
+  arrayOf,
+  assert,
+  lit,
+  num,
+  obj,
+  objOf,
+  str,
+  unk,
+} from "./typeguards.js";
 import jsonBigInt from "json-bigint";
 main()
   .then()

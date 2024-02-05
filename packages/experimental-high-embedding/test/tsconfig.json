@@ -1,0 +1,19 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "../test-dist",
+    "paths": {
+      "@marlowe.io/adapter/*": ["../../adapter/src/*"],
+      "@marlowe.io/language-core-v1/*": ["../../language/core/v1/src/*"],
+      "@marlowe.io/marlowe-object/*": ["../../marlowe-object/src/*"],
+      "@marlowe.io/experimental-high-embedding/*": ["../src/*"]
+    },
+    "types": ["node", "jest"]
+  },
+  "references": [
+    { "path": "../../adapter/src" },
+    { "path": "../../language/core/v1/src" },
+    { "path": "../../marlowe-object/src" },
+    { "path": "../src" }
+  ]
+}

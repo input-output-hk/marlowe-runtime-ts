@@ -8,7 +8,7 @@ import {
   ValueOrNumber,
   When,
   token,
-} from "./marlowe";
+} from "../index.js";
 
 interface SwapRequest {
   partyA: Party;

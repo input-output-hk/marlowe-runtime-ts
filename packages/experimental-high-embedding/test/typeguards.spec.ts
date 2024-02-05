@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { num, objOf, str } from "./typeguards";
+import { num, objOf, str } from "../src/typeguards.js";
 
 describe("Type guards", () => {
   describe("String", () => {

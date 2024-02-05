@@ -19,7 +19,7 @@ import {
   ada,
   waitFor,
   waitUntil,
-} from "./marlowe";
+} from "../index.js";
 
 interface TimeWindow {
   beginning: Date;

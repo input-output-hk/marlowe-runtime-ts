@@ -39,7 +39,8 @@
     "packages/runtime/core",
     "packages/runtime/lifecycle",
     "packages/marlowe-object",
-    "packages/testing-kit"
+    "packages/testing-kit",
+    "packages/experimental-high-embedding"
   ],
   "devDependencies": {
     "@blockfrost/blockfrost-js": "5.2.0",
