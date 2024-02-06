@@ -35,17 +35,32 @@ export class Close<A> extends String {
  */
 export const close = <A>(annotation?: A) => new Close<A>(annotation);
 
+export function extendsStringLiteral<L extends string>(
+  literal: L
+): t.Type<String> {
+  function guard(input: unknown): input is String {
+    if (typeof input === "string") {
+      return input === literal;
+    }
+    if (typeof input === "object" && input instanceof String) {
+      return input.valueOf() === literal;
+    }
+    return false;
+  }
+  return new t.Type(
+    literal,
+    (input: unknown): input is String => guard(input),
+    (input, context) =>
+      guard(input) ? t.success(new String(literal)) : t.failure(input, context),
+    t.identity
+  );
+}
+
 /**
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Close | Close type}.
  * @category Contract
  */
-export const CloseGuard: t.Type<Close<unknown>> = new t.Type(
-  "close",
-  (input: unknown): input is Close<unknown> => input == "close",
-  (input, context) =>
-    input == "close" ? t.success("close" as const) : t.failure(input, context),
-  t.identity
-);
+export const CloseGuard: t.Type<Close<unknown>> = extendsStringLiteral("close");
 
 /**
  * Marlowe Object version of {@link @marlowe.io/language-core-v1!index.Pay | Core Pay}.

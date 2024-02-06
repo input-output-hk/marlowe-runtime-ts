@@ -10,6 +10,8 @@ import {
   unk,
 } from "./typeguards.js";
 import jsonBigInt from "json-bigint";
+import { ObjectContract } from "@marlowe.io/marlowe-object/bundle-map";
+import { MarloweJSON } from "@marlowe.io/adapter/codec";
 
 type IntoAccount = { intoAccount: (to: Party) => DepositAction };
 type ChoiceBetween = { between: (...bounds: Bound[]) => ChoiceAction };
@@ -960,11 +962,20 @@ export abstract class Contract {
   }
   getRuntimeObject() {
     let thisHash = this.hash();
-    let symbols: { [key: string]: Contract } = {};
-    symbols[thisHash] = this;
-    this.continuations.forEach((contract, sym) => (symbols[sym] = contract));
+    let objects: { [key: string]: ObjectContract<unknown> } = {};
+    objects[thisHash] = {
+      type: "contract",
+      value: this as any,
+    };
+    this.continuations.forEach(
+      (contract, sym) =>
+        (objects[sym] = {
+          type: "contract",
+          value: contract as any,
+        })
+    );
     return jsonBigInt.stringify({
-      symbols,
+      objects,
       main: thisHash,
     });
   }
@@ -1332,6 +1343,7 @@ class NormalCase extends Case {
   }
 }
 
+// TODO: Refactor to Ref constructor.
 class MerkleizedCase extends Case {
   private _continuations?: Map<string, Contract>;
   continuationHash?: string;
@@ -1366,7 +1378,7 @@ class MerkleizedCase extends Case {
     this.__build();
     return {
       case: this.action,
-      merkleized_then: this.continuationHash,
+      then: { ref: this.continuationHash },
     };
   }
 }
