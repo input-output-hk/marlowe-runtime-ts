@@ -11,9 +11,11 @@ import {
 } from "./typeguards.js";
 import jsonBigInt from "json-bigint";
 import { ObjectContract } from "@marlowe.io/marlowe-object/bundle-map";
-import { MarloweJSON } from "@marlowe.io/adapter/codec";
 
-type IntoAccount = { intoAccount: (to: Party) => DepositAction };
+type IntoAccount = {
+  intoAccount: (to: Party) => DepositAction;
+  intoOwnAccount: () => DepositAction;
+};
 type ChoiceBetween = { between: (...bounds: Bound[]) => ChoiceAction };
 type PayTo = { to: (dst: Party) => ThenableContract };
 
@@ -38,6 +40,9 @@ export abstract class Party {
     return {
       intoAccount: (to: Party) => {
         return Deposit(to, from, tok, val);
+      },
+      intoOwnAccount: () => {
+        return Deposit(from, from, tok, val);
       },
     };
   }
@@ -145,7 +150,7 @@ export function token(currencySymbol: string, tokenName: string): Token {
   return new Token(currencySymbol, tokenName);
 }
 
-export const ada = token("", "");
+export const lovelace = token("", "");
 
 export abstract class Payee {
   static parse(obj: unknown): Payee {
@@ -1346,7 +1351,7 @@ class NormalCase extends Case {
 // TODO: Refactor to Ref constructor.
 class MerkleizedCase extends Case {
   private _continuations?: Map<string, Contract>;
-  continuationHash?: string;
+  continuationHash: string;
   constructor(
     public action: Action,
     public cont: Contract

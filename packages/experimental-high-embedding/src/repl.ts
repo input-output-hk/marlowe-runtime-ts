@@ -1,7 +1,7 @@
 import {
   Role,
   Add,
-  ada,
+  lovelace,
   Close,
   Pay,
   account,
@@ -23,8 +23,8 @@ import {
 
 const buyer = Role("buyer");
 
-const v = buyer.availableMoney(ada);
-buyer.deposits([3, ada]);
+const v = buyer.availableMoney(lovelace);
+buyer.deposits([3, lovelace]);
 
 buyer.chooses("Something").between(Bound(3, 5), Bound(6, 8));
 const dayOfWeek = choice("day").between(Bound(1, 7));
@@ -41,44 +41,44 @@ const v4 = Add(3, 4).sub(2);
 // console.log(v2.eq(v4).eval())
 
 // const c1 = Pay(buyer, account(buyer), ada, Add(3, 2)).then(Close);
-const c1 = buyer.transfer(Add(3, 2), ada).to(buyer).then(Close);
-const c2 = Pay(buyer, account(buyer), ada, Add(3, 2), Close);
+const c1 = buyer.transfer(Add(3, 2), lovelace).to(buyer).then(Close);
+const c2 = Pay(buyer, account(buyer), lovelace, Add(3, 2), Close);
 
 const c3: Contract = If(true).then(Close).else(c2);
 
 const c4: Contract = If(true, Close, c2);
 
 const c5 = When([]).after(new Date(), Close);
-const c6 = When([buyer.deposits(2, ada).intoAccount(buyer).then(Close)]);
+const c6 = When([buyer.deposits(2, lovelace).intoAccount(buyer).then(Close)]);
 
 const c7 = SetContingency(
-  When([buyer.deposits(3, ada).intoAccount(buyer).then(Close)])
+  When([buyer.deposits(3, lovelace).intoAccount(buyer).then(Close)])
 ).after(new Date("2024-05-26T12:34:56.789Z"), Close);
 
 const example = (a: Party, b: Party) =>
   Do(
-    waitFor(b.deposits(1, ada).intoAccount(a)).after(
+    waitFor(b.deposits(1, lovelace).intoAccount(a)).after(
       new Date("2023-06-21T13:40:10.000Z"),
       Close
     ),
-    a.payOut(1, ada).to(b),
+    a.payOut(1, lovelace).to(b),
     Close
   );
 
 const example3 = (a: Party, b: Party) =>
   SetContingency(
     Do(
-      waitFor(b.deposits(1, ada).intoAccount(a)),
-      a.payOut(1, ada).to(b),
+      waitFor(b.deposits(1, lovelace).intoAccount(a)),
+      a.payOut(1, lovelace).to(b),
       Close
     )
   ).after(new Date("2023-06-21T13:40:10.000Z"), Close);
 
 const example2 = (a: Party, b: Party) =>
   When([
-    b.deposits(1, ada).intoAccount(a).then(
+    b.deposits(1, lovelace).intoAccount(a).then(
       a
-        .payOut(1, ada)
+        .payOut(1, lovelace)
         .to(b)
         // Comment to force newline in formatter
         .then(Close)

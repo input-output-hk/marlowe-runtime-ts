@@ -7,7 +7,7 @@ import {
   Do,
   Party,
   SingleAssetValue,
-  ada,
+  lovelace,
   Address,
 } from "../index.js";
 
@@ -51,7 +51,7 @@ const s = swap({
       "SurveyReward"
     ),
   ],
-  assetB: [100, ada],
+  assetB: [100, lovelace],
 });
 
 console.log(s.getRuntimeObject());

@@ -16,7 +16,7 @@ import {
   SetContingency,
   Sub,
   Value,
-  ada,
+  lovelace,
   waitFor,
   waitUntil,
 } from "../index.js";
@@ -60,8 +60,12 @@ function cfd(opts: CFD) {
     waitFor(choice).after(deadline, Close);
 
   const fullRefund = Do(
-    partyBidder.party.payOut(partyBidder.deposit, ada).to(partyBidder.party),
-    counterparty.party.payOut(counterparty.deposit, ada).to(counterparty.party),
+    partyBidder.party
+      .payOut(partyBidder.deposit, lovelace)
+      .to(partyBidder.party),
+    counterparty.party
+      .payOut(counterparty.deposit, lovelace)
+      .to(counterparty.party),
     Close
   );
 
@@ -77,7 +81,7 @@ function cfd(opts: CFD) {
         splitResult == "Decrease in price" ? counterparty : partyBidder;
       return Do(
         looser.party
-          .transfer(Min(deltaPrice, looser.deposit), ada)
+          .transfer(Min(deltaPrice, looser.deposit), lovelace)
           .to(winner.party),
         Close
         // TODO: This is for explicit refunds
@@ -90,12 +94,12 @@ function cfd(opts: CFD) {
       Chain(
         waitFor(
           partyBidder.party
-            .deposits(partyBidder.deposit, ada)
+            .deposits(partyBidder.deposit, lovelace)
             .intoAccount(partyBidder.party)
         ),
         waitFor(
           counterparty.party
-            .deposits(counterparty.deposit, ada)
+            .deposits(counterparty.deposit, lovelace)
             .intoAccount(counterparty.party)
         )
       )
