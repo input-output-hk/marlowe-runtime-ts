@@ -10,7 +10,10 @@ import {
   unk,
 } from "./typeguards.js";
 import jsonBigInt from "json-bigint";
-import { ObjectContract } from "@marlowe.io/marlowe-object/bundle-map";
+import {
+  BundleMap,
+  mergeBundleMaps,
+} from "@marlowe.io/marlowe-object/bundle-map";
 
 type IntoAccount = {
   intoAccount: (to: Party) => DepositAction;
@@ -882,12 +885,13 @@ export abstract class Contract {
   protected built = false;
   abstract __build(): void;
   defaultContingency: Contingency | undefined;
-  abstract get continuations(): Readonly<Map<string, Contract>>;
+  abstract get bundleMap(): Readonly<BundleMap<unknown>>;
   protected abstract reduceContractStep(
     env: Environment,
     state: State
   ): ReduceStepResult;
 
+  // TODO: Replace with io-ts codecs.
   stringify() {
     return jsonBigInt.stringify(this);
   }
@@ -966,23 +970,14 @@ export abstract class Contract {
     } while (true);
   }
   getRuntimeObject() {
-    let thisHash = this.hash();
-    let objects: { [key: string]: ObjectContract<unknown> } = {};
-    objects[thisHash] = {
-      type: "contract",
-      value: this as any,
-    };
-    this.continuations.forEach(
-      (contract, sym) =>
-        (objects[sym] = {
-          type: "contract",
-          value: contract as any,
-        })
-    );
-    return jsonBigInt.stringify({
-      objects,
-      main: thisHash,
+    // FIXME: Try to avoid stringify and parse.
+    const objects = mergeBundleMaps(this.bundleMap, {
+      [this.hash()]: {
+        type: "contract",
+        value: jsonBigInt.parse(this.stringify()),
+      },
     });
+    return jsonBigInt.stringify({ objects, main: this.hash() });
   }
   do(...chain: DoableContract) {
     return Do(...chain);
@@ -1000,8 +995,8 @@ export abstract class Contract {
 
 class CloseC extends Contract {
   __build() {}
-  get continuations() {
-    return new Map();
+  get bundleMap() {
+    return {};
   }
   protected reduceContractStep(_: Environment, state: State): ReduceStepResult {
     const accs = state.accounts.values();
@@ -1037,7 +1032,7 @@ function bigIntMin(...val: bigint[]) {
 
 class PayC extends Contract {
   value: Value;
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
   constructor(
     private from: Party,
     private to: Payee,
@@ -1057,7 +1052,7 @@ class PayC extends Contract {
       this.cont.defaultContingency = this.defaultContingency;
     }
     this.cont.__build();
-    this._continuations = this.cont.continuations;
+    this._bundleMap = this.cont.bundleMap;
   }
   protected reduceContractStep(
     env: Environment,
@@ -1121,12 +1116,12 @@ class PayC extends Contract {
       cont: this.cont,
     };
   }
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
   toJSON() {
     this.__build();
@@ -1150,16 +1145,16 @@ class AssertC extends Contract {
       this.cont.defaultContingency = this.defaultContingency;
     }
     this.cont.__build();
-    this._continuations = this.cont.continuations;
+    this._bundleMap = this.cont.bundleMap;
   }
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
 
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
   protected reduceContractStep(
     env: Environment,
@@ -1181,14 +1176,14 @@ class AssertC extends Contract {
   }
 }
 class LetC extends Contract {
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
 
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
   __build(): void {
     if (this.built) {
@@ -1199,7 +1194,7 @@ class LetC extends Contract {
       this.cont.defaultContingency = this.defaultContingency;
     }
     this.cont.__build();
-    this._continuations = this.cont.continuations;
+    this._bundleMap = this.cont.bundleMap;
   }
 
   protected reduceContractStep(
@@ -1237,7 +1232,7 @@ export function Let(id: string, value: ValueOrNumber) {
   };
 }
 class IfC extends Contract {
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
   private obs: Observation;
   constructor(
     obs: ObservationOrBool,
@@ -1260,17 +1255,17 @@ class IfC extends Contract {
     }
     this.ifTrue.__build();
     this.ifFalse.__build();
-    this._continuations = new Map([
-      ...this.ifTrue.continuations,
-      ...this.ifFalse.continuations,
-    ]);
+    this._bundleMap = mergeBundleMaps(
+      this.ifTrue.bundleMap,
+      this.ifFalse.bundleMap
+    );
   }
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
 
   protected reduceContractStep(
@@ -1309,11 +1304,11 @@ export abstract class Case {
     throw new Error("Object is not a Case: " + jsonBigInt.stringify(val));
   }
   defaultContingency: Contingency | undefined;
-  abstract continuations: Map<string, Contract>;
+  abstract bundleMap: BundleMap<unknown>;
 }
 
 class NormalCase extends Case {
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
   constructor(
     public action: Action,
     public cont: Contract
@@ -1330,14 +1325,14 @@ class NormalCase extends Case {
       this.cont.defaultContingency = this.defaultContingency;
     }
     this.cont.__build();
-    this._continuations = this.cont.continuations;
+    this._bundleMap = this.cont.bundleMap;
   }
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
   toJSON() {
     this.__build();
@@ -1350,7 +1345,7 @@ class NormalCase extends Case {
 
 // TODO: Refactor to Ref constructor.
 class MerkleizedCase extends Case {
-  private _continuations?: Map<string, Contract>;
+  private _bundleMap?: BundleMap<unknown>;
   continuationHash: string;
   constructor(
     public action: Action,
@@ -1369,15 +1364,23 @@ class MerkleizedCase extends Case {
     }
     this.cont.__build();
     this.continuationHash = this.cont.hash();
-    this._continuations = new Map([...this.cont.continuations]);
-    this._continuations.set(this.continuationHash, this.cont);
+
+    this._bundleMap = mergeBundleMaps(this.cont.bundleMap, {
+      [this.continuationHash]: {
+        type: "contract",
+        // FIXME: Avoid stringify.
+        value: jsonBigInt.parse(this.cont.stringify()),
+      },
+    });
+    // this._bundleMap = new Map([...this.cont.bundleMap]);
+    // this._bundleMap.set(this.continuationHash, this.cont);
   }
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    if (!this._continuations) {
-      throw new Error("Continuations not initialized");
+    if (!this._bundleMap) {
+      throw new Error("Bundle map not initialized");
     }
-    return this._continuations;
+    return this._bundleMap;
   }
   toJSON() {
     this.__build();
@@ -1494,7 +1497,7 @@ export function choice(choiceName: string) {
   };
 }
 class WhenC extends Contract {
-  private _continuations = new Map<string, Contract>();
+  private _bundleMap: BundleMap<unknown>;
   private contingency: Contingency | undefined;
   constructor(private cases: Case[]) {
     super();
@@ -1515,21 +1518,26 @@ class WhenC extends Contract {
       this.contingency[1].defaultContingency = this.defaultContingency;
     }
 
-    this.cases.forEach((cse) => {
-      return cse.continuations.forEach((cont, hsh) =>
-        this._continuations.set(hsh, cont)
-      );
-    });
     const contingency =
       this.contingency || this.defaultContingency || defaultContingency;
     contingency[1].__build();
-    contingency[1].continuations.forEach((cont, hsh) =>
-      this._continuations.set(hsh, cont)
-    );
+
+    this._bundleMap = [
+      contingency[1].bundleMap,
+      ...this.cases.map((cse) => cse.bundleMap),
+    ].reduce(mergeBundleMaps, {});
+    // this.cases.forEach((cse) => {
+    //   return cse.bundleMap.forEach((cont, hsh) =>
+    //     this._bundleMap.set(hsh, cont)
+    //   );
+    // });
+    // contingency[1].bundleMap.forEach((cont, hsh) =>
+    //   this._bundleMap.set(hsh, cont)
+    // );
   }
-  get continuations() {
+  get bundleMap() {
     this.__build();
-    return this._continuations;
+    return this._bundleMap;
   }
   after(deadline: Date, cont: Contract) {
     if (this.built) {

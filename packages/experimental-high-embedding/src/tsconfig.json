@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../dist/esm",
     "paths": {
-      "@marlowe.io/language-object/*": ["../../marlowe-object/src/*"]
+      "@marlowe.io/marlowe-object/*": ["../../marlowe-object/src/*"]
     }
   },
   "references": [{ "path": "../../marlowe-object/src" }]

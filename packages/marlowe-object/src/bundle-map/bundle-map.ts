@@ -10,6 +10,9 @@ import {
   Observation,
   ObservationGuard,
 } from "../value-and-observation.js";
+import * as R from "fp-ts/lib/Record.js";
+import { deepEqual } from "@marlowe.io/adapter/deep-equal";
+import { MarloweJSON } from "@marlowe.io/adapter/codec";
 
 /**
  * An entry of a {@link BundleMap} that references a {@link Party}.
@@ -158,6 +161,29 @@ export const BundleMapGuard: t.Type<BundleMap<unknown>> = t.record(
   LabelGuard,
   ObjectTypeGuard
 );
+
+/**
+ * Combines two {@link BundleMap | bundle maps} into one. If the same key is present in both maps, the values need to be
+ * the same or the function will throw.
+ */
+export const mergeBundleMaps = <A>(
+  left: BundleMap<A>,
+  right: BundleMap<A>
+): BundleMap<A> => {
+  const mergeSameKey = {
+    concat: (x: ObjectType<A>, y: ObjectType<A>) => {
+      if (!deepEqual(x, y)) {
+        throw new Error(
+          `Cannot merge two different objects with the same key: ${MarloweJSON.stringify(
+            x
+          )} and ${MarloweJSON.stringify(y)}`
+        );
+      }
+      return x;
+    },
+  };
+  return R.union(mergeSameKey)(right)(left);
+};
 
 /**
  * A contract bundle is just a {@link BundleMap} with a main entrypoint.

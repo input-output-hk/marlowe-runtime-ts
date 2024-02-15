@@ -49,4 +49,5 @@ export {
   ObjectType,
   BundleMap,
   ContractBundleMap,
+  mergeBundleMaps,
 } from "./bundle-map.js";
