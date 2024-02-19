@@ -1,32 +1,39 @@
 import { describe, expect, test } from "@jest/globals";
 import {
-  Accounts,
   Add,
   Close,
   Contract,
-  Do,
-  Environment,
   If,
   Notify,
   Party,
   Payee,
   Role,
   SetContingency,
-  TimeInterval,
   Token,
   token,
   When,
   lovelace,
+} from "../dist/esm/index.js";
+
+import {
+  SubValue,
+  ConstantValue,
+  Accounts,
+  Environment,
+  TimeInterval,
   emptyState,
-  AvailableMoneyGuard,
   AvailableMoneyValue,
-  ValueGuard,
   NegValue,
   AddValue,
-  ConstantValue,
-  SubValue,
+} from "../dist/esm/hom.js";
+import {
   ContractGuard,
-} from "@marlowe.io/experimental-high-embedding";
+  ValueGuard,
+  parseParty,
+  parsePayee,
+  parseToken,
+} from "../dist/esm/guards.js";
+
 import jsonBigInt from "json-bigint";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.
@@ -44,24 +51,24 @@ function contractAsJson(obj: Contract) {
 describe("Marlowe ts", () => {
   describe("Party", () => {
     test("parse Address", () => {
-      expect(Party.parse({ address: "x" })).toHaveProperty("address", "x");
+      expect(parseParty({ address: "x" })).toHaveProperty("address", "x");
     });
     test("parse Role", () => {
-      expect(Party.parse({ role_token: "x" })).toHaveProperty("roleName", "x");
+      expect(parseParty({ role_token: "x" })).toHaveProperty("roleName", "x");
     });
     test("fail parse", () => {
-      expect(() => Party.parse({ unk: "x" })).toThrow();
+      expect(() => parseParty({ unk: "x" })).toThrow();
     });
   });
   describe("Token", () => {
     test("parse Token", () => {
-      const tok = Token.parse({ currency_symbol: "x", token_name: "y" });
+      const tok = parseToken({ currency_symbol: "x", token_name: "y" });
 
       expect(tok.currencySymbol).toBe("x");
       expect(tok.tokenName).toBe("y");
     });
     test("fail parse", () => {
-      expect(() => Token.parse({ currency_symbol: "x" })).toThrow();
+      expect(() => parseToken({ currency_symbol: "x" })).toThrow();
     });
   });
   describe("Value", () => {
@@ -124,7 +131,7 @@ describe("Marlowe ts", () => {
   describe("Payee", () => {
     test("Parse Payee", () => {
       const payeeObj = { account: { address: "x" } };
-      const parsed = Payee.parse(payeeObj) as any;
+      const parsed = parsePayee(payeeObj) as any;
       expect(parsed).toHaveProperty("account");
       expect(parsed.account).toHaveProperty("address", "x");
     });

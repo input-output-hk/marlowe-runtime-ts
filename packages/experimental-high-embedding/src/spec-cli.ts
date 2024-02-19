@@ -1,20 +1,18 @@
 import { Readable } from "node:stream";
-import {
-  Action,
-  Address,
-  Bound,
-  ChoiceId,
-  Contract,
-  Observation,
-  Party,
-  Payee,
-  Role,
-  Token,
-  Value,
-  token,
-} from "./index.js";
+import { Address, Role, token } from "./index.js";
 import * as t from "io-ts/lib/index.js";
 import jsonBigInt from "json-bigint";
+import {
+  parseBound,
+  parseValue,
+  parseToken,
+  parseParty,
+  parsePayee,
+  parseChoiceId,
+  parseObservation,
+  parseAction,
+  parseContract,
+} from "./guards.js";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.
 const { stringify, parse } = jsonBigInt({
@@ -36,15 +34,15 @@ function serializationRequest(json: unknown) {
 
 function rountripSerialization(typeId: string, json: unknown) {
   const parsers = {
-    "Core.Bound": Bound.parse,
-    "Core.Value": Value.parse,
-    "Core.Token": Token.parse,
-    "Core.Party": Party.parse,
-    "Core.Payee": Payee.parse,
-    "Core.ChoiceId": ChoiceId.parse,
-    "Core.Observation": Observation.parse,
-    "Core.Action": Action.parse,
-    "Core.Contract": Contract.parse,
+    "Core.Bound": parseBound,
+    "Core.Value": parseValue,
+    "Core.Token": parseToken,
+    "Core.Party": parseParty,
+    "Core.Payee": parsePayee,
+    "Core.ChoiceId": parseChoiceId,
+    "Core.Observation": parseObservation,
+    "Core.Action": parseAction,
+    "Core.Contract": parseContract,
   } as any;
   if (typeId in parsers) {
     const parser = parsers[typeId];

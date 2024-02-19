@@ -1,3 +1,4 @@
+import { ContractGuard } from "../guards.js";
 import {
   Action,
   Bound,
@@ -166,4 +167,4 @@ const s = cfd({
   priceBeginning: Constant(5_000_000),
 });
 
-console.log(s.stringify());
+console.log(ContractGuard.encode(s));

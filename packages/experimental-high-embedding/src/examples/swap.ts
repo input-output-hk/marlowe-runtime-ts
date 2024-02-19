@@ -1,11 +1,10 @@
+import { ContractGuard } from "../guards.js";
 import {
   Close,
   Party,
   Role,
   SetContingency,
   SingleAssetValue,
-  Token,
-  ValueOrNumber,
   When,
   token,
 } from "../index.js";
@@ -49,4 +48,4 @@ const s = swap({
   assetsB: [100, token("symB", "tokB")],
 });
 
-console.log(s.stringify());
+console.log(ContractGuard.encode(s));
