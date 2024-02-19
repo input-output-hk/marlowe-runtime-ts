@@ -1,5 +1,4 @@
 import { Readable } from "node:stream";
-import { lit, num, objOf, str, unk } from "./typeguards.js";
 import {
   Action,
   Address,
@@ -14,6 +13,7 @@ import {
   Value,
   token,
 } from "./index.js";
+import * as t from "io-ts/lib/index.js";
 import jsonBigInt from "json-bigint";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.
@@ -51,9 +51,10 @@ function rountripSerialization(typeId: string, json: unknown) {
     try {
       return requestResponse(serializationRequest(parser(json)));
     } catch (err) {
-      const errMessage = objOf({ toString: unk })(err)
-        ? (err as any).toString()
-        : "Unknown problem";
+      const errMessage =
+        typeof err === "object" && typeof (err as any).toString === "function"
+          ? (err as any).toString()
+          : "Unknown problem";
       return requestResponse({ "serialization-error": errMessage });
     }
   }
@@ -77,6 +78,18 @@ function generateRandomValue(typeId: string, seed: number) {
   return requestResponse({ "unknown-type": typeId });
 }
 
+const TestRoundtripSerializationMsg = t.type({
+  request: t.literal("test-roundtrip-serialization"),
+  typeId: t.string,
+  json: t.unknown,
+});
+
+const GenerateRandomValueMsg = t.type({
+  request: t.literal("generate-random-value"),
+  typeId: t.string,
+  seed: t.number,
+});
+
 function main() {
   createJsonStream({
     stream: process.stdin,
@@ -84,22 +97,10 @@ function main() {
     beginSeparator: "```",
     endSeparator: "```",
     onJson: (obj) => {
-      if (
-        objOf({
-          request: lit("test-roundtrip-serialization"),
-          typeId: str,
-          json: unk,
-        })(obj)
-      ) {
+      if (TestRoundtripSerializationMsg.is(obj)) {
         return rountripSerialization(obj.typeId, obj.json);
       }
-      if (
-        objOf({
-          request: lit("generate-random-value"),
-          typeId: str,
-          seed: num,
-        })(obj)
-      ) {
+      if (GenerateRandomValueMsg.is(obj)) {
         return generateRandomValue(obj.typeId, obj.seed);
       }
       return console.log("RequestNotImplemented");

@@ -2,17 +2,6 @@ import { sha1 } from "object-hash";
 import * as t from "io-ts/lib/index.js";
 import * as Either from "fp-ts/lib/Either.js";
 import { pipe } from "fp-ts/lib/function.js";
-// FIXME: remove typeguards
-import {
-  arrayOf,
-  bigint,
-  bool,
-  lit,
-  num,
-  objOf,
-  str,
-  unk,
-} from "./typeguards.js";
 import jsonBigInt from "json-bigint";
 import {
   BundleMap,
@@ -55,7 +44,7 @@ export abstract class Party {
   chooses(choice: Choice): ChoiceAction;
   chooses(choiceName: string): ChoiceBetween;
   chooses(arg: string | Choice) {
-    if (str(arg)) {
+    if (typeof arg === "string") {
       return {
         between: (...bounds: Bound[]) =>
           new ChoiceAction(choiceId(arg, this), bounds),
@@ -276,13 +265,7 @@ export class ChoiceId {
     return new ChoiceValueValue(this);
   }
   static parse(val: unknown): ChoiceId {
-    if (objOf({ choice_name: str, choice_owner: unk })(val)) {
-      return new ChoiceId(val.choice_name, Party.parse(val.choice_owner));
-    }
-    throw new Error("Value is not a choiceId");
-  }
-  toJSON() {
-    return { choice_name: this.choiceName, choice_owner: this.choiceOwner };
+    return unsafeEither(ChoiceIdGuard.decode(val));
   }
 }
 
