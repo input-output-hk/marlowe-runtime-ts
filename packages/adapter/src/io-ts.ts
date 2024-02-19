@@ -133,3 +133,92 @@ export function likeLiteral<S extends string>(literal: S): t.Type<S> {
     t.identity
   );
 }
+
+type Constructor<C = {}> = abstract new (...args: any[]) => C;
+
+/**
+ * This type guard is similar to t.union but for subtypes of a given class.
+ * @param name The name of the guarded type
+ * @param constructor The constructor of the base class
+ * @param guards A list of guards for the subtypes
+ */
+export function subtypeUnion<C, C1, O1>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [t.Type<C1, O1, any>]
+): t.Type<C, O1, unknown>;
+export function subtypeUnion<C, C1, O1, C2, O2>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [t.Type<C1, O1, any>, t.Type<C2, O2, any>]
+): t.Type<C, O1 | O2, unknown>;
+export function subtypeUnion<C, C1, O1, C2, O2, C3, O3>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [t.Type<C1, O1, any>, t.Type<C2, O2, any>, t.Type<C3, O3, any>]
+): t.Type<C, O1 | O2 | O3, unknown>;
+export function subtypeUnion<C, C1, O1, C2, O2, C3, O3, C4, O4>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [
+    t.Type<C1, O1, any>,
+    t.Type<C2, O2, any>,
+    t.Type<C3, O3, any>,
+    t.Type<C4, O4, any>,
+  ]
+): t.Type<C, O1 | O2 | O3 | O4, unknown>;
+export function subtypeUnion<C, C1, O1, C2, O2, C3, O3, C4, O4, C5, O5>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [
+    t.Type<C1, O1, any>,
+    t.Type<C2, O2, any>,
+    t.Type<C3, O3, any>,
+    t.Type<C4, O4, any>,
+    t.Type<C5, O5, any>,
+  ]
+): t.Type<C, O1 | O2 | O3 | O4 | O5, unknown>;
+export function subtypeUnion<C, C1, O1, C2, O2, C3, O3, C4, O4, C5, O5, C6, O6>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: [
+    t.Type<C1, O1, any>,
+    t.Type<C2, O2, any>,
+    t.Type<C3, O3, any>,
+    t.Type<C4, O4, any>,
+    t.Type<C5, O5, any>,
+    t.Type<C6, O6, any>,
+  ]
+): t.Type<C, O1 | O2 | O3 | O4 | O5 | O6, unknown>;
+export function subtypeUnion<C>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: t.Any[]
+): t.Type<C, any, any>;
+export function subtypeUnion<C>(
+  name: string,
+  constructor: Constructor<C>,
+  guards: t.Any[]
+): t.Type<C, any, any> {
+  return new t.Type(
+    name,
+    (u): u is C => u instanceof constructor,
+    (u, c) => {
+      for (const guard of guards) {
+        const result = guard.validate(u, c);
+        if (result._tag === "Right") {
+          return t.success(result.right);
+        }
+      }
+      return t.failure(u, c, "Value does not match any of the subtype guards");
+    },
+    (a) => {
+      for (const guard of guards) {
+        if (guard.is(a)) {
+          return guard.encode(a);
+        }
+      }
+      throw new Error("Unknown type");
+    }
+  );
+}

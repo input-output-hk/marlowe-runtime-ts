@@ -1,4 +1,8 @@
 import { sha1 } from "object-hash";
+import * as t from "io-ts/lib/index.js";
+import * as Either from "fp-ts/lib/Either.js";
+import { pipe } from "fp-ts/lib/function.js";
+// FIXME: remove typeguards
 import {
   arrayOf,
   bigint,
@@ -14,6 +18,10 @@ import {
   BundleMap,
   mergeBundleMaps,
 } from "@marlowe.io/marlowe-object/bundle-map";
+import * as ObjG from "@marlowe.io/marlowe-object/guards";
+import * as Obj from "@marlowe.io/marlowe-object";
+import { unsafeEither } from "@marlowe.io/adapter/fp-ts";
+import { subtypeUnion } from "@marlowe.io/adapter/io-ts";
 
 type IntoAccount = {
   intoAccount: (to: Party) => DepositAction;
@@ -22,16 +30,10 @@ type IntoAccount = {
 type ChoiceBetween = { between: (...bounds: Bound[]) => ChoiceAction };
 type PayTo = { to: (dst: Party) => ThenableContract };
 
+// #region Party
 export abstract class Party {
   static parse(obj: unknown): Party {
-    if (objOf({ address: str })(obj)) {
-      return Address(obj.address);
-    }
-    if (objOf({ role_token: str })(obj)) {
-      return Role(obj.role_token);
-    }
-
-    throw new Error("Object is not a Party");
+    return unsafeEither(PartyGuard.decode(obj));
   }
 
   deposits(asset: SingleAssetValue): IntoAccount;
@@ -102,14 +104,23 @@ export abstract class Party {
   }
 }
 
+export const RoleGuard = ObjG.Role.pipe(
+  new t.Type<RoleParty, Obj.Role, Obj.Role>(
+    "RoleFromObject",
+    (u): u is RoleParty => u instanceof RoleParty,
+    (u, c) => {
+      return t.success(new RoleParty(u.role_token));
+    },
+    (a) => ({ role_token: a.roleName })
+  )
+);
+
 class RoleParty extends Party {
   constructor(public roleName: string) {
     super();
   }
-  toJSON() {
-    return { role_token: this.roleName };
-  }
 }
+
 export function Role(roleName: string) {
   return new RoleParty(roleName);
 }
@@ -118,15 +129,31 @@ class AddressParty extends Party {
   constructor(public address: string) {
     super();
   }
-  toJSON() {
-    return { address: this.address };
-  }
 }
 
 export function Address(address: string) {
   return new AddressParty(address);
 }
 
+export const AddressGuard = ObjG.Address.pipe(
+  new t.Type<AddressParty, Obj.Address, Obj.Address>(
+    "AddressFromObject",
+    (u): u is AddressParty => u instanceof AddressParty,
+    (u, c) => {
+      return t.success(new AddressParty(u.address));
+    },
+    (a) => ({ address: a.address })
+  )
+);
+
+export const PartyGuard = subtypeUnion("Party", Party, [
+  AddressGuard,
+  RoleGuard,
+]);
+
+// #endregion Party
+
+// #region Token
 export type SingleAssetValue = [ValueOrNumber, Token];
 export type SingleAsset = [number, Token];
 
@@ -136,16 +163,7 @@ export class Token {
     public tokenName: Readonly<string>
   ) {}
   static parse(obj: unknown): Token {
-    if (objOf({ currency_symbol: str, token_name: str })(obj)) {
-      return new Token(obj.currency_symbol, obj.token_name);
-    }
-    throw new Error("Object is not a Token");
-  }
-  toJSON() {
-    return {
-      currency_symbol: this.currencySymbol,
-      token_name: this.tokenName,
-    };
+    return unsafeEither(TokenGuard.decode(obj));
   }
 }
 
@@ -155,16 +173,30 @@ export function token(currencySymbol: string, tokenName: string): Token {
 
 export const lovelace = token("", "");
 
+export const TokenGuard = ObjG.Token.pipe(
+  new t.Type<Token, Obj.Token, Obj.Token>(
+    "TokenFromObject",
+    (u): u is Token => u instanceof Token,
+    (u, c) => {
+      if ("currency_symbol" in u) {
+        return t.success(new Token(u.currency_symbol, u.token_name));
+      } else {
+        return t.failure<Token>(
+          u,
+          c,
+          "Token reference decoding is not implemented. "
+        );
+      }
+    },
+    (a) => ({ currency_symbol: a.currencySymbol, token_name: a.tokenName })
+  )
+);
+// #endregion Token
+
+// #region Payee
 export abstract class Payee {
   static parse(obj: unknown): Payee {
-    if (objOf({ party: unk })(obj)) {
-      return party(Party.parse(obj.party));
-    }
-    if (objOf({ account: unk })(obj)) {
-      return account(Party.parse(obj.account));
-    }
-
-    throw new Error("Object is not a Party");
+    return unsafeEither(PayeeGuard.decode(obj));
   }
   match<T>(
     matchAccount: (p: AccountPayee) => T,
@@ -184,19 +216,42 @@ class PartyPayee extends Payee {
   constructor(public party: Party) {
     super();
   }
-  toJSON() {
-    return { party: this.party };
-  }
 }
 
+export const PartyPayeeGuard = ObjG.PayeeParty.pipe(
+  new t.Type<PartyPayee, Obj.PayeeParty, Obj.PayeeParty>(
+    "PartyPayeeFromObject",
+    (u): u is PartyPayee => u instanceof PartyPayee,
+    (u, c) =>
+      pipe(
+        PartyGuard.validate(u.party, c),
+        Either.map((party) => new PartyPayee(party))
+      ),
+    (a) => ({ party: PartyGuard.encode(a.party) })
+  )
+);
+
+// TODO: Rename to PayeeAccount to match marlowe-object
 class AccountPayee extends Payee {
   constructor(public account: Party) {
     super();
   }
-  toJSON() {
-    return { account: this.account };
-  }
 }
+
+export const AccountPayeeGuard = ObjG.PayeeAccount.pipe(
+  new t.Type<AccountPayee, Obj.PayeeAccount, Obj.PayeeAccount>(
+    "AccountFromObject",
+    (u): u is AccountPayee => u instanceof AccountPayee,
+    (u, c) => {
+      return pipe(
+        PartyGuard.validate(u.account, c),
+        Either.map((account) => new AccountPayee(account))
+      );
+    },
+    (a) => ({ account: PartyGuard.encode(a.account) })
+  )
+);
+
 export function account(p: Party) {
   return new AccountPayee(p);
 }
@@ -204,6 +259,13 @@ export function account(p: Party) {
 export function party(p: Party) {
   return new PartyPayee(p);
 }
+
+export const PayeeGuard = subtypeUnion("Payee", Payee, [
+  AccountPayeeGuard,
+  PartyPayeeGuard,
+]);
+
+// #endregion Payee
 
 export class ChoiceId {
   constructor(
@@ -224,72 +286,41 @@ export class ChoiceId {
   }
 }
 
+export const ChoiceIdGuard = ObjG.ChoiceId.pipe(
+  new t.Type<ChoiceId, Obj.ChoiceId, Obj.ChoiceId>(
+    "ChoiceIdFromObject",
+    (u): u is ChoiceId => u instanceof ChoiceId,
+    (u, ctx) => {
+      return pipe(
+        PartyGuard.validate(u.choice_owner, ctx),
+        Either.map((party) => new ChoiceId(u.choice_name, party))
+      );
+    },
+    (a) => ({
+      choice_name: a.choiceName,
+      choice_owner: PartyGuard.encode(a.choiceOwner),
+    })
+  )
+);
+
 export function choiceId(choiceName: string, choiceOwner: Party): ChoiceId {
   return new ChoiceId(choiceName, choiceOwner);
 }
 // TODO refactor to bigint
-export type Bound = { from: number; to: number };
-export function Bound(from: number, to: number): Bound {
+export type Bound = Obj.Bound;
+export function Bound(from: bigint, to: bigint): Bound {
   return { from, to };
 }
 
 Bound.parse = function (val: unknown): Bound {
-  if (objOf({ from: num, to: num })(val)) {
-    return val;
-  }
-  throw new Error("Value is not a Bound");
+  return unsafeEither(BoundGuard.decode(val));
 };
+
+export const BoundGuard = ObjG.Bound;
 
 export abstract class Value {
   static parse(val: unknown): Value {
-    if (lit("time_interval_start")(val)) {
-      return new TimeIntervalStartValue();
-    }
-    if (lit("time_interval_end")(val)) {
-      return new TimeIntervalEndValue();
-    }
-    if (num(val) || bigint(val)) {
-      return new ConstantValue(BigInt(val));
-    }
-    if (objOf({ in_account: unk, amount_of_token: unk })(val)) {
-      return new AvailableMoneyValue(
-        Party.parse(val.in_account),
-        Token.parse(val.amount_of_token)
-      );
-    }
-    if (objOf({ add: unk, and: unk })(val)) {
-      return new AddValue(Value.parse(val.add), Value.parse(val.and));
-    }
-    if (objOf({ negate: unk })(val)) {
-      return new NegValue(Value.parse(val.negate));
-    }
-
-    if (objOf({ multiply: unk, times: unk })(val)) {
-      return new MulValue(Value.parse(val.multiply), Value.parse(val.times));
-    }
-
-    if (objOf({ divide: unk, by: unk })(val)) {
-      return new DivValue(Value.parse(val.divide), Value.parse(val.by));
-    }
-
-    if (objOf({ value: unk, minus: unk })(val)) {
-      return new SubValue(Value.parse(val.value), Value.parse(val.minus));
-    }
-
-    if (objOf({ use_value: str })(val)) {
-      return new UseValue(val.use_value);
-    }
-    if (objOf({ if: unk, then: unk, else: unk })(val)) {
-      return new CondValue(
-        Observation.parse(val.if),
-        Value.parse(val.then),
-        Value.parse(val.else)
-      );
-    }
-    if (objOf({ value_of_choice: unk })(val)) {
-      return new ChoiceValueValue(ChoiceId.parse(val.value_of_choice));
-    }
-    throw new Error("Object is not a Value: " + jsonBigInt.stringify(val));
+    return unsafeEither(ValueGuard.decode(val));
   }
 
   abstract eval(env: Environment, state: State): bigint;
@@ -339,7 +370,7 @@ const numberToConstant = (val: ValueOrNumber): Value => {
   } else return val;
 };
 
-class AvailableMoneyValue extends Value {
+export class AvailableMoneyValue extends Value {
   constructor(
     public accountId: Party,
     public token: Token
@@ -349,12 +380,33 @@ class AvailableMoneyValue extends Value {
   eval(env: Environment, state: State) {
     return state.accounts.availableMoney(this.accountId, this.token);
   }
-  toJSON() {
-    return { amount_of_token: this.token, in_account: this.accountId };
-  }
 }
 
-class ChoiceValueValue extends Value {
+export const AvailableMoneyGuard = ObjG.AvailableMoney.pipe(
+  new t.Type<AvailableMoneyValue, Obj.AvailableMoney, Obj.AvailableMoney>(
+    "AvailableMoneyFromObject",
+    (u): u is AvailableMoneyValue => u instanceof AvailableMoneyValue,
+    (u, c) =>
+      pipe(
+        Either.Do,
+        Either.apS("in_account", PartyGuard.validate(u.in_account, c)),
+        Either.apS(
+          "amount_of_token",
+          TokenGuard.validate(u.amount_of_token, c)
+        ),
+        Either.map(
+          (party) =>
+            new AvailableMoneyValue(party.in_account, party.amount_of_token)
+        )
+      ),
+    (a) => ({
+      amount_of_token: TokenGuard.encode(a.token),
+      in_account: PartyGuard.encode(a.accountId),
+    })
+  )
+);
+
+export class ChoiceValueValue extends Value {
   constructor(public choiceId: ChoiceId) {
     super();
   }
@@ -365,18 +417,29 @@ class ChoiceValueValue extends Value {
     return { value_of_choice: this.choiceId };
   }
 }
+
+export const ChoiceValueGuard = ObjG.ChoiceValue.pipe(
+  new t.Type<ChoiceValueValue, Obj.ChoiceValue, Obj.ChoiceValue>(
+    "ChoiceValueFromObject",
+    (u): u is ChoiceValueValue => u instanceof ChoiceValueValue,
+    (u, c) =>
+      pipe(
+        ChoiceIdGuard.validate(u.value_of_choice, c),
+        Either.map((choiceId) => new ChoiceValueValue(choiceId))
+      ),
+    (a) => ({ value_of_choice: ChoiceIdGuard.encode(a.choiceId) })
+  )
+);
+
 export function AvailableMoney(accountId: Party, token: Token) {
   return new AvailableMoneyValue(accountId, token);
 }
 
-class ConstantValue extends Value {
-  constructor(private val: bigint) {
+export class ConstantValue extends Value {
+  constructor(public val: bigint) {
     super();
   }
   eval() {
-    return this.val;
-  }
-  toJSON() {
     return this.val;
   }
 }
@@ -385,7 +448,18 @@ export function Constant(n: number | bigint) {
   return new ConstantValue(BigInt(n));
 }
 
-class NegValue extends Value {
+export const ConstantGuard = ObjG.Constant.pipe(
+  new t.Type<ConstantValue, Obj.Constant, Obj.Constant>(
+    "ConstantFromObject",
+    (u): u is ConstantValue => u instanceof ConstantValue,
+    (u, c) => {
+      return t.success(new ConstantValue(u));
+    },
+    (a) => a.val
+  )
+);
+
+export class NegValue extends Value {
   val: Value;
   constructor(val: ValueOrNumber) {
     super();
@@ -394,16 +468,27 @@ class NegValue extends Value {
   eval(env: Environment, state: State) {
     return -this.val.eval(env, state);
   }
-  toJSON() {
-    return { negate: this.val };
-  }
 }
+
+export const NegGuard = ObjG.NegValue.pipe(
+  new t.Type<NegValue, Obj.NegValue, Obj.NegValue>(
+    "NegValueFromObject",
+    (u): u is NegValue => u instanceof NegValue,
+    (u, ctx) => {
+      return pipe(
+        ValueGuard.validate(u.negate, ctx),
+        Either.map((val) => new NegValue(val))
+      );
+    },
+    (a) => ({ negate: ValueGuard.encode(a.val) })
+  )
+);
 
 export function Neg(val: ValueOrNumber) {
   return new NegValue(val);
 }
 
-class AddValue extends Value {
+export class AddValue extends Value {
   constructor(
     public left: Value,
     public right: Value
@@ -413,16 +498,28 @@ class AddValue extends Value {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) + this.right.eval(env, state);
   }
-  toJSON() {
-    return { add: this.left, and: this.right };
-  }
 }
+
+export const AddGuard = ObjG.AddValue.pipe(
+  new t.Type<AddValue, Obj.AddValue, Obj.AddValue>(
+    "AddValueFromObject",
+    (u): u is AddValue => u instanceof AddValue,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("add", ValueGuard.validate(u.add, ctx)),
+        Either.apS("and", ValueGuard.validate(u.and, ctx)),
+        Either.map((val) => new AddValue(val.add, val.and))
+      ),
+    (a) => ({ add: ValueGuard.encode(a.left), and: ValueGuard.encode(a.right) })
+  )
+);
 
 export function Add(left: ValueOrNumber, right: ValueOrNumber) {
   return new AddValue(numberToConstant(left), numberToConstant(right));
 }
 
-class SubValue extends Value {
+export class SubValue extends Value {
   constructor(
     public left: Value,
     public right: Value
@@ -434,16 +531,31 @@ class SubValue extends Value {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) - this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, minus: this.right };
-  }
 }
+
+export const SubValueGuard = ObjG.SubValue.pipe(
+  new t.Type<SubValue, Obj.SubValue, Obj.SubValue>(
+    "SubValueFromObject",
+    (u): u is SubValue => u instanceof SubValue,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("minus", ValueGuard.validate(u.minus, ctx)),
+        Either.map((val) => new SubValue(val.value, val.minus))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      minus: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function Sub(left: ValueOrNumber, right: ValueOrNumber) {
   return new SubValue(numberToConstant(left), numberToConstant(right));
 }
 
-class MulValue extends Value {
+export class MulValue extends Value {
   constructor(
     public left: Value,
     public right: Value
@@ -453,10 +565,25 @@ class MulValue extends Value {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) * this.right.eval(env, state);
   }
-  toJSON() {
-    return { multiply: this.left, times: this.right };
-  }
 }
+
+export const MulValueGuard = ObjG.MulValue.pipe(
+  new t.Type<MulValue, Obj.MulValue, Obj.MulValue>(
+    "MulValueFromObject",
+    (u): u is MulValue => u instanceof MulValue,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("multiply", ValueGuard.validate(u.multiply, ctx)),
+        Either.apS("times", ValueGuard.validate(u.times, ctx)),
+        Either.map((val) => new MulValue(val.multiply, val.times))
+      ),
+    (a) => ({
+      multiply: ValueGuard.encode(a.left),
+      times: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function Mul(left: ValueOrNumber, right: ValueOrNumber) {
   return new MulValue(numberToConstant(left), numberToConstant(right));
@@ -474,10 +601,25 @@ class DivValue extends Value {
   eval(env: Environment, state: State) {
     return this.divide.eval(env, state) / this.by.eval(env, state);
   }
-  toJSON() {
-    return { divide: this.divide, by: this.by };
-  }
 }
+
+export const DivValueGuard = ObjG.DivValue.pipe(
+  new t.Type<DivValue, Obj.DivValue, Obj.DivValue>(
+    "DivValueFromObject",
+    (u): u is DivValue => u instanceof DivValue,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("divide", ValueGuard.validate(u.divide, ctx)),
+        Either.apS("by", ValueGuard.validate(u.by, ctx)),
+        Either.map((val) => new DivValue(val.divide, val.by))
+      ),
+    (a) => ({
+      divide: ValueGuard.encode(a.divide),
+      by: ValueGuard.encode(a.by),
+    })
+  )
+);
 
 export function Div(divide: ValueOrNumber, by: ValueOrNumber) {
   return new DivValue(numberToConstant(divide), numberToConstant(by));
@@ -490,12 +632,7 @@ class UseValue extends Value {
     super();
   }
   eval(env: Environment, state: State) {
-    // return Math.round(this.divide.eval(env, state) / this.by.eval(env, state));
-    // TODO: implement
     return state.boundValues.get(this.valueId) ?? 0n;
-  }
-  toJSON() {
-    return { use_value: this.valueId };
   }
 }
 
@@ -503,7 +640,18 @@ export function Use(valueId: ValueId) {
   return new UseValue(valueId);
 }
 
-class CondValue extends Value {
+export const UseValueGuard = ObjG.UseValue.pipe(
+  new t.Type<UseValue, Obj.UseValue, Obj.UseValue>(
+    "UseValueFromObject",
+    (u): u is UseValue => u instanceof UseValue,
+    (u, ctx) => {
+      return t.success(new UseValue(u.use_value));
+    },
+    (a) => ({ use_value: a.valueId })
+  )
+);
+
+export class CondValue extends Value {
   obs: Observation;
   ifTrue: Value;
   ifFalse: Value;
@@ -524,10 +672,27 @@ class CondValue extends Value {
       return this.ifFalse.eval(env, state);
     }
   }
-  toJSON() {
-    return { if: this.obs, then: this.ifTrue, else: this.ifFalse };
-  }
 }
+
+export const CondGuard = ObjG.Cond.pipe(
+  new t.Type<CondValue, Obj.Cond, Obj.Cond>(
+    "CondFromObject",
+    (u): u is CondValue => u instanceof CondValue,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("if", ObservationGuard.validate(u.if, ctx)),
+        Either.apS("then", ValueGuard.validate(u.then, ctx)),
+        Either.apS("else", ValueGuard.validate(u.else, ctx)),
+        Either.map((val) => new CondValue(val.if, val.then, val.else))
+      ),
+    (a) => ({
+      if: ObservationGuard.encode(a.obs),
+      then: ValueGuard.encode(a.ifTrue),
+      else: ValueGuard.encode(a.ifFalse),
+    })
+  )
+);
 
 export function Cond(
   obs: ObservationOrBool,
@@ -537,14 +702,26 @@ export function Cond(
   return new CondValue(obs, ifTrue, ifFalse);
 }
 
-class TimeIntervalStartValue extends Value {
+export class TimeIntervalStartValue extends Value {
   eval(env: Environment, _: State) {
     return BigInt(env.timeInterval.from.getTime());
   }
-  toJSON() {
-    return "time_interval_start";
-  }
 }
+
+export const TimeIntervalStartGuard = ObjG.TimeIntervalStart.pipe(
+  new t.Type<
+    TimeIntervalStartValue,
+    Obj.TimeIntervalStart,
+    Obj.TimeIntervalStart
+  >(
+    "TimeIntervalStartFromObject",
+    (u): u is TimeIntervalStartValue => u instanceof TimeIntervalStartValue,
+    (u, ctx) => {
+      return t.success(new TimeIntervalStartValue());
+    },
+    (a) => "time_interval_start"
+  )
+);
 
 export const TimeIntervalStart = new TimeIntervalStartValue();
 
@@ -552,10 +729,37 @@ class TimeIntervalEndValue extends Value {
   eval(env: Environment, _: State) {
     return BigInt(env.timeInterval.to.getTime());
   }
-  toJSON() {
-    return "time_interval_end";
-  }
 }
+
+export const TimeIntervalEndGuard = ObjG.TimeIntervalEnd.pipe(
+  new t.Type<TimeIntervalEndValue, Obj.TimeIntervalEnd, Obj.TimeIntervalEnd>(
+    "TimeIntervalEndFromObject",
+    (u): u is TimeIntervalEndValue => u instanceof TimeIntervalEndValue,
+    (u, ctx) => {
+      return t.success(new TimeIntervalEndValue());
+    },
+    (a) => "time_interval_end"
+  )
+);
+
+export const ValueGuard: t.Type<Value, Obj.Value, unknown> = t.recursion(
+  "Value",
+  () =>
+    subtypeUnion("Value", Value, [
+      ConstantGuard,
+      AvailableMoneyGuard,
+      ChoiceValueGuard,
+      NegGuard,
+      AddGuard,
+      SubValueGuard,
+      MulValueGuard,
+      DivValueGuard,
+      UseValueGuard,
+      CondGuard,
+      TimeIntervalStartGuard,
+      TimeIntervalEndGuard,
+    ])
+);
 
 export const TimeIntervalEnd = new TimeIntervalEndValue();
 
@@ -568,47 +772,7 @@ export function Min(a: Value, b: Value): Value {
 
 export abstract class Observation {
   static parse(val: unknown): Observation {
-    if (bool(val)) {
-      return new ConstantObs(val);
-    }
-
-    if (objOf({ both: unk, and: unk })(val)) {
-      return new AndObs(
-        Observation.parse(val.both),
-        Observation.parse(val.and)
-      );
-    }
-    if (objOf({ either: unk, or: unk })(val)) {
-      return new OrObs(
-        Observation.parse(val.either),
-        Observation.parse(val.or)
-      );
-    }
-    if (objOf({ value: unk, equal_to: unk })(val)) {
-      return new ValueEq(Value.parse(val.value), Value.parse(val.equal_to));
-    }
-    if (objOf({ value: unk, ge_than: unk })(val)) {
-      return ValueGE(Value.parse(val.value), Value.parse(val.ge_than));
-    }
-    if (objOf({ value: unk, gt: unk })(val)) {
-      return ValueGT(Value.parse(val.value), Value.parse(val.gt));
-    }
-
-    if (objOf({ value: unk, lt: unk })(val)) {
-      return ValueLT(Value.parse(val.value), Value.parse(val.lt));
-    }
-    if (objOf({ value: unk, le_than: unk })(val)) {
-      return ValueLE(Value.parse(val.value), Value.parse(val.le_than));
-    }
-    if (objOf({ not: unk })(val)) {
-      return Not(Observation.parse(val.not));
-    }
-    if (objOf({ chose_something_for: unk })(val)) {
-      return new ChoseSomething(ChoiceId.parse(val.chose_something_for));
-    }
-    throw new Error(
-      "Object is not an Observation: " + jsonBigInt.stringify(val)
-    );
+    return unsafeEither(ObservationGuard.decode(val));
   }
   abstract eval(env: Environment, state: State): boolean;
   and(right: Observation) {
@@ -622,7 +786,7 @@ export abstract class Observation {
   }
 }
 
-class AndObs extends Observation {
+export class AndObs extends Observation {
   left: Observation;
   right: Observation;
   constructor(left: ObservationOrBool, right: ObservationOrBool) {
@@ -633,16 +797,31 @@ class AndObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) && this.right.eval(env, state);
   }
-  toJSON() {
-    return { both: this.left, and: this.right };
-  }
 }
+
+export const AndObsGuard = ObjG.AndObs.pipe(
+  new t.Type<AndObs, Obj.AndObs, Obj.AndObs>(
+    "AndObsFromObject",
+    (u): u is AndObs => u instanceof AndObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("both", ObservationGuard.validate(u.both, ctx)),
+        Either.apS("and", ObservationGuard.validate(u.and, ctx)),
+        Either.map((val) => new AndObs(val.both, val.and))
+      ),
+    (a) => ({
+      both: ObservationGuard.encode(a.left),
+      and: ObservationGuard.encode(a.right),
+    })
+  )
+);
 
 export function And(left: ObservationOrBool, right: ObservationOrBool) {
   return new AndObs(left, right);
 }
 
-class OrObs extends Observation {
+export class OrObs extends Observation {
   left: Observation;
   right: Observation;
   constructor(left: ObservationOrBool, right: ObservationOrBool) {
@@ -653,10 +832,24 @@ class OrObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) || this.right.eval(env, state);
   }
-  toJSON() {
-    return { either: this.left, or: this.right };
-  }
 }
+export const OrObsGuard = ObjG.OrObs.pipe(
+  new t.Type<OrObs, Obj.OrObs, Obj.OrObs>(
+    "OrObsFromObject",
+    (u): u is OrObs => u instanceof OrObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("either", ObservationGuard.validate(u.either, ctx)),
+        Either.apS("or", ObservationGuard.validate(u.or, ctx)),
+        Either.map((val) => new OrObs(val.either, val.or))
+      ),
+    (a) => ({
+      either: ObservationGuard.encode(a.left),
+      or: ObservationGuard.encode(a.right),
+    })
+  )
+);
 
 export function Or(left: ObservationOrBool, right: ObservationOrBool) {
   return new OrObs(left, right);
@@ -671,16 +864,26 @@ class NotObs extends Observation {
   eval(env: Environment, state: State) {
     return !this.val.eval(env, state);
   }
-  toJSON() {
-    return { not: this.val };
-  }
 }
+
+export const NotObsGuard = ObjG.NotObs.pipe(
+  new t.Type<NotObs, Obj.NotObs, Obj.NotObs>(
+    "NotObsFromObject",
+    (u): u is NotObs => u instanceof NotObs,
+    (u, ctx) =>
+      pipe(
+        ObservationGuard.validate(u.not, ctx),
+        Either.map((val) => new NotObs(val))
+      ),
+    (a) => ({ not: ObservationGuard.encode(a.val) })
+  )
+);
 
 export function Not(val: ObservationOrBool) {
   return new NotObs(val);
 }
 
-class ValueEq extends Observation {
+export class ValueEq extends Observation {
   left: Value;
   right: Value;
   constructor(left: ValueOrNumber, right: ValueOrNumber) {
@@ -691,16 +894,31 @@ class ValueEq extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) === this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, equal_to: this.right };
-  }
 }
+
+export const ValueEqGuard = ObjG.ValueEQ.pipe(
+  new t.Type<ValueEq, Obj.ValueEQ, Obj.ValueEQ>(
+    "ValueEqFromObject",
+    (u): u is ValueEq => u instanceof ValueEq,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("equal_to", ValueGuard.validate(u.equal_to, ctx)),
+        Either.map((val) => new ValueEq(val.value, val.equal_to))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      equal_to: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function Eq(left: ValueOrNumber, right: ValueOrNumber) {
   return new ValueEq(left, right);
 }
 
-class ValueGEObs extends Observation {
+export class ValueGEObs extends Observation {
   left: Value;
   right: Value;
   constructor(left: ValueOrNumber, right: ValueOrNumber) {
@@ -711,16 +929,31 @@ class ValueGEObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) >= this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, ge_than: this.right };
-  }
 }
+
+export const ValueGEObsGuard = ObjG.ValueGE.pipe(
+  new t.Type<ValueGEObs, Obj.ValueGE, Obj.ValueGE>(
+    "ValueGEFromObject",
+    (u): u is ValueGEObs => u instanceof ValueGEObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("ge_than", ValueGuard.validate(u.ge_than, ctx)),
+        Either.map((val) => new ValueGEObs(val.value, val.ge_than))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      ge_than: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function ValueGE(left: ValueOrNumber, right: ValueOrNumber) {
   return new ValueGEObs(left, right);
 }
 
-class ValueGTObs extends Observation {
+export class ValueGTObs extends Observation {
   left: Value;
   right: Value;
   constructor(left: ValueOrNumber, right: ValueOrNumber) {
@@ -731,16 +964,31 @@ class ValueGTObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) > this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, gt: this.right };
-  }
 }
+
+export const ValueGTObsGuard = ObjG.ValueGT.pipe(
+  new t.Type<ValueGTObs, Obj.ValueGT, Obj.ValueGT>(
+    "ValueGTFromObject",
+    (u): u is ValueGTObs => u instanceof ValueGTObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("gt", ValueGuard.validate(u.gt, ctx)),
+        Either.map((val) => new ValueGTObs(val.value, val.gt))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      gt: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function ValueGT(left: ValueOrNumber, right: ValueOrNumber) {
   return new ValueGTObs(left, right);
 }
 
-class ValueLTObs extends Observation {
+export class ValueLTObs extends Observation {
   left: Value;
   right: Value;
   constructor(left: ValueOrNumber, right: ValueOrNumber) {
@@ -751,16 +999,30 @@ class ValueLTObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) < this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, lt: this.right };
-  }
 }
 
+export const ValueLTObsGuard = ObjG.ValueLT.pipe(
+  new t.Type<ValueLTObs, Obj.ValueLT, Obj.ValueLT>(
+    "ValueLTFromObject",
+    (u): u is ValueLTObs => u instanceof ValueLTObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("lt_than", ValueGuard.validate(u.lt, ctx)),
+        Either.map((val) => new ValueLTObs(val.value, val.lt_than))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      lt: ValueGuard.encode(a.right),
+    })
+  )
+);
 export function ValueLT(left: ValueOrNumber, right: ValueOrNumber) {
   return new ValueLTObs(left, right);
 }
 
-class ValueLEObs extends Observation {
+export class ValueLEObs extends Observation {
   left: Value;
   right: Value;
   constructor(left: ValueOrNumber, right: ValueOrNumber) {
@@ -771,30 +1033,53 @@ class ValueLEObs extends Observation {
   eval(env: Environment, state: State) {
     return this.left.eval(env, state) <= this.right.eval(env, state);
   }
-  toJSON() {
-    return { value: this.left, le_than: this.right };
-  }
 }
+
+export const ValueLEObsGuard = ObjG.ValueLE.pipe(
+  new t.Type<ValueLEObs, Obj.ValueLE, Obj.ValueLE>(
+    "ValueLEFromObject",
+    (u): u is ValueLEObs => u instanceof ValueLEObs,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("value", ValueGuard.validate(u.value, ctx)),
+        Either.apS("le_than", ValueGuard.validate(u.le_than, ctx)),
+        Either.map((val) => new ValueLEObs(val.value, val.le_than))
+      ),
+    (a) => ({
+      value: ValueGuard.encode(a.left),
+      le_than: ValueGuard.encode(a.right),
+    })
+  )
+);
 
 export function ValueLE(left: ValueOrNumber, right: ValueOrNumber) {
   return new ValueLEObs(left, right);
 }
 
-class ChoseSomething extends Observation {
+export class ChoseSomething extends Observation {
   constructor(public choiceId: ChoiceId) {
     super();
   }
   eval(env: Environment, state: State) {
     return state.choices.has(choiceIdKey(this.choiceId));
   }
-  toJSON() {
-    return {
-      chose_something_for: this.choiceId,
-    };
-  }
 }
+export const ChoseSomethingGuard = ObjG.ChoseSomething.pipe(
+  new t.Type<ChoseSomething, Obj.ChoseSomething, Obj.ChoseSomething>(
+    "ChoseSomethingFromObject",
+    (u): u is ChoseSomething => u instanceof ChoseSomething,
+    (u, ctx) =>
+      pipe(
+        ChoiceIdGuard.validate(u.chose_something_for, ctx),
+        Either.map((val) => new ChoseSomething(val))
+      ),
+    (a) => ({ chose_something_for: ChoiceIdGuard.encode(a.choiceId) })
+  )
+);
+
 export class ConstantObs extends Observation {
-  constructor(private obs: boolean) {
+  constructor(public obs: boolean) {
     super();
   }
   eval() {
@@ -804,6 +1089,33 @@ export class ConstantObs extends Observation {
     return this.obs;
   }
 }
+
+export const ConstantObsGuard = t.boolean.pipe(
+  new t.Type<ConstantObs, boolean, boolean>(
+    "ConstantObs",
+    (u): u is ConstantObs => u instanceof ConstantObs,
+    (u, c) => {
+      return t.success(new ConstantObs(u));
+    },
+    (a) => a.obs
+  )
+);
+
+export const ObservationGuard: t.Type<Observation, Obj.Observation, unknown> =
+  t.recursion("Observation", () =>
+    subtypeUnion("Observation", Observation, [
+      ConstantObsGuard,
+      AndObsGuard,
+      OrObsGuard,
+      NotObsGuard,
+      ValueEqGuard,
+      ValueGEObsGuard,
+      ValueGTObsGuard,
+      ValueLTObsGuard,
+      ValueLEObsGuard,
+      ChoseSomethingGuard,
+    ])
+  );
 
 type ObservationOrBool = Observation | boolean;
 
@@ -891,55 +1203,13 @@ export abstract class Contract {
     state: State
   ): ReduceStepResult;
 
-  // TODO: Replace with io-ts codecs.
+  // FIXME: Remove from API
   stringify() {
-    return jsonBigInt.stringify(this);
+    return ContractGuard.encode(this);
   }
 
   static parse(val: unknown): Contract {
-    if (lit("close")(val)) {
-      return Close;
-    }
-    if (
-      objOf({ from_account: unk, to: unk, token: unk, pay: unk, then: unk })(
-        val
-      )
-    ) {
-      return Pay(
-        Party.parse(val.from_account),
-        Payee.parse(val.to),
-        Token.parse(val.token),
-        Value.parse(val.pay),
-        Contract.parse(val.then)
-      );
-    }
-    if (objOf({ if: unk, then: unk, else: unk })(val)) {
-      return If(
-        Observation.parse(val.if),
-        Contract.parse(val.then),
-        Contract.parse(val.else)
-      );
-    }
-    if (
-      objOf({ when: arrayOf(unk), timeout: num, timeout_continuation: unk })(
-        val
-      )
-    ) {
-      return When(val.when.map(Case.parse)).after(
-        new Date(val.timeout),
-        Contract.parse(val.timeout_continuation)
-      );
-    }
-    if (objOf({ let: str, be: unk, then: unk })(val)) {
-      return new LetC(val.let, Value.parse(val.be), Contract.parse(val.then));
-    }
-    if (objOf({ assert: unk, then: unk })(val)) {
-      return new AssertC(
-        Observation.parse(val.assert),
-        Contract.parse(val.then)
-      );
-    }
-    throw new Error("Object is not a contract: " + jsonBigInt.stringify(val));
+    return unsafeEither(ContractGuard.decode(val));
   }
   reduceContractUntilQuiescent(
     this: Contract,
@@ -969,15 +1239,14 @@ export abstract class Contract {
       state = reduceResult.state;
     } while (true);
   }
-  getRuntimeObject() {
-    // FIXME: Try to avoid stringify and parse.
+  getRuntimeObject(): Obj.ContractBundleMap<unknown> {
     const objects = mergeBundleMaps(this.bundleMap, {
       [this.hash()]: {
         type: "contract",
-        value: jsonBigInt.parse(this.stringify()),
+        value: ContractGuard.encode(this),
       },
     });
-    return jsonBigInt.stringify({ objects, main: this.hash() });
+    return { objects, main: this.hash() };
   }
   do(...chain: DoableContract) {
     return Do(...chain);
@@ -1018,11 +1287,18 @@ class CloseC extends Contract {
       };
     }
   }
-
-  toJSON() {
-    return "close";
-  }
 }
+
+export const CloseGuard = ObjG.Close.pipe(
+  new t.Type<CloseC, Obj.Close<unknown>, Obj.Close<unknown>>(
+    "CloseFromObject",
+    (u): u is CloseC => u instanceof CloseC,
+    (u, ctx) => {
+      return t.success(Close);
+    },
+    (a) => "close"
+  )
+);
 
 function bigIntMin(...val: bigint[]) {
   let min = val[0];
@@ -1034,11 +1310,11 @@ class PayC extends Contract {
   value: Value;
   private _bundleMap?: BundleMap<unknown>;
   constructor(
-    private from: Party,
-    private to: Payee,
-    private token: Token,
+    public from: Party,
+    public to: Payee,
+    public token: Token,
     value: ValueOrNumber,
-    private cont: Contract
+    public cont: Contract
   ) {
     super();
     this.value = numberToConstant(value);
@@ -1123,17 +1399,37 @@ class PayC extends Contract {
     }
     return this._bundleMap;
   }
-  toJSON() {
-    this.__build();
-    return {
-      from_account: this.from,
-      to: this.to,
-      token: this.token,
-      pay: this.value,
-      then: this.cont,
-    };
-  }
 }
+
+export const PayGuard = ObjG.Pay.pipe(
+  new t.Type<PayC, Obj.Pay<unknown>, Obj.Pay<unknown>>(
+    "PayFromObject",
+    (u): u is PayC => u instanceof PayC,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("from_account", PartyGuard.validate(u.from_account, ctx)),
+        Either.apS("to", PayeeGuard.validate(u.to, ctx)),
+        Either.apS("token", TokenGuard.validate(u.token, ctx)),
+        Either.apS("pay", ValueGuard.validate(u.pay, ctx)),
+        Either.apS("then", ContractGuard.validate(u.then, ctx)),
+        Either.map(
+          (val) =>
+            new PayC(val.from_account, val.to, val.token, val.pay, val.then)
+        )
+      ),
+    (a) => {
+      a.__build();
+      return {
+        from_account: PartyGuard.encode(a.from),
+        to: PayeeGuard.encode(a.to),
+        token: TokenGuard.encode(a.token),
+        pay: ValueGuard.encode(a.value),
+        then: ContractGuard.encode(a.cont),
+      };
+    }
+  )
+);
 
 class AssertC extends Contract {
   __build(): void {
@@ -1168,13 +1464,29 @@ class AssertC extends Contract {
   ) {
     super();
   }
-  toJSON() {
-    return {
-      assert: this.obs,
-      then: this.cont,
-    };
-  }
 }
+
+export const AssertGuard = ObjG.Assert.pipe(
+  new t.Type<AssertC, Obj.Assert<unknown>, Obj.Assert<unknown>>(
+    "AssertFromObject",
+    (u): u is AssertC => u instanceof AssertC,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("assert", ObservationGuard.validate(u.assert, ctx)),
+        Either.apS("then", ContractGuard.validate(u.then, ctx)),
+        Either.map((val) => new AssertC(val.assert, val.then))
+      ),
+    (a) => {
+      a.__build();
+      return {
+        assert: ObservationGuard.encode(a.obs),
+        then: ContractGuard.encode(a.cont),
+      };
+    }
+  )
+);
+
 class LetC extends Contract {
   private _bundleMap?: BundleMap<unknown>;
 
@@ -1210,14 +1522,30 @@ class LetC extends Contract {
   ) {
     super();
   }
-  toJSON() {
-    return {
-      let: this.valueId,
-      be: this.value,
-      then: this.cont,
-    };
-  }
 }
+
+export const LetGuard = ObjG.Let.pipe(
+  new t.Type<LetC, Obj.Let<unknown>, Obj.Let<unknown>>(
+    "LetFromObject",
+    (u): u is LetC => u instanceof LetC,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("let", t.string.validate(u.let, ctx)),
+        Either.apS("be", ValueGuard.validate(u.be, ctx)),
+        Either.apS("then", ContractGuard.validate(u.then, ctx)),
+        Either.map((val) => new LetC(val.let, val.be, val.then))
+      ),
+    (a) => {
+      a.__build();
+      return {
+        let: a.valueId,
+        be: ValueGuard.encode(a.value),
+        then: ContractGuard.encode(a.cont),
+      };
+    }
+  )
+);
 
 type LetInBody = (ref: Value) => Contract;
 // TODO: Add overrides
@@ -1233,11 +1561,11 @@ export function Let(id: string, value: ValueOrNumber) {
 }
 class IfC extends Contract {
   private _bundleMap?: BundleMap<unknown>;
-  private obs: Observation;
+  public obs: Observation;
   constructor(
     obs: ObservationOrBool,
-    private ifTrue: Contract,
-    private ifFalse: Contract
+    public ifTrue: Contract,
+    public ifFalse: Contract
   ) {
     super();
     this.obs = boolToConstant(obs);
@@ -1275,13 +1603,30 @@ class IfC extends Contract {
     const cont = this.obs.eval(env, state) ? this.ifTrue : this.ifFalse;
     return { reduceEffect: "reduced", state, cont };
   }
-
-  toJSON() {
-    this.__build();
-
-    return { if: this.obs, then: this.ifTrue, else: this.ifFalse };
-  }
 }
+
+export const IfGuard = ObjG.If.pipe(
+  new t.Type<IfC, Obj.If<unknown>, Obj.If<unknown>>(
+    "IfFromObject",
+    (u): u is IfC => u instanceof IfC,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("if", ObservationGuard.validate(u.if, ctx)),
+        Either.apS("then", ContractGuard.validate(u.then, ctx)),
+        Either.apS("else", ContractGuard.validate(u.else, ctx)),
+        Either.map((val) => new IfC(val.if, val.then, val.else))
+      ),
+    (a) => {
+      a.__build();
+      return {
+        if: ObservationGuard.encode(a.obs),
+        then: ContractGuard.encode(a.ifTrue),
+        else: ContractGuard.encode(a.ifFalse),
+      };
+    }
+  )
+);
 
 export type Contingency = [Date, Contract];
 
@@ -1294,14 +1639,7 @@ export abstract class Case {
   protected built = false;
   abstract __build(): void;
   static parse(val: unknown): Case {
-    if (objOf({ case: unk, then: unk })(val)) {
-      return new NormalCase(Action.parse(val.case), Contract.parse(val.then));
-    }
-    // if (objOf({ case: unk, merkleized_then: str })(val)) {
-    //   return new MerkleizedCase(Action.parse(val.case), val.merkleized_then);
-    // }
-
-    throw new Error("Object is not a Case: " + jsonBigInt.stringify(val));
+    return unsafeEither(CaseGuard.decode(val));
   }
   defaultContingency: Contingency | undefined;
   abstract bundleMap: BundleMap<unknown>;
@@ -1334,14 +1672,28 @@ class NormalCase extends Case {
     }
     return this._bundleMap;
   }
-  toJSON() {
-    this.__build();
-    return {
-      case: this.action,
-      then: this.cont,
-    };
-  }
 }
+
+export const NormalCaseGuard = ObjG.NormalCase.pipe(
+  new t.Type<NormalCase, Obj.NormalCase<unknown>, Obj.NormalCase<unknown>>(
+    "NormalCaseFromObject",
+    (u): u is NormalCase => u instanceof NormalCase,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("case", ActionGuard.validate(u.case, ctx)),
+        Either.apS("then", ContractGuard.validate(u.then, ctx)),
+        Either.map((val) => new NormalCase(val.case, val.then))
+      ),
+    (a) => {
+      a.__build();
+      return {
+        case: ActionGuard.encode(a.action),
+        then: ContractGuard.encode(a.cont),
+      };
+    }
+  )
+);
 
 // TODO: Refactor to Ref constructor.
 class MerkleizedCase extends Case {
@@ -1368,8 +1720,7 @@ class MerkleizedCase extends Case {
     this._bundleMap = mergeBundleMaps(this.cont.bundleMap, {
       [this.continuationHash]: {
         type: "contract",
-        // FIXME: Avoid stringify.
-        value: jsonBigInt.parse(this.cont.stringify()),
+        value: ContractGuard.encode(this.cont),
       },
     });
     // this._bundleMap = new Map([...this.cont.bundleMap]);
@@ -1390,30 +1741,31 @@ class MerkleizedCase extends Case {
     };
   }
 }
+// FIXME
+// export const MerkleizedCaseGuard = ObjG.MerkleizedCase.pipe(
+//   new t.Type<MerkleizedCase, Obj.NormalCase<unknown>, Obj.NormalCase<unknown>>(
+//     "MerkleizedCaseFromObject",
+//     (u): u is MerkleizedCase => u instanceof MerkleizedCase,
+//     (u, ctx) => t.failure(u, ctx, "Not implemented"),
+//       // pipe(
+//       //   Either.Do,
+//       //   Either.apS("case", ActionGuard.validate(u.case, ctx)),
+//       //   Either.apS("then", ContractGuard.validate(u.then, ctx)),
+//       //   Either.map((val) => new MerkleizedCase(val.case, val.then))
+//       // ),
+//     (a) => ({
+//       case: ActionGuard.encode(a.action),
+//       then: ContractGuard.encode(a.cont),
+//     })
+//   ));
+
+export const CaseGuard: t.Type<Case, Obj.Case<unknown>, unknown> = t.recursion(
+  "Case",
+  () => subtypeUnion("Case", Case, [NormalCaseGuard])
+);
 export abstract class Action {
   static parse(val: unknown): Action {
-    if (objOf({ notify_if: unk })(val)) {
-      return new NotifyAction(Observation.parse(val.notify_if));
-    }
-    if (
-      objOf({ deposits: unk, into_account: unk, of_token: unk, party: unk })(
-        val
-      )
-    ) {
-      return new DepositAction(
-        Party.parse(val.into_account),
-        Party.parse(val.party),
-        Token.parse(val.of_token),
-        Value.parse(val.deposits)
-      );
-    }
-    if (objOf({ choose_between: arrayOf(unk), for_choice: unk })(val)) {
-      return new ChoiceAction(
-        ChoiceId.parse(val.for_choice),
-        val.choose_between.map(Bound.parse)
-      );
-    }
-    throw new Error("Object not an action: " + jsonBigInt.stringify(val));
+    return unsafeEither(ActionGuard.decode(val));
   }
   abstract match(input: Input): boolean;
   then(cont: Contract | (() => Contract)): Case {
@@ -1434,12 +1786,20 @@ class NotifyAction extends Action {
   match() {
     return false;
   }
-  toJSON() {
-    return {
-      notify_if: this.observation,
-    };
-  }
 }
+
+export const NotifyActionGuard = ObjG.Notify.pipe(
+  new t.Type<NotifyAction, Obj.Notify, Obj.Notify>(
+    "NotifyFromObject",
+    (u): u is NotifyAction => u instanceof NotifyAction,
+    (u, ctx) =>
+      pipe(
+        ObservationGuard.validate(u.notify_if, ctx),
+        Either.map((val) => new NotifyAction(val))
+      ),
+    (a) => ({ notify_if: ObservationGuard.encode(a.observation) })
+  )
+);
 
 export function Notify(observation: ObservationOrBool) {
   return new NotifyAction(observation);
@@ -1457,15 +1817,37 @@ class DepositAction extends Action {
   match() {
     return false;
   }
-  toJSON() {
-    return {
-      deposits: this.value,
-      into_account: this.intoAccount,
-      of_token: this.token,
-      party: this.from,
-    };
-  }
 }
+
+export const DepositActionGuard = ObjG.Deposit.pipe(
+  new t.Type<DepositAction, Obj.Deposit, Obj.Deposit>(
+    "DepositFromObject",
+    (u): u is DepositAction => u instanceof DepositAction,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("deposits", ValueGuard.validate(u.deposits, ctx)),
+        Either.apS("into_account", PartyGuard.validate(u.into_account, ctx)),
+        Either.apS("of_token", TokenGuard.validate(u.of_token, ctx)),
+        Either.apS("party", PartyGuard.validate(u.party, ctx)),
+        Either.map(
+          (val) =>
+            new DepositAction(
+              val.into_account,
+              val.party,
+              val.of_token,
+              val.deposits
+            )
+        )
+      ),
+    (a) => ({
+      deposits: ValueGuard.encode(a.value),
+      into_account: PartyGuard.encode(a.intoAccount),
+      of_token: TokenGuard.encode(a.token),
+      party: PartyGuard.encode(a.from),
+    })
+  )
+);
 
 export class ChoiceAction extends Action {
   match(input: String): boolean {
@@ -1480,13 +1862,42 @@ export class ChoiceAction extends Action {
   value() {
     return new ChoiceValueValue(this.choiceId);
   }
-  toJSON() {
-    return {
-      for_choice: this.choiceId,
-      choose_between: this.bounds,
-    };
-  }
 }
+
+export const ChoiceActionGuard = ObjG.Choice.pipe(
+  new t.Type<ChoiceAction, Obj.Choice, Obj.Choice>(
+    "ChoiceFromObject",
+    (u): u is ChoiceAction => u instanceof ChoiceAction,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("for_choice", ChoiceIdGuard.validate(u.for_choice, ctx)),
+        Either.apS(
+          "choose_between",
+          t.array(BoundGuard).validate(u.choose_between, ctx)
+        ),
+        Either.map(
+          (val) => new ChoiceAction(val.for_choice, val.choose_between)
+        )
+      ),
+    (a) => ({
+      for_choice: ChoiceIdGuard.encode(a.choiceId),
+      choose_between: a.bounds.map(BoundGuard.encode),
+    })
+  )
+);
+
+export const ActionGuard: t.Type<Action, Obj.Action, unknown> = t.recursion(
+  "Action",
+  () =>
+    subtypeUnion("Action", Action, [
+      NotifyActionGuard,
+      DepositActionGuard,
+      ChoiceActionGuard,
+    ])
+);
+
+// TODO: Revisit this, why Choice and not ChoiceAction
 export type Choice = { choiceName: string; bounds: Bound[] };
 
 export function choice(choiceName: string) {
@@ -1498,8 +1909,8 @@ export function choice(choiceName: string) {
 }
 class WhenC extends Contract {
   private _bundleMap: BundleMap<unknown>;
-  private contingency: Contingency | undefined;
-  constructor(private cases: Case[]) {
+  public contingency: Contingency | undefined;
+  constructor(public cases: Case[]) {
     super();
   }
   __build() {
@@ -1561,18 +1972,68 @@ class WhenC extends Contract {
       return { errorType: "AmbiguousTimeInterval" };
     }
   }
-  toJSON() {
-    this.__build();
-    const contingency =
-      this.contingency || this.defaultContingency || defaultContingency;
+  // TODO: Delete
+  // toJSON() {
+  //   this.__build();
+  //   const contingency =
+  //     this.contingency || this.defaultContingency || defaultContingency;
 
-    return {
-      when: this.cases,
-      timeout: contingency[0].getTime(),
-      timeout_continuation: contingency[1],
-    };
-  }
+  //   return {
+  //     when: this.cases,
+  //     timeout: contingency[0].getTime(),
+  //     timeout_continuation: contingency[1],
+  //   };
+  // }
 }
+
+export const WhenGuard = ObjG.When.pipe(
+  new t.Type<WhenC, Obj.When<unknown>, Obj.When<unknown>>(
+    "WhenFromObject",
+    (u): u is WhenC => u instanceof WhenC,
+    (u, ctx) =>
+      pipe(
+        Either.Do,
+        Either.apS("when", t.array(CaseGuard).validate(u.when, ctx)),
+        Either.apS("timeout", t.bigint.validate(u.timeout, ctx)),
+        Either.apS(
+          "timeout_continuation",
+          ContractGuard.validate(u.timeout_continuation, ctx)
+        ),
+        Either.map(
+          (val) =>
+            new WhenC(val.when).after(
+              new Date(Number(val.timeout)),
+              val.timeout_continuation
+            ) as WhenC
+        )
+      ),
+    (a) => {
+      a.__build();
+      const contingency =
+        a.contingency || a.defaultContingency || defaultContingency;
+      return {
+        when: a.cases.map(CaseGuard.encode),
+        timeout: BigInt(contingency[0].getTime()),
+        timeout_continuation: ContractGuard.encode(contingency[1]),
+      };
+    }
+  )
+);
+
+export const ContractGuard: t.Type<
+  Contract,
+  Obj.Contract<unknown>,
+  unknown
+> = t.recursion("Contract", () =>
+  subtypeUnion("Contract", Contract, [
+    CloseGuard,
+    PayGuard,
+    IfGuard,
+    WhenGuard,
+    LetGuard,
+    AssertGuard,
+  ])
+);
 
 export function waitFor(action: Action) {
   return {

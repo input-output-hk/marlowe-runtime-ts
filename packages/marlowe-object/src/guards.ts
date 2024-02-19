@@ -83,6 +83,8 @@ export {
   IfGuard as If,
   LetGuard as Let,
   WhenGuard as When,
+  NormalCaseGuard as NormalCase,
+  MerkleizedCaseGuard as MerkleizedCase,
 } from "./contract.js";
 
 export {

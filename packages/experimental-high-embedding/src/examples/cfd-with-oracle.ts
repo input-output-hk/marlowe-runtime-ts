@@ -159,10 +159,10 @@ const s = cfd({
   },
   exchangeBegining: Role("kraken")
     .chooses("dir-adausd")
-    .between(Bound(0, 100_000_000_000)),
+    .between(Bound(0n, 100_000_000_000n)),
   exchangeEnd: Role("kraken")
     .chooses("inv-adausd")
-    .between(Bound(0, 100_000_000_000)),
+    .between(Bound(0n, 100_000_000_000n)),
   priceBeginning: Constant(5_000_000),
 });
 

@@ -31,6 +31,8 @@
   },
   "dependencies": {
     "@marlowe.io/marlowe-object": "^0.3.0-beta",
+    "@marlowe.io/language-core-v1": "^0.3.0-beta",
+    "@marlowe.io/adapter": "^0.3.0-beta",
     "@types/json-bigint": "^1.0.1",
     "json-bigint": "^1.0.0",
     "object-hash": "^3.0.0"

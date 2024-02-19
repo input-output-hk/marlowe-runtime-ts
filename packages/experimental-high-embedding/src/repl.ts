@@ -26,8 +26,8 @@ const buyer = Role("buyer");
 const v = buyer.availableMoney(lovelace);
 buyer.deposits([3, lovelace]);
 
-buyer.chooses("Something").between(Bound(3, 5), Bound(6, 8));
-const dayOfWeek = choice("day").between(Bound(1, 7));
+buyer.chooses("Something").between(Bound(3n, 5n), Bound(6n, 8n));
+const dayOfWeek = choice("day").between(Bound(1n, 7n));
 buyer.chooses(dayOfWeek);
 
 const v1 = Add(3, 4);
