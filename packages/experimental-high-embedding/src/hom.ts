@@ -64,7 +64,7 @@ export abstract class Party {
       to: (dst: Party) => {
         return {
           then: (cont: Contract) => {
-            return new PayC(from, new AccountPayee(dst), tok, val, cont);
+            return new Pay(from, new AccountPayee(dst), tok, val, cont);
           },
         };
       },
@@ -81,7 +81,7 @@ export abstract class Party {
       to: (dst: Party) => {
         return {
           then: (cont: Contract) => {
-            return new PayC(from, new PartyPayee(dst), tok, val, cont);
+            return new Pay(from, new PartyPayee(dst), tok, val, cont);
           },
         };
       },
@@ -613,17 +613,17 @@ export abstract class Contract {
     return Do(...chain);
   }
   isClose() {
-    return this instanceof CloseC;
+    return this instanceof Close;
   }
   isPay() {
-    return this instanceof PayC;
+    return this instanceof Pay;
   }
   hash() {
     return sha1(jsonBigInt.stringify(this));
   }
 }
 
-export class CloseC extends Contract {
+export class Close extends Contract {
   __build() {}
   get bundleMap() {
     return {};
@@ -656,7 +656,7 @@ function bigIntMin(...val: bigint[]) {
   return min;
 }
 
-export class PayC extends Contract {
+export class Pay extends Contract {
   value: Value;
   private _bundleMap?: BundleMap<unknown>;
   constructor(
@@ -751,7 +751,7 @@ export class PayC extends Contract {
   }
 }
 
-export class AssertC extends Contract {
+export class Assert extends Contract {
   __build(): void {
     if (this.built) {
       return;
@@ -786,7 +786,7 @@ export class AssertC extends Contract {
   }
 }
 
-export class LetC extends Contract {
+export class Let extends Contract {
   private _bundleMap?: BundleMap<unknown>;
 
   get bundleMap() {
@@ -823,7 +823,7 @@ export class LetC extends Contract {
   }
 }
 
-export class IfC extends Contract {
+export class If extends Contract {
   private _bundleMap?: BundleMap<unknown>;
   public obs: Observation;
   constructor(
@@ -871,7 +871,7 @@ export class IfC extends Contract {
 
 export type Contingency = [Date, Contract];
 
-export const defaultContingency = [new Date(0), new CloseC()] as Contingency;
+export const defaultContingency = [new Date(0), new Close()] as Contingency;
 
 // TODO: Implement
 type Input = String;
@@ -1024,7 +1024,7 @@ export function choice(choiceName: string) {
     },
   };
 }
-export class WhenC extends Contract {
+export class When extends Contract {
   private _bundleMap: BundleMap<unknown>;
   public contingency: Contingency | undefined;
   constructor(public cases: Case[]) {

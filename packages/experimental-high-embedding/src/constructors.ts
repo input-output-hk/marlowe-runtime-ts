@@ -124,11 +124,11 @@ export function Notify(observation: HOM.ObservationOrBool) {
 export function waitFor(action: HOM.Action) {
   return {
     then: (cont: HOM.Contract) => {
-      return new HOM.WhenC([action.then(cont)]);
+      return new HOM.When([action.then(cont)]);
     },
     after: (deadline: Date, deadlineCont: HOM.Contract) => ({
       then: (cont: HOM.Contract) => {
-        return new HOM.WhenC([action.then(cont)]).after(deadline, deadlineCont);
+        return new HOM.When([action.then(cont)]).after(deadline, deadlineCont);
       },
     }),
   };
@@ -136,18 +136,18 @@ export function waitFor(action: HOM.Action) {
 
 export function waitUntil(deadline: Date) {
   return {
-    then: (cont: HOM.Contract) => new HOM.WhenC([]).after(deadline, cont),
+    then: (cont: HOM.Contract) => new HOM.When([]).after(deadline, cont),
   };
 }
 
-export const Close = new HOM.CloseC();
+export const Close = new HOM.Close();
 export const Pay = (
   from: HOM.Party,
   to: HOM.Payee,
   token: HOM.Token,
   value: HOM.ValueOrNumber,
   cont: HOM.Contract
-) => new HOM.PayC(from, to, token, value, cont);
+) => new HOM.Pay(from, to, token, value, cont);
 // TODO: Maybe add overrides for IfElse
 export function If(obs: HOM.ObservationOrBool): {
   then: (c: HOM.Contract) => { else: (c: HOM.Contract) => HOM.Contract };
@@ -161,15 +161,15 @@ export function If(obs: HOM.ObservationOrBool, ...args: any[]): any {
   if (args.length == 0) {
     return {
       then: (ifTrue: HOM.Contract) => ({
-        else: (ifFalse: HOM.Contract) => new HOM.IfC(obs, ifTrue, ifFalse),
+        else: (ifFalse: HOM.Contract) => new HOM.If(obs, ifTrue, ifFalse),
       }),
     };
   } else {
-    return new HOM.IfC(obs, args[0], args[1]);
+    return new HOM.If(obs, args[0], args[1]);
   }
 }
 
-export const When = (cases: HOM.Case[]) => new HOM.WhenC(cases);
+export const When = (cases: HOM.Case[]) => new HOM.When(cases);
 export function Deposit(
   intoAccount: HOM.Party,
   from: HOM.Party,
@@ -263,10 +263,10 @@ type LetInBody = (ref: HOM.Value) => HOM.Contract;
 export function Let(id: string, value: HOM.ValueOrNumber) {
   return {
     then: (cont: HOM.Contract) => {
-      return new HOM.LetC(id, HOM.numberToConstant(value), cont);
+      return new HOM.Let(id, HOM.numberToConstant(value), cont);
     },
     in: (body: LetInBody) => {
-      return new HOM.LetC(
+      return new HOM.Let(
         id,
         HOM.numberToConstant(value),
         body(new HOM.UseValue(id))

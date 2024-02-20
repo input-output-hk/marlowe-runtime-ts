@@ -501,9 +501,9 @@ export const ObservationGuard: t.Type<
 );
 
 export const PayGuard = ObjG.Pay.pipe(
-  new t.Type<HOM.PayC, Obj.Pay<unknown>, Obj.Pay<unknown>>(
+  new t.Type<HOM.Pay, Obj.Pay<unknown>, Obj.Pay<unknown>>(
     "PayFromObject",
-    (u): u is HOM.PayC => u instanceof HOM.PayC,
+    (u): u is HOM.Pay => u instanceof HOM.Pay,
     (u, ctx) =>
       pipe(
         Either.Do,
@@ -514,7 +514,7 @@ export const PayGuard = ObjG.Pay.pipe(
         Either.apS("then", ContractGuard.validate(u.then, ctx)),
         Either.map(
           (val) =>
-            new HOM.PayC(val.from_account, val.to, val.token, val.pay, val.then)
+            new HOM.Pay(val.from_account, val.to, val.token, val.pay, val.then)
         )
       ),
     (a) => {
@@ -531,15 +531,15 @@ export const PayGuard = ObjG.Pay.pipe(
 );
 
 export const AssertGuard = ObjG.Assert.pipe(
-  new t.Type<HOM.AssertC, Obj.Assert<unknown>, Obj.Assert<unknown>>(
+  new t.Type<HOM.Assert, Obj.Assert<unknown>, Obj.Assert<unknown>>(
     "AssertFromObject",
-    (u): u is HOM.AssertC => u instanceof HOM.AssertC,
+    (u): u is HOM.Assert => u instanceof HOM.Assert,
     (u, ctx) =>
       pipe(
         Either.Do,
         Either.apS("assert", ObservationGuard.validate(u.assert, ctx)),
         Either.apS("then", ContractGuard.validate(u.then, ctx)),
-        Either.map((val) => new HOM.AssertC(val.assert, val.then))
+        Either.map((val) => new HOM.Assert(val.assert, val.then))
       ),
     (a) => {
       a.__build();
@@ -552,16 +552,16 @@ export const AssertGuard = ObjG.Assert.pipe(
 );
 
 export const LetGuard = ObjG.Let.pipe(
-  new t.Type<HOM.LetC, Obj.Let<unknown>, Obj.Let<unknown>>(
+  new t.Type<HOM.Let, Obj.Let<unknown>, Obj.Let<unknown>>(
     "LetFromObject",
-    (u): u is HOM.LetC => u instanceof HOM.LetC,
+    (u): u is HOM.Let => u instanceof HOM.Let,
     (u, ctx) =>
       pipe(
         Either.Do,
         Either.apS("let", t.string.validate(u.let, ctx)),
         Either.apS("be", ValueGuard.validate(u.be, ctx)),
         Either.apS("then", ContractGuard.validate(u.then, ctx)),
-        Either.map((val) => new HOM.LetC(val.let, val.be, val.then))
+        Either.map((val) => new HOM.Let(val.let, val.be, val.then))
       ),
     (a) => {
       a.__build();
@@ -575,16 +575,16 @@ export const LetGuard = ObjG.Let.pipe(
 );
 
 export const IfGuard = ObjG.If.pipe(
-  new t.Type<HOM.IfC, Obj.If<unknown>, Obj.If<unknown>>(
+  new t.Type<HOM.If, Obj.If<unknown>, Obj.If<unknown>>(
     "IfFromObject",
-    (u): u is HOM.IfC => u instanceof HOM.IfC,
+    (u): u is HOM.If => u instanceof HOM.If,
     (u, ctx) =>
       pipe(
         Either.Do,
         Either.apS("if", ObservationGuard.validate(u.if, ctx)),
         Either.apS("then", ContractGuard.validate(u.then, ctx)),
         Either.apS("else", ContractGuard.validate(u.else, ctx)),
-        Either.map((val) => new HOM.IfC(val.if, val.then, val.else))
+        Either.map((val) => new HOM.If(val.if, val.then, val.else))
       ),
     (a) => {
       a.__build();
@@ -721,9 +721,9 @@ export const ActionGuard: t.Type<HOM.Action, Obj.Action, unknown> = t.recursion(
 );
 
 export const WhenGuard = ObjG.When.pipe(
-  new t.Type<HOM.WhenC, Obj.When<unknown>, Obj.When<unknown>>(
+  new t.Type<HOM.When, Obj.When<unknown>, Obj.When<unknown>>(
     "WhenFromObject",
-    (u): u is HOM.WhenC => u instanceof HOM.WhenC,
+    (u): u is HOM.When => u instanceof HOM.When,
     (u, ctx) =>
       pipe(
         Either.Do,
@@ -735,10 +735,10 @@ export const WhenGuard = ObjG.When.pipe(
         ),
         Either.map(
           (val) =>
-            new HOM.WhenC(val.when).after(
+            new HOM.When(val.when).after(
               new Date(Number(val.timeout)),
               val.timeout_continuation
-            ) as HOM.WhenC
+            ) as HOM.When
         )
       ),
     (a) => {
@@ -755,11 +755,11 @@ export const WhenGuard = ObjG.When.pipe(
 );
 
 export const CloseGuard = ObjG.Close.pipe(
-  new t.Type<HOM.CloseC, Obj.Close<unknown>, Obj.Close<unknown>>(
+  new t.Type<HOM.Close, Obj.Close<unknown>, Obj.Close<unknown>>(
     "CloseFromObject",
-    (u): u is HOM.CloseC => u instanceof HOM.CloseC,
+    (u): u is HOM.Close => u instanceof HOM.Close,
     (u, ctx) => {
-      return t.success(new HOM.CloseC());
+      return t.success(new HOM.Close());
     },
     (a) => "close"
   )
