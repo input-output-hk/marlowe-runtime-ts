@@ -618,23 +618,23 @@ export const NormalCaseGuard = ObjG.NormalCase.pipe(
   )
 );
 
-// FIXME
-// export const MerkleizedCaseGuard = ObjG.MerkleizedCase.pipe(
-//   new t.Type<MerkleizedCase, Obj.NormalCase<unknown>, Obj.NormalCase<unknown>>(
-//     "MerkleizedCaseFromObject",
-//     (u): u is MerkleizedCase => u instanceof MerkleizedCase,
-//     (u, ctx) => t.failure(u, ctx, "Not implemented"),
-//       // pipe(
-//       //   Either.Do,
-//       //   Either.apS("case", ActionGuard.validate(u.case, ctx)),
-//       //   Either.apS("then", ContractGuard.validate(u.then, ctx)),
-//       //   Either.map((val) => new MerkleizedCase(val.case, val.then))
-//       // ),
-//     (a) => ({
-//       case: ActionGuard.encode(a.action),
-//       then: ContractGuard.encode(a.cont),
-//     })
-//   ));
+export const RefContractGuard = ObjG.Reference.pipe(
+  new t.Type<HOM.RefContract, Obj.Reference, Obj.Reference>(
+    "RefContractFromObject",
+    (u): u is HOM.RefContract => u instanceof HOM.RefContract,
+    (u, ctx) => {
+      return t.failure<HOM.RefContract>(
+        u,
+        ctx,
+        "Can't decode a reference contract"
+      );
+    },
+    (a) => {
+      a.__build();
+      return { ref: a.label };
+    }
+  )
+);
 
 export const CaseGuard: t.Type<
   HOM.Case,
@@ -777,6 +777,7 @@ export const ContractGuard: t.Type<
     WhenGuard,
     LetGuard,
     AssertGuard,
+    RefContractGuard,
   ])
 );
 

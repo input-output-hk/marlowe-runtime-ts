@@ -16,7 +16,8 @@ interface SwapRequest {
   assetB: SingleAssetValue;
   deadline: Date;
 }
-
+// TODO: Rename Merkle-swap as we are not using Merkle abstraction anymore,
+//       maybe refactor into a referenced contract.
 function swap({ partyA, partyB, assetA, assetB, deadline }: SwapRequest) {
   const makeSwap = Do(
     partyA.payOut(assetA).to(partyB),
@@ -28,24 +29,14 @@ function swap({ partyA, partyB, assetA, assetB, deadline }: SwapRequest) {
       partyA
         .deposits(assetA)
         .intoAccount(partyA)
-        .then(() =>
-          When([
-            partyB
-              .deposits(assetB)
-              .intoAccount(partyB)
-              .then(() => makeSwap),
-          ])
+        .then(
+          When([partyB.deposits(assetB).intoAccount(partyB).then(makeSwap)])
         ),
       partyB
         .deposits(assetB)
         .intoAccount(partyB)
-        .then(() =>
-          When([
-            partyA
-              .deposits(assetA)
-              .intoAccount(partyA)
-              .then(() => makeSwap),
-          ])
+        .then(
+          When([partyA.deposits(assetA).intoAccount(partyA).then(makeSwap)])
         ),
     ])
   ).after(deadline, Close);

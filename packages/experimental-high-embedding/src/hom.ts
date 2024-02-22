@@ -561,15 +561,13 @@ type ReduceResult =
 function notReduced(res: ReduceStepResult) {
   return "errorType" in res || res.reduceEffect == "notReduced";
 }
+
 export abstract class Contract {
   protected built = false;
   abstract __build(): void;
   defaultContingency: Contingency | undefined;
   abstract get bundleMap(): Readonly<BundleMap<unknown>>;
-  protected abstract reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult;
+  abstract reduceContractStep(env: Environment, state: State): ReduceStepResult;
 
   reduceContractUntilQuiescent(
     this: Contract,
@@ -619,7 +617,8 @@ export abstract class Contract {
     return this instanceof Pay;
   }
   hash() {
-    return sha1(jsonBigInt.stringify(this));
+    this.__build();
+    return sha1(ContractGuard.encode(this));
   }
 }
 
@@ -628,7 +627,7 @@ export class Close extends Contract {
   get bundleMap() {
     return {};
   }
-  protected reduceContractStep(_: Environment, state: State): ReduceStepResult {
+  reduceContractStep(_: Environment, state: State): ReduceStepResult {
     const accs = state.accounts.values();
     if (accs.length == 0) {
       return { reduceEffect: "notReduced" };
@@ -680,10 +679,7 @@ export class Pay extends Contract {
     this.cont.__build();
     this._bundleMap = this.cont.bundleMap;
   }
-  protected reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult {
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
     const amountToPay = this.value.eval(env, state);
     if (amountToPay <= 0) {
       return {
@@ -772,10 +768,7 @@ export class Assert extends Contract {
     }
     return this._bundleMap;
   }
-  protected reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult {
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
     throw new Error("Method not implemented.");
   }
   constructor(
@@ -808,10 +801,7 @@ export class Let extends Contract {
     this._bundleMap = this.cont.bundleMap;
   }
 
-  protected reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult {
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
     throw new Error("Method not implemented.");
   }
   constructor(
@@ -860,10 +850,7 @@ export class If extends Contract {
     return this._bundleMap;
   }
 
-  protected reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult {
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
     const cont = this.obs.eval(env, state) ? this.ifTrue : this.ifFalse;
     return { reduceEffect: "reduced", state, cont };
   }
@@ -912,62 +899,60 @@ export class NormalCase extends Case {
   }
 }
 
-// TODO: Refactor to Ref constructor.
-export class MerkleizedCase extends Case {
-  private _bundleMap?: BundleMap<unknown>;
-  continuationHash: string;
+export class RefContract extends Contract {
+  private _label?: string;
   constructor(
-    public action: Action,
-    public cont: Contract
+    public ref: Contract,
+    label?: string
   ) {
     super();
+    this._label = label;
   }
-  __build() {
+  get label() {
+    if (!this._label) {
+      this.__build();
+      this._label = this.ref.hash();
+    }
+    return this._label;
+  }
+
+  __build(): void {
     if (this.built) {
       return;
     }
     this.built = true;
 
-    if (typeof this.cont.defaultContingency == "undefined") {
-      this.cont.defaultContingency = this.defaultContingency;
+    if (typeof this.ref.defaultContingency == "undefined") {
+      this.ref.defaultContingency = this.defaultContingency;
     }
-    this.cont.__build();
-    this.continuationHash = this.cont.hash();
+    this.ref.__build();
+    const label = this._label || this.ref.hash();
 
-    this._bundleMap = mergeBundleMaps(this.cont.bundleMap, {
-      [this.continuationHash]: {
+    this._bundleMap = mergeBundleMaps(this.ref.bundleMap, {
+      [label]: {
         type: "contract",
-        value: ContractGuard.encode(this.cont),
+        value: ContractGuard.encode(this.ref),
       },
     });
-    // this._bundleMap = new Map([...this.cont.bundleMap]);
-    // this._bundleMap.set(this.continuationHash, this.cont);
   }
-  get bundleMap() {
+  private _bundleMap?: BundleMap<unknown>;
+  get bundleMap(): Readonly<BundleMap<unknown>> {
     this.__build();
     if (!this._bundleMap) {
       throw new Error("Bundle map not initialized");
     }
     return this._bundleMap;
   }
-  toJSON() {
-    this.__build();
-    return {
-      case: this.action,
-      then: { ref: this.continuationHash },
-    };
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
+    return this.ref.reduceContractStep(env, state);
   }
 }
 
 export abstract class Action {
   // FIXME: Remove
   abstract match(input: Input): boolean;
-  then(cont: Contract | (() => Contract)): Case {
-    if (typeof cont == "function") {
-      return new MerkleizedCase(this, cont());
-    } else {
-      return new NormalCase(this, cont);
-    }
+  then(cont: Contract): Case {
+    return new NormalCase(this, cont);
   }
 }
 
@@ -1074,10 +1059,7 @@ export class When extends Contract {
     this.contingency = [deadline, cont];
     return this as Contract;
   }
-  protected reduceContractStep(
-    env: Environment,
-    state: State
-  ): ReduceStepResult {
+  reduceContractStep(env: Environment, state: State): ReduceStepResult {
     const contingency =
       this.contingency || this.defaultContingency || defaultContingency;
 

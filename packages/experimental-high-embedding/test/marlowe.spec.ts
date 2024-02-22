@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+// TODO: Fix imports not to use dist
 import {
   Add,
   Close,
@@ -25,6 +25,8 @@ import {
   AvailableMoneyValue,
   NegValue,
   AddValue,
+  RefContract,
+  Do,
 } from "../dist/esm/hom.js";
 import {
   ContractGuard,
@@ -34,6 +36,7 @@ import {
   parseToken,
 } from "../dist/esm/guards.js";
 
+// TODO: This should no longer be needed.
 import jsonBigInt from "json-bigint";
 
 // We need to patch the JSON.stringify in order for BigInt serialization to work.
@@ -252,35 +255,34 @@ describe("Marlowe ts", () => {
       expect(json).toHaveProperty("else.timeout", 11n);
     });
 
-    // FIXME: this is not working
-    test.skip("Set default contingency on merkleized contract", () => {
+    test("Set default contingency on a referenced contract", () => {
       const contract = SetContingency(
         // Main contract
         When([
           Notify(true).then(
             // Sub contract
-            () => When([])
+            new RefContract(When([]))
           ),
         ])
       ).after(new Date(11), Close);
       const bundleMap = contract.getRuntimeObject();
       const mainContractJson = bundleMap.objects[bundleMap.main];
-      expect(mainContractJson).toHaveProperty("timeout", 11n);
-
-      // expect(json.continuations[0].timeout).toBe(11);
+      expect(mainContractJson.value).toHaveProperty("timeout", 11n);
     });
-    // FIXME: this is not working
-    /*test.skip("Set default contingency on merkleized contract that starts with Pay", () => {
-      const json = asJsonWithContinuations(
-        SetContingency(
-          Do(
-            partyA.payOut(2, lovelace).to(partyA),
-            When([Notify(true).then(() => When([]))])
-          )
-        ).after(new Date(11), Close)
-      );
-      expect(json.continuations[0].timeout).toBe(11);
-    });*/
+
+    test("Set default contingency on a referenced contract that starts with Pay", () => {
+      const contract = SetContingency(
+        Do(
+          partyA.payOut(2, lovelace).to(partyA),
+          When([Notify(true).then(new RefContract(When([]), "second-when"))])
+        )
+      ).after(new Date(11), Close);
+      const bundleMap = contract.getRuntimeObject();
+      const mainContractJson = bundleMap.objects[bundleMap.main];
+      const secondWhenJson = bundleMap.objects["second-when"];
+      expect(mainContractJson.value).toHaveProperty("then.timeout", 11n);
+      expect(secondWhenJson.value).toHaveProperty("timeout", 11n);
+    });
 
     test("Unset default contingency on default timeout", () => {
       const json = contractAsJson(

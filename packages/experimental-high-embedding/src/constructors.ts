@@ -189,16 +189,14 @@ export function All(actions: HOM.Action[], cont: HOM.Contract): HOM.Case[] {
   if (actions.length == 0) {
     return [];
   } else if (actions.length == 1) {
-    return [actions[0].then(() => cont)];
+    return [actions[0].then(new HOM.RefContract(cont))];
   } else {
     return actions.flatMap((action, index) => {
-      return action.then(() => {
-        const c = When(
-          All(actions.slice(0, index).concat(actions.slice(index + 1)), cont)
-        );
-        c.defaultContingency = cont.defaultContingency;
-        return c;
-      });
+      const c = When(
+        All(actions.slice(0, index).concat(actions.slice(index + 1)), cont)
+      );
+      c.defaultContingency = cont.defaultContingency;
+      return action.then(new HOM.RefContract(c));
     });
   }
 }
@@ -207,15 +205,11 @@ export function Seq(actions: HOM.Action[], cont: HOM.Contract): HOM.Case[] {
   if (actions.length == 0) {
     return [];
   } else if (actions.length == 1) {
-    return [actions[0].then(() => cont)];
+    return [actions[0].then(new HOM.RefContract(cont))];
   } else {
-    return [
-      actions[0].then(() => {
-        const c = When(Seq(actions.slice(1), cont));
-        c.defaultContingency = cont.defaultContingency;
-        return c;
-      }),
-    ];
+    const c = When(Seq(actions.slice(1), cont));
+    c.defaultContingency = cont.defaultContingency;
+    return [actions[0].then(new HOM.RefContract(c))];
   }
 }
 
