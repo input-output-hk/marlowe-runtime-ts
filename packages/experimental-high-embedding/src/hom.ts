@@ -159,6 +159,8 @@ export class ChoiceId {
     return new ChoiceValueValue(this);
   }
 }
+export const choiceId = (choiceName: string, choiceOwner: Party) =>
+  new ChoiceId(choiceName, choiceOwner);
 
 export type Bound = Obj.Bound;
 

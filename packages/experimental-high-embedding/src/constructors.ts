@@ -1,3 +1,4 @@
+import { Cond } from "@marlowe.io/language-core-v1";
 import * as HOM from "./hom.js";
 
 export function Role(roleName: string) {
@@ -23,6 +24,13 @@ export function choiceId(
   choiceOwner: HOM.Party
 ): HOM.ChoiceId {
   return new HOM.ChoiceId(choiceName, choiceOwner);
+}
+
+export function choiceValue(
+  choiceName: string,
+  choiceOwner: HOM.Party
+): HOM.ChoiceValueValue {
+  return choiceId(choiceName, choiceOwner).value();
 }
 
 export function Bound(from: bigint, to: bigint): HOM.Bound {
@@ -61,13 +69,33 @@ export function Use(valueId: HOM.ValueId) {
   return new HOM.UseValue(valueId);
 }
 
-// TODO: Add overloads
+export type CondThen = { then: (v: HOM.ValueOrNumber) => CondElse };
+export type CondElse = { else: (v: HOM.ValueOrNumber) => HOM.Value };
+
 export function Cond(
   obs: HOM.ObservationOrBool,
   ifTrue: HOM.ValueOrNumber,
   ifFalse: HOM.ValueOrNumber
-) {
-  return new HOM.CondValue(obs, ifTrue, ifFalse);
+): HOM.Value;
+export function Cond(obs: HOM.ObservationOrBool): CondThen;
+
+export function Cond(
+  obs: HOM.ObservationOrBool,
+  ...ts: HOM.ValueOrNumber[]
+): HOM.Value | CondThen {
+  if (ts.length === 2) {
+    return new HOM.CondValue(obs, ts[0], ts[1]);
+  } else {
+    return {
+      then: (ifV: HOM.ValueOrNumber) => {
+        return {
+          else: (elseV: HOM.ValueOrNumber) => {
+            return new HOM.CondValue(obs, ifV, elseV);
+          },
+        };
+      },
+    };
+  }
 }
 
 export const TimeIntervalStart = new HOM.TimeIntervalStartValue();
