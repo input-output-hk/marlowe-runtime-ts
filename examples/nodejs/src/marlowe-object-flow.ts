@@ -227,8 +227,13 @@ async function contractMenu(
   contractId: ContractId
 ): Promise<void> {
   // Get and print the contract logical state.
-  const inputHistory = await lifecycle.contracts.getInputHistory(contractId);
-  const contractState = getState(datetoTimeout(new Date()), inputHistory, sourceMap);
+  const inputHistory =
+    await lifecycle.deprecatedContractAPI.getInputHistory(contractId);
+  const contractState = getState(
+    datetoTimeout(new Date()),
+    inputHistory,
+    sourceMap
+  );
 
   printState(contractState, scheme);
 

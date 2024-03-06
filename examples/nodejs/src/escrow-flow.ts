@@ -88,10 +88,12 @@ async function main(action: "buy" | "sell", otherAddress: string, amount: number
   console.log("Mediator: " + Mediator);
   console.log("Amount: " + amount);
 
-  const [contractId, txId] = await runtime.contracts.createContract({
-    contract: escrow,
-    roles: { Buyer, Seller, Mediator },
-  });
+  const [contractId, txId] = await runtime.deprecatedContractAPI.createContract(
+    {
+      contract: escrow,
+      roles: { Buyer, Seller, Mediator },
+    }
+  );
 
   console.log("Contract ID: " + contractId);
   console.log("Transaction ID: " + txId);

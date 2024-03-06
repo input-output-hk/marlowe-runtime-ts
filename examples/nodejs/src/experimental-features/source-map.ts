@@ -177,7 +177,7 @@ export async function mkSourceMap<T>(
     },
     createContract: (options: CreateContractRequestBase) => {
       const contract = stripAnnotations(closure.contracts.get(closure.main)!);
-      return lifecycle.contracts.createContract({
+      return lifecycle.deprecatedContractAPI.createContract({
         ...options,
         contract,
       });

@@ -1,4 +1,4 @@
-import { ContractsAPI } from "../api.js";
+import { ContractsAPI } from "./deprecated-contracts.js";
 
 import { Monoid } from "fp-ts/lib/Monoid.js";
 import * as R from "fp-ts/lib/Record.js";
