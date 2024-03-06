@@ -6,7 +6,12 @@ import {
   PayoutId,
   PayoutWithdrawn,
 } from "@marlowe.io/runtime-core";
-import { RestClient, RestDI } from "@marlowe.io/runtime-rest-client";
+import {
+  DeprecatedRestDI,
+  RestClient,
+  RestDI,
+} from "@marlowe.io/runtime-rest-client";
+
 import {
   ApplicableActionsAPI,
   ApplicableAction,
@@ -19,10 +24,12 @@ import {
   CanDeposit,
   CanNotify,
   GetApplicableActionsResponse,
+} from "./generic/applicable-actions.js";
+import {
   ActiveContract,
   ClosedContract,
   ContractDetails,
-} from "./generic/applicable-actions.js";
+} from "./generic/new-contract-api.js";
 import {
   ContractsAPI,
   CreateContractRequestBase,
@@ -44,6 +51,7 @@ export {
   ContractDetails,
   CreateContractRequestBase,
 };
+import * as NewContract from "./generic/new-contract-api.js";
 
 /**
  * This is the main entry point of the @marlowe.io/runtime-lifecycle package. It provides a set of APIs to
@@ -62,6 +70,7 @@ export interface RuntimeLifecycle {
    * Access to the low-level REST API as defined in the {@link @marlowe.io/runtime-rest-client! } package. It is re-exported here for convenience.
    */
   restClient: RestClient;
+  newContractAPI: NewContract.ContractsAPI;
   /**
    * The contracts API is a high level API that lets you create and interact with Marlowe contracts.
    */
@@ -73,7 +82,7 @@ export interface RuntimeLifecycle {
 /**
  * @hidden
  */
-export type PayoutsDI = WalletDI & RestDI;
+export type PayoutsDI = WalletDI & RestDI & DeprecatedRestDI;
 
 /**
  * @category PayoutsAPI

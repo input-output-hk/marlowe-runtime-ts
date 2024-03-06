@@ -637,7 +637,9 @@ export interface ContractsAPI {
  * @description Dependency Injection for the Rest Client API
  * @hidden
  */
-export type RestDI = { deprecatedRestAPI: FPTSRestAPI; restClient: RestClient };
+export type RestDI = { restClient: RestClient };
+
+export type DeprecatedRestDI = { deprecatedRestAPI: FPTSRestAPI };
 
 /**
  * @hidden

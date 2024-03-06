@@ -38,6 +38,11 @@ import { WalletAPI } from "@marlowe.io/wallet";
 import * as Big from "@marlowe.io/adapter/bigint";
 import { ContractSourceId } from "@marlowe.io/marlowe-object";
 import { posixTimeToIso8601 } from "@marlowe.io/adapter/time";
+import {
+  ActiveContract,
+  ContractDetails,
+  GetContractDetailsDI,
+} from "./new-contract-api.js";
 
 /**
  * @experimental
@@ -755,37 +760,3 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
     });
   }
 }
-
-// #region High level Contract Details
-/**
- * @category New ContractsAPI
- */
-export type ClosedContract = {
-  type: "closed";
-};
-
-/**
- * @category New ContractsAPI
- */
-export type ActiveContract = {
-  type: "active";
-  contractId: ContractId;
-  currentState: MarloweState;
-  currentContract: Contract;
-  roleTokenMintingPolicyId: PolicyId;
-};
-
-/**
- * This is the start of a high level API to get the contract details.
- * The current restAPI is not clear wether the details that you get are
- * from a closed or active contract. This API is just the start to get
- * getApplicableInputs ready in production, but as part of a ContractsAPI
- * refactoring, the whole contract details should be modeled.
- * @category New ContractsAPI
- */
-export type ContractDetails = ClosedContract | ActiveContract;
-
-type GetContractDetailsDI = {
-  getContractDetails: (contractId: ContractId) => Promise<ContractDetails>;
-};
-// #endregion

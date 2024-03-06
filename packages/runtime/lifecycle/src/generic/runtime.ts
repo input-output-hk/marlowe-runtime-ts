@@ -6,6 +6,7 @@ import { FPTSRestAPI, RestClient } from "@marlowe.io/runtime-rest-client";
 import { mkPayoutLifecycle } from "./payouts.js";
 import { mkContractLifecycle } from "./deprecated-contracts.js";
 import { mkApplicableActionsAPI } from "./applicable-actions.js";
+import * as NewContract from "./new-contract-api.js";
 
 export function mkRuntimeLifecycle(
   deprecatedRestAPI: FPTSRestAPI,
@@ -21,6 +22,7 @@ export function mkRuntimeLifecycle(
     wallet: wallet,
     restClient,
     deprecatedContractAPI,
+    newContractAPI: NewContract.mkContractsAPI({ wallet, restClient }),
     payouts: mkPayoutLifecycle(wallet, deprecatedRestAPI, restClient),
     applicableActions: mkApplicableActionsAPI(
       restClient,
