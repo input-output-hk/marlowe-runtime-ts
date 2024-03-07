@@ -27,7 +27,7 @@ export function mkRuntimeLifecycle(
     applicableActions: mkApplicableActionsAPI(
       restClient,
       wallet,
-      deprecatedContractAPI
+      deprecatedContractAPI.applyInputs
     ),
   };
 }

@@ -11,10 +11,30 @@ import {
   applyInputs,
   getInputHistory,
 } from "./deprecated-contracts.js";
-import { SingleInputTx } from "@marlowe.io/language-core-v1/semantics";
-import { Contract, MarloweState } from "@marlowe.io/language-core-v1";
-import { RestDI } from "@marlowe.io/runtime-rest-client";
-import { WalletDI } from "@marlowe.io/wallet";
+import {
+  SingleInputTx,
+  TransactionSuccess,
+} from "@marlowe.io/language-core-v1/semantics";
+import {
+  ChosenNum,
+  Contract,
+  Environment,
+  MarloweState,
+} from "@marlowe.io/language-core-v1";
+import { RestClient, RestDI } from "@marlowe.io/runtime-rest-client";
+import { WalletAPI, WalletDI } from "@marlowe.io/wallet";
+import {
+  ApplicableAction,
+  ApplicableActionsFilter,
+  ApplicableInput,
+  ApplyApplicableInputRequest,
+  ApplyInputDI,
+  CanAdvance,
+  CanChoose,
+  CanDeposit,
+  CanNotify,
+} from "./applicable-actions.js";
+import * as Applicable from "./applicable-actions.js";
 
 /**
  *
@@ -46,6 +66,80 @@ export function mkContractsAPI(di: ContractsDI): ContractsAPI {
   };
 }
 
+export interface ApplicableActionsAPI {
+  compute(environment?: Environment): Promise<ApplicableAction[]>;
+  toInput(
+    action: CanNotify | CanDeposit | CanAdvance
+  ): Promise<ApplicableInput>;
+  toInput(action: CanChoose, chosenNum: ChosenNum): Promise<ApplicableInput>;
+  simulate(input: ApplicableInput): Promise<TransactionSuccess>;
+  apply(req: ApplyApplicableInputRequest): Promise<TxId>;
+  mkFilter(): Promise<ApplicableActionsFilter>;
+}
+
+type GetContractDetailsDI = {
+  getContractDetails: () => Promise<ContractDetails>;
+};
+
+type ContractIdDI = {
+  contractId: ContractId;
+};
+
+function mkApplicableActionsAPI(
+  di: RestDI & WalletDI & GetContractDetailsDI & ContractIdDI
+): ApplicableActionsAPI {
+  // TODO: Revisit the DI for this function
+  const standaloneAPI = Applicable.mkApplicableActionsAPI(di);
+  const getActiveContractDetails = () =>
+    di.getContractDetails().then((details) => {
+      // TODO: improve error type
+      if (details.type !== "active") {
+        throw new Error("Contract is not active");
+      }
+      return details;
+    });
+  async function toInput(
+    action: CanNotify | CanDeposit | CanAdvance
+  ): Promise<ApplicableInput>;
+  async function toInput(
+    action: CanChoose,
+    chosenNum: ChosenNum
+  ): Promise<ApplicableInput>;
+  async function toInput(
+    action: ApplicableAction,
+    chosenNum?: ChosenNum
+  ): Promise<ApplicableInput> {
+    const contractDetails = await getActiveContractDetails();
+    if (action.actionType === "Choice") {
+      return standaloneAPI.getInput(contractDetails, action, chosenNum!);
+    } else {
+      return standaloneAPI.getInput(contractDetails, action);
+    }
+  }
+
+  return {
+    compute: (environment) =>
+      di
+        .getContractDetails()
+        .then((details) =>
+          standaloneAPI.getApplicableActions(details, environment)
+        ),
+    toInput,
+    // NOTE: The original ApplicableActionsAPI does not use promises and assumes that the contract details were
+    //       the same as the ones used to compute and toInput. This is not the case here as we are fetching the contract
+    //       details each time. We might want to rethink the flow of this API.
+    simulate: (input) =>
+      getActiveContractDetails().then((details) =>
+        standaloneAPI.simulateInput(details, input)
+      ),
+    apply: (req) => standaloneAPI.applyInput(di.contractId, req),
+    mkFilter: () =>
+      getActiveContractDetails().then((details) =>
+        standaloneAPI.mkFilter(details)
+      ),
+  };
+}
+
 /**
  * TODO comment
  * @category New ContractsAPI
@@ -55,7 +149,7 @@ export interface ContractInstanceAPI {
   waitForConfirmation: () => Promise<boolean>;
   getContractDetails: () => Promise<ContractDetails>;
   applyInputs(applyInputsRequest: ApplyInputsRequest): Promise<TxId>;
-  // TODO: ApplicableInputs
+  applicableActions: ApplicableActionsAPI;
   /**
    * Get a list of the applied inputs for the contract
    */
@@ -73,8 +167,13 @@ function mkContractInstanceAPI(
       return di.wallet.waitConfirmation(contractCreationTxId);
     },
     getContractDetails: async () => {
-      return getContractDetails(di, contractId);
+      return getContractDetails(di)(contractId);
     },
+    applicableActions: mkApplicableActionsAPI({
+      ...di,
+      contractId,
+      getContractDetails: () => getContractDetails(di)(contractId),
+    }),
     applyInputs: async (request) => {
       return applyInputs(di)(contractId, request);
     },
@@ -86,25 +185,24 @@ function mkContractInstanceAPI(
   };
 }
 
-async function getContractDetails(
-  di: ContractsDI,
-  contractId: ContractId
-): Promise<ContractDetails> {
-  const contractDetails = await di.restClient.getContractById({ contractId });
-  if (
-    typeof contractDetails.state === "undefined" ||
-    typeof contractDetails.currentContract === "undefined"
-  ) {
-    return { type: "closed" };
-  } else {
-    return {
-      type: "active",
-      contractId,
-      currentState: contractDetails.state,
-      currentContract: contractDetails.currentContract,
-      roleTokenMintingPolicyId: contractDetails.roleTokenMintingPolicyId,
-    };
-  }
+function getContractDetails(di: ContractsDI) {
+  return async function (contractId: ContractId): Promise<ContractDetails> {
+    const contractDetails = await di.restClient.getContractById({ contractId });
+    if (
+      typeof contractDetails.state === "undefined" ||
+      typeof contractDetails.currentContract === "undefined"
+    ) {
+      return { type: "closed" };
+    } else {
+      return {
+        type: "active",
+        contractId,
+        currentState: contractDetails.state,
+        currentContract: contractDetails.currentContract,
+        roleTokenMintingPolicyId: contractDetails.roleTokenMintingPolicyId,
+      };
+    }
+  };
 }
 
 /**
@@ -133,11 +231,3 @@ export type ActiveContract = {
  * @category New ContractsAPI
  */
 export type ContractDetails = ClosedContract | ActiveContract;
-
-/**
- * TODO comment
- * @category New ContractsAPI
- */
-export type GetContractDetailsDI = {
-  getContractDetails: (contractId: ContractId) => Promise<ContractDetails>;
-};
