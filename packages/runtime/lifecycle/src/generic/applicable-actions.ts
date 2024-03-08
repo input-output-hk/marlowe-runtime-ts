@@ -59,11 +59,6 @@ export interface ApplicableActionsAPI {
    *                    the environment is computed using the runtime tip as a lower bound and the next timeout
    *                    as an upper bound.
    * @returns An object with an array of {@link ApplicableAction | applicable actions} and the {@link ContractDetails | contract details}
-   * @experimental
-   * @remarks
-   * **EXPERIMENTAL:** Perhaps instead of receiving a contractId and returning the actions and contractDetails this
-   * function should receive the contractDetails and just return the actions.
-   * To do this, we should refactor the {@link ContractsAPI} first to use the {@link ContractDetails} type
    */
   getApplicableActions(
     contractDetails: ContractDetails,
@@ -137,10 +132,8 @@ export interface ApplyApplicableInputRequest {
  * @hidden
  */
 export function mkApplicableActionsAPI(
-  di: RestDI & WalletDI
+  di: RestDI & WalletDI & GetContinuationDI & ChainTipDI
 ): ApplicableActionsAPI {
-  const getApplicableActionsDI = mkGetApplicableActionsDI(di.restClient);
-
   async function mkFilter(): Promise<ApplicableActionsWithDetailsFilter>;
   async function mkFilter(contractDetails: ActiveContract): Promise<ApplicableActionsFilter>;
   async function mkFilter(
@@ -155,9 +148,9 @@ export function mkApplicableActionsAPI(
   }
 
   return {
-    getInput: getApplicableInput(getApplicableActionsDI),
+    getInput: getApplicableInput(di),
     simulateInput: simulateApplicableInput,
-    getApplicableActions: getApplicableActions(getApplicableActionsDI),
+    getApplicableActions: getApplicableActions(di),
     applyInput: applyInput(applyInputs(di)),
     mkFilter,
   };
@@ -430,7 +423,10 @@ function getApplicant(action: ApplicableAction): ActionApplicant {
   }
 }
 
-type ChainTipDI = {
+/**
+ * @hidden
+ */
+export type ChainTipDI = {
   getRuntimeTip: () => Promise<Date>;
 };
 
@@ -458,23 +454,6 @@ async function computeEnvironment({ getRuntimeTip }: ChainTipDI, currentContract
 
   return { timeInterval: { from: lowerBound, to: upperBound - 1n } };
 }
-
-// FIXME: Refactor dependencies
-/**
- * @hidden
- */
-export const mkGetApplicableActionsDI = (restClient: RestClient): GetApplicableActionsDI => {
-  return {
-    getContractContinuation: (contractSourceId: ContractSourceId) => {
-      // TODO: Add caching
-      return restClient.getContractSourceById({ contractSourceId });
-    },
-    getRuntimeTip: async () => {
-      const status = await restClient.healthcheck();
-      return new Date(status.tips.runtimeChain.slotTimeUTC);
-    },
-  };
-};
 
 type GetApplicableActionsDI = GetContinuationDI & ChainTipDI;
 
@@ -719,7 +698,10 @@ const mergeApplicableActionAccumulator: Monoid<ApplicableActionAccumulator> = {
   },
 };
 
-type GetContinuationDI = {
+/**
+ * @hidden
+ */
+export type GetContinuationDI = {
   getContractContinuation: (sourceId: ContractSourceId) => Promise<Contract>;
 };
 

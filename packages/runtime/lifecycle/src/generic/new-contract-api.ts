@@ -33,15 +33,18 @@ import {
   CanChoose,
   CanDeposit,
   CanNotify,
+  ChainTipDI,
+  GetContinuationDI,
 } from "./applicable-actions.js";
 import * as Applicable from "./applicable-actions.js";
+import { ContractSourceId } from "@marlowe.io/marlowe-object";
 
 /**
  *
  * @description Dependency Injection for the Contract API
  * @hidden
  */
-export type ContractsDI = WalletDI & RestDI;
+export type ContractsDI = WalletDI & RestDI & GetContinuationDI & ChainTipDI;
 
 /**
  * TODO comment
@@ -58,6 +61,7 @@ export function mkContractsAPI(di: ContractsDI): ContractsAPI {
   // The ContractInstance API is stateful as it has some cache, so whenever
   // possible we want to reuse the same instance of the API for the same contractId
   const apis = new Map<ContractId, ContractInstanceAPI>();
+
   return {
     createContract: async (request) => {
       const [contractId, _] = await createContract(di)(request);
@@ -86,20 +90,20 @@ export interface ApplicableActionsAPI {
 }
 
 function mkApplicableActionsAPI(
-  di: RestDI & WalletDI,
+  di: RestDI & WalletDI & GetContinuationDI & ChainTipDI,
   actions: ApplicableAction[],
   myActions: ApplicableAction[],
   contractDetails: ContractDetails,
   contractId: ContractId
 ): ApplicableActionsAPI {
-  // TODO: Revisit the DI for this function
-  const standaloneAPI = Applicable.mkApplicableActionsAPI(di);
   const getActiveContractDetails = () => {
     if (contractDetails.type !== "active") {
       throw new Error("Contract is not active");
     }
     return contractDetails;
   };
+
+  const standaloneAPI = Applicable.mkApplicableActionsAPI(di);
 
   async function toInput(
     action: CanNotify | CanDeposit | CanAdvance
@@ -160,7 +164,7 @@ export interface ContractInstanceAPI {
 }
 
 function mkContractInstanceAPI(
-  di: ContractsDI,
+  di: ContractsDI & GetContinuationDI & ChainTipDI,
   contractId: ContractId
 ): ContractInstanceAPI {
   const contractCreationTxId = contractIdToTxId(contractId);
