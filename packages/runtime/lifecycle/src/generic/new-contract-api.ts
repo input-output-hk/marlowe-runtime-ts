@@ -10,7 +10,7 @@ import {
   createContract,
   applyInputs,
   getInputHistory,
-} from "./deprecated-contracts.js";
+} from "./contracts.js";
 import {
   SingleInputTx,
   TransactionSuccess,

@@ -1,8 +1,4 @@
-import {
-  ApplyInputsRequest,
-  ContractsAPI,
-  applyInputs,
-} from "./deprecated-contracts.js";
+import { ApplyInputsRequest, ContractsAPI, applyInputs } from "./contracts.js";
 
 import { Monoid } from "fp-ts/lib/Monoid.js";
 import * as R from "fp-ts/lib/Record.js";

@@ -33,7 +33,7 @@ import {
 import {
   ContractsAPI,
   CreateContractRequestBase,
-} from "./generic/deprecated-contracts.js";
+} from "./generic/contracts.js";
 export {
   ApplicableActionsAPI,
   ApplicableAction,
@@ -74,7 +74,7 @@ export interface RuntimeLifecycle {
   /**
    * The contracts API is a high level API that lets you create and interact with Marlowe contracts.
    */
-  deprecatedContractAPI: ContractsAPI;
+  contracts: ContractsAPI;
   payouts: PayoutsAPI;
   applicableActions: ApplicableActionsAPI;
 }
