@@ -136,13 +136,22 @@ function mkApplicableActionsAPI(
  * TODO comment
  * @category New ContractsAPI
  */
+type ComputeApplicableActionsRequest = {
+  environment?: Environment;
+  contractDetails?: ContractDetails;
+};
+
+/**
+ * TODO comment
+ * @category New ContractsAPI
+ */
 export interface ContractInstanceAPI {
   contractId: ContractId;
   waitForConfirmation: () => Promise<boolean>;
   getContractDetails: () => Promise<ContractDetails>;
   applyInputs(applyInputsRequest: ApplyInputsRequest): Promise<TxId>;
   computeApplicableActions(
-    environment?: Environment
+    request?: ComputeApplicableActionsRequest
   ): Promise<ApplicableActionsAPI>;
   /**
    * Get a list of the applied inputs for the contract
@@ -164,11 +173,12 @@ function mkContractInstanceAPI(
     getContractDetails: async () => {
       return getContractDetails(di)(contractId);
     },
-    computeApplicableActions: async (env) => {
-      const contractDetails = await getContractDetails(di)(contractId);
+    computeApplicableActions: async (req = {}) => {
+      const contractDetails =
+        req.contractDetails ?? (await getContractDetails(di)(contractId));
       const actions = await applicableActionsAPI.getApplicableActions(
         contractDetails,
-        env
+        req.environment
       );
       let myActions = [] as ApplicableAction[];
       if (contractDetails.type === "active") {
