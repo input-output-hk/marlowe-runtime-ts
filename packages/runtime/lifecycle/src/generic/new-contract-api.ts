@@ -55,6 +55,7 @@ export interface ContractsAPI {
 }
 
 export function mkContractsAPI(di: ContractsDI): ContractsAPI {
+  // TODO: Cache of API's
   return {
     createContract: async (request) => {
       const [contractId, _] = await createContract(di)(request);
@@ -67,37 +68,32 @@ export function mkContractsAPI(di: ContractsDI): ContractsAPI {
 }
 
 export interface ApplicableActionsAPI {
-  compute(environment?: Environment): Promise<ApplicableAction[]>;
+  actions: ApplicableAction[];
+  myActions: ApplicableAction[];
   toInput(
     action: CanNotify | CanDeposit | CanAdvance
   ): Promise<ApplicableInput>;
   toInput(action: CanChoose, chosenNum: ChosenNum): Promise<ApplicableInput>;
-  simulate(input: ApplicableInput): Promise<TransactionSuccess>;
+  simulate(input: ApplicableInput): TransactionSuccess;
   apply(req: ApplyApplicableInputRequest): Promise<TxId>;
-  mkFilter(): Promise<ApplicableActionsFilter>;
 }
 
-type GetContractDetailsDI = {
-  getContractDetails: () => Promise<ContractDetails>;
-};
-
-type ContractIdDI = {
-  contractId: ContractId;
-};
-
 function mkApplicableActionsAPI(
-  di: RestDI & WalletDI & GetContractDetailsDI & ContractIdDI
+  di: RestDI & WalletDI,
+  actions: ApplicableAction[],
+  myActions: ApplicableAction[],
+  contractDetails: ContractDetails,
+  contractId: ContractId
 ): ApplicableActionsAPI {
   // TODO: Revisit the DI for this function
   const standaloneAPI = Applicable.mkApplicableActionsAPI(di);
-  const getActiveContractDetails = () =>
-    di.getContractDetails().then((details) => {
-      // TODO: improve error type
-      if (details.type !== "active") {
-        throw new Error("Contract is not active");
-      }
-      return details;
-    });
+  const getActiveContractDetails = () => {
+    if (contractDetails.type !== "active") {
+      throw new Error("Contract is not active");
+    }
+    return contractDetails;
+  };
+
   async function toInput(
     action: CanNotify | CanDeposit | CanAdvance
   ): Promise<ApplicableInput>;
@@ -109,34 +105,23 @@ function mkApplicableActionsAPI(
     action: ApplicableAction,
     chosenNum?: ChosenNum
   ): Promise<ApplicableInput> {
-    const contractDetails = await getActiveContractDetails();
+    const activeContractDetails = getActiveContractDetails();
     if (action.actionType === "Choice") {
-      return standaloneAPI.getInput(contractDetails, action, chosenNum!);
+      return standaloneAPI.getInput(activeContractDetails, action, chosenNum!);
     } else {
-      return standaloneAPI.getInput(contractDetails, action);
+      return standaloneAPI.getInput(activeContractDetails, action);
     }
   }
 
   return {
-    compute: (environment) =>
-      di
-        .getContractDetails()
-        .then((details) =>
-          standaloneAPI.getApplicableActions(details, environment)
-        ),
+    actions,
+    myActions,
     toInput,
-    // NOTE: The original ApplicableActionsAPI does not use promises and assumes that the contract details were
-    //       the same as the ones used to compute and toInput. This is not the case here as we are fetching the contract
-    //       details each time. We might want to rethink the flow of this API.
-    simulate: (input) =>
-      getActiveContractDetails().then((details) =>
-        standaloneAPI.simulateInput(details, input)
-      ),
-    apply: (req) => standaloneAPI.applyInput(di.contractId, req),
-    mkFilter: () =>
-      getActiveContractDetails().then((details) =>
-        standaloneAPI.mkFilter(details)
-      ),
+    simulate: (input) => {
+      const activeContractDetails = getActiveContractDetails();
+      return standaloneAPI.simulateInput(activeContractDetails, input);
+    },
+    apply: (req) => standaloneAPI.applyInput(contractId, req),
   };
 }
 
@@ -149,7 +134,9 @@ export interface ContractInstanceAPI {
   waitForConfirmation: () => Promise<boolean>;
   getContractDetails: () => Promise<ContractDetails>;
   applyInputs(applyInputsRequest: ApplyInputsRequest): Promise<TxId>;
-  applicableActions: ApplicableActionsAPI;
+  computeApplicableActions(
+    environment?: Environment
+  ): Promise<ApplicableActionsAPI>;
   /**
    * Get a list of the applied inputs for the contract
    */
@@ -161,6 +148,7 @@ function mkContractInstanceAPI(
   contractId: ContractId
 ): ContractInstanceAPI {
   const contractCreationTxId = contractIdToTxId(contractId);
+  const applicableActionsAPI = Applicable.mkApplicableActionsAPI(di);
   return {
     contractId,
     waitForConfirmation: async () => {
@@ -169,11 +157,27 @@ function mkContractInstanceAPI(
     getContractDetails: async () => {
       return getContractDetails(di)(contractId);
     },
-    applicableActions: mkApplicableActionsAPI({
-      ...di,
-      contractId,
-      getContractDetails: () => getContractDetails(di)(contractId),
-    }),
+    computeApplicableActions: async (env) => {
+      const contractDetails = await getContractDetails(di)(contractId);
+      const actions = await applicableActionsAPI.getApplicableActions(
+        contractDetails,
+        env
+      );
+      let myActions = [] as ApplicableAction[];
+      if (contractDetails.type === "active") {
+        const myActionsFilter =
+          await applicableActionsAPI.mkFilter(contractDetails);
+        myActions = actions.filter(myActionsFilter);
+      }
+
+      return mkApplicableActionsAPI(
+        di,
+        actions,
+        myActions,
+        contractDetails,
+        contractId
+      );
+    },
     applyInputs: async (request) => {
       return applyInputs(di)(contractId, request);
     },

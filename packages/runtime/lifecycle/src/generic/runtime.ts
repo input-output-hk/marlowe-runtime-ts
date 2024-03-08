@@ -24,10 +24,6 @@ export function mkRuntimeLifecycle(
     deprecatedContractAPI,
     newContractAPI: NewContract.mkContractsAPI({ wallet, restClient }),
     payouts: mkPayoutLifecycle(wallet, deprecatedRestAPI, restClient),
-    applicableActions: mkApplicableActionsAPI(
-      restClient,
-      wallet,
-      deprecatedContractAPI.applyInputs
-    ),
+    applicableActions: mkApplicableActionsAPI({ restClient, wallet }),
   };
 }

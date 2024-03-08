@@ -23,12 +23,12 @@ import {
   CanChoose,
   CanDeposit,
   CanNotify,
-  GetApplicableActionsResponse,
 } from "./generic/applicable-actions.js";
 import {
   ActiveContract,
   ClosedContract,
   ContractDetails,
+  ContractInstanceAPI,
 } from "./generic/new-contract-api.js";
 import {
   ContractsAPI,
@@ -45,10 +45,10 @@ export {
   CanChoose,
   CanDeposit,
   CanNotify,
-  GetApplicableActionsResponse,
   ActiveContract,
   ClosedContract,
   ContractDetails,
+  ContractInstanceAPI,
   CreateContractRequestBase,
 };
 import * as NewContract from "./generic/new-contract-api.js";
