@@ -55,14 +55,21 @@ export interface ContractsAPI {
 }
 
 export function mkContractsAPI(di: ContractsDI): ContractsAPI {
-  // TODO: Cache of API's
+  // The ContractInstance API is stateful as it has some cache, so whenever
+  // possible we want to reuse the same instance of the API for the same contractId
+  const apis = new Map<ContractId, ContractInstanceAPI>();
   return {
     createContract: async (request) => {
       const [contractId, _] = await createContract(di)(request);
-      return mkContractInstanceAPI(di, contractId);
+      apis.set(contractId, mkContractInstanceAPI(di, contractId));
+      return apis.get(contractId)!;
     },
     loadContract: async (contractId) => {
-      return mkContractInstanceAPI(di, contractId);
+      if (apis.has(contractId)) {
+        return apis.get(contractId)!;
+      } else {
+        return mkContractInstanceAPI(di, contractId);
+      }
     },
   };
 }
