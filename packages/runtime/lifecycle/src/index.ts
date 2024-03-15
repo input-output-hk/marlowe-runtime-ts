@@ -20,8 +20,8 @@ import { WalletAPI } from "@marlowe.io/wallet";
 import * as Generic from "./generic/runtime.js";
 import { mkFPTSRestClient, mkRestClient } from "@marlowe.io/runtime-rest-client";
 import { RuntimeLifecycle } from "./api.js";
-import { InvalidTypeError, strictDynamicTypeCheck } from "@marlowe.io/adapter/io-ts";
-
+import { dynamicAssertType } from "@marlowe.io/adapter/io-ts";
+import * as t from "io-ts/lib/index.js";
 export * as Browser from "./browser/index.js";
 
 /**
@@ -40,21 +40,31 @@ export interface RuntimeLifecycleOptions {
 }
 
 /**
- * Creates an instance of RuntimeLifecycle.
- * @param options
- * @category RuntimeLifecycle
+ * @hidden
  */
-export function mkRuntimeLifecycle(options: RuntimeLifecycleOptions): RuntimeLifecycle;
+export const RuntimeLifecycleOptionsGuard: t.Type<RuntimeLifecycleOptions> =
+  t.type({
+    runtimeURL: t.string,
+    // TODO: Create a shallow guard for the wallet that checks that all methods are present as t.function.
+    wallet: t.any,
+  });
+
 /**
  * Creates an instance of RuntimeLifecycle.
  * @param options
  * @param strict Whether to perform runtime checking to provide helpful error messages. May have a slight negative performance impact. Default value is `true`.
  * @category RuntimeLifecycle
  */
-export function mkRuntimeLifecycle(options: RuntimeLifecycleOptions, strict = true): RuntimeLifecycle {
-  if (!strictDynamicTypeCheck(strict)) {
-    throw new InvalidTypeError([], `Invalid type for argument 'strict', expected boolean but got ${strict}`);
-  }
+export function mkRuntimeLifecycle(
+  options: RuntimeLifecycleOptions,
+  strict = true
+): RuntimeLifecycle {
+  dynamicAssertType(RuntimeLifecycleOptionsGuard, options);
+  dynamicAssertType(
+    t.boolean,
+    strict,
+    "Invalid type for argument 'strict', expected boolean"
+  );
   const { runtimeURL, wallet } = options;
   const deprecatedRestAPI = mkFPTSRestClient(runtimeURL);
   const restClient = mkRestClient(runtimeURL, strict);
