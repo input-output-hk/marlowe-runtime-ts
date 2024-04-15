@@ -2,6 +2,8 @@ import * as t from "io-ts/lib/index.js";
 import { readFile } from "fs/promises";
 import * as fs from "fs";
 import * as path from "path";
+import { formatValidationErrors } from "jsonbigint-io-ts-reporters";
+
 const lucidNetworkGuard = t.union([
   t.literal("Mainnet"),
   t.literal("Preview"),
@@ -55,7 +57,9 @@ export async function readTestConfiguration(
   const configStr = await readFile(filepath, { encoding: "utf-8" });
   const result = testConfigurationGuard.decode(JSON.parse(configStr));
   if (result._tag === "Left") {
-    throw new Error("Invalid configuration");
+    throw new Error(
+      `Invalid configuration: ${formatValidationErrors(result.left)}`
+    );
   }
   return result.right;
 }
