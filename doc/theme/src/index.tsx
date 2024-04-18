@@ -27,10 +27,7 @@ export function load(app: Application) {
   app.renderer.hooks.on("head.end", (event) => (
     <>
       <link rel="icon" href={event.relativeURL("assets/marlowe/favicon.ico")} />
-      <link
-        rel="stylesheet"
-        href={event.relativeURL("assets/marlowe/marlowe-theme.css")}
-      />
+      <link rel="stylesheet" href={event.relativeURL("assets/marlowe/marlowe-theme.css")} />
     </>
   ));
 }
@@ -40,9 +37,7 @@ export function copySync(src: string, dest: string): void {
 
   if (stat.isDirectory()) {
     const contained = fs.readdirSync(src);
-    contained.forEach((file) =>
-      copySync(path.join(src, file), path.join(dest, file))
-    );
+    contained.forEach((file) => copySync(path.join(src, file), path.join(dest, file)));
   } else if (stat.isFile()) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);

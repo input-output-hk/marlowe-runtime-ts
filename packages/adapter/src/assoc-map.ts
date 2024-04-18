@@ -17,10 +17,8 @@ export type AssocMap<K, V> = Array<[K, V]>;
 //             in relevant places (mainly Core.State) we encode/decode to this, or if we use this representation
 //             all the way (current approach).
 
-export const AssocMapGuard = <K, V>(
-  keyGuard: t.Type<K>,
-  valueGuard: t.Type<V>
-): t.Type<AssocMap<K, V>> => t.array(t.tuple([keyGuard, valueGuard]));
+export const AssocMapGuard = <K, V>(keyGuard: t.Type<K>, valueGuard: t.Type<V>): t.Type<AssocMap<K, V>> =>
+  t.array(t.tuple([keyGuard, valueGuard]));
 
 export type Sort = "GreaterThan" | "LowerThan" | "EqualTo";
 
@@ -29,12 +27,7 @@ export type Linorder<K> = (a: K, b: K) => Sort;
 /**
  * Insert an element in the sorted associative list.
  */
-export function insert<K, V>(
-  cmp: Linorder<K>,
-  key: K,
-  value: V,
-  list: AssocMap<K, V>
-): AssocMap<K, V> {
+export function insert<K, V>(cmp: Linorder<K>, key: K, value: V, list: AssocMap<K, V>): AssocMap<K, V> {
   if (list.length === 0) {
     return [[key, value]];
   }
@@ -53,11 +46,7 @@ export function insert<K, V>(
 /**
  * Removes an element from the sorted associative list.
  */
-export function remove<K, V>(
-  cmp: Linorder<K>,
-  key: K,
-  list: AssocMap<K, V>
-): AssocMap<K, V> {
+export function remove<K, V>(cmp: Linorder<K>, key: K, list: AssocMap<K, V>): AssocMap<K, V> {
   if (list.length === 0) {
     return [];
   }
@@ -76,11 +65,7 @@ export function remove<K, V>(
 /**
  * Looks for an element in the sorted associative list.
  */
-export function lookup<K, V>(
-  cmp: Linorder<K>,
-  key: K,
-  list: AssocMap<K, V>
-): V | undefined {
+export function lookup<K, V>(cmp: Linorder<K>, key: K, list: AssocMap<K, V>): V | undefined {
   if (list.length === 0) {
     return undefined;
   }
@@ -99,12 +84,7 @@ export function lookup<K, V>(
 /**
  * Looks for a value in the sorted associative list. If the value is not found, it returns the default value.
  */
-export function findWithDefault<K, V>(
-  cmp: Linorder<K>,
-  defaultValue: V,
-  key: K,
-  list: AssocMap<K, V>
-): V {
+export function findWithDefault<K, V>(cmp: Linorder<K>, defaultValue: V, key: K, list: AssocMap<K, V>): V {
   const value = lookup(cmp, key, list);
   return value === undefined ? defaultValue : value;
 }
@@ -119,10 +99,6 @@ export function strCmp(a: string, b: string): Sort {
   return "EqualTo";
 }
 
-export function member<K, V>(
-  cmp: Linorder<K>,
-  key: K,
-  list: AssocMap<K, V>
-): boolean {
+export function member<K, V>(cmp: Linorder<K>, key: K, list: AssocMap<K, V>): boolean {
   return lookup(cmp, key, list) !== undefined;
 }

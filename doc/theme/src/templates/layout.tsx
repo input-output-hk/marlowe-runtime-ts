@@ -1,11 +1,4 @@
-import {
-  ContainerReflection,
-  DefaultThemeRenderContext,
-  JSX,
-  PageEvent,
-  Reflection,
-  RenderTemplate,
-} from "typedoc";
+import { ContainerReflection, DefaultThemeRenderContext, JSX, PageEvent, Reflection, RenderTemplate } from "typedoc";
 import { classNames } from "./utils";
 
 export const layout = (
@@ -19,44 +12,18 @@ export const layout = (
         <meta charSet="utf-8" />
         {context.hook("head.begin")}
         <meta http-equiv="x-ua-compatible" content="IE=edge" />
-        <meta
-          name="description"
-          content={"Documentation for " + props.project.name}
-        />
+        <meta name="description" content={"Documentation for " + props.project.name} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <link
-          rel="stylesheet"
-          href={context.relativeURL("assets/style.css", true)}
-        />
-        <link
-          rel="stylesheet"
-          href={context.relativeURL("assets/highlight.css", true)}
-        />
-        <link
-          rel="stylesheet"
-          href={context.relativeURL("assets/marlowe/style.css")}
-        />
+        <link rel="stylesheet" href={context.relativeURL("assets/style.css", true)} />
+        <link rel="stylesheet" href={context.relativeURL("assets/highlight.css", true)} />
+        <link rel="stylesheet" href={context.relativeURL("assets/marlowe/style.css")} />
         {context.options.getValue("customCss") && (
-          <link
-            rel="stylesheet"
-            href={context.relativeURL("assets/custom.css", true)}
-          />
+          <link rel="stylesheet" href={context.relativeURL("assets/custom.css", true)} />
         )}
-        <script
-          defer
-          src={context.relativeURL("assets/main.js", true)}
-        ></script>
-        <script
-          async
-          src={context.relativeURL("assets/search.js", true)}
-          id="search-script"
-        ></script>
-        <script
-          async
-          src={context.relativeURL("assets/navigation.js", true)}
-          id="tsd-nav-script"
-        ></script>
+        <script defer src={context.relativeURL("assets/main.js", true)}></script>
+        <script async src={context.relativeURL("assets/search.js", true)} id="search-script"></script>
+        <script async src={context.relativeURL("assets/navigation.js", true)} id="tsd-nav-script"></script>
         {context.hook("head.end")}
       </head>
       <body>

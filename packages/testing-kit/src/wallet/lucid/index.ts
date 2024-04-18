@@ -34,8 +34,7 @@ export function mkLucidWalletTest(lucidWallet: Lucid): WalletTestAPI {
     ...di.wallet,
     ...{ provision: Provision.provision(di) },
     ...{
-      waitRuntimeSyncingTillCurrentWalletTip:
-        waitRuntimeSyncingTillCurrentWalletTip(di),
+      waitRuntimeSyncingTillCurrentWalletTip: waitRuntimeSyncingTillCurrentWalletTip(di),
     },
   };
 }
@@ -57,12 +56,8 @@ const waitRuntimeSyncingTillCurrentWalletTip =
   async (client: RestClient): Promise<void> => {
     const { lucid } = di;
     const currentLucidSlot = BigInt(lucid.currentSlot());
-    logInfo(
-      `Setting up a synchronization point with Runtime at SlotNo ${currentLucidSlot}`
-    );
-    await waitForPredicatePromise(
-      isRuntimeChainMoreAdvancedThan(client, currentLucidSlot)
-    );
+    logInfo(`Setting up a synchronization point with Runtime at SlotNo ${currentLucidSlot}`);
+    await waitForPredicatePromise(isRuntimeChainMoreAdvancedThan(client, currentLucidSlot));
     process.stdout.write("\n");
     return sleep(15);
   };
@@ -73,16 +68,13 @@ const waitRuntimeSyncingTillCurrentWalletTip =
  * @param aSlotNo
  * @returns
  */
-export const isRuntimeChainMoreAdvancedThan =
-  (client: RestClient, aSlotNo: bigint) => () =>
-    client.healthcheck().then((status) => {
-      if (status.tips.runtimeChain.blockHeader.slotNo >= aSlotNo) {
-        return true;
-      } else {
-        const delta = aSlotNo - status.tips.runtimeChain.blockHeader.slotNo;
-        process.stdout.write(
-          `Waiting Runtime to reach that point (${delta} slots behind (~${delta}s)) `
-        );
-        return false;
-      }
-    });
+export const isRuntimeChainMoreAdvancedThan = (client: RestClient, aSlotNo: bigint) => () =>
+  client.healthcheck().then((status) => {
+    if (status.tips.runtimeChain.blockHeader.slotNo >= aSlotNo) {
+      return true;
+    } else {
+      const delta = aSlotNo - status.tips.runtimeChain.blockHeader.slotNo;
+      process.stdout.write(`Waiting Runtime to reach that point (${delta} slots behind (~${delta}s)) `);
+      return false;
+    }
+  });

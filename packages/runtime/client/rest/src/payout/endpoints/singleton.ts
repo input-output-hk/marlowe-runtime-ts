@@ -41,29 +41,21 @@ export type GetPayoutByIdResponse = {
   assets: AssetsMap;
 };
 
-export type GET = (
-  payoutId: PayoutId
-) => TE.TaskEither<Error | DecodingError, PayoutDetails>;
+export type GET = (payoutId: PayoutId) => TE.TaskEither<Error | DecodingError, PayoutDetails>;
 
 type GETPayload = t.TypeOf<typeof GETPayload>;
 const GETPayload = t.type({ links: t.type({}), resource: PayoutDetails });
 
-export const getViaAxios: (axiosInstance: AxiosInstance) => GET =
-  (axiosInstance) => (contractId) =>
-    pipe(
-      HTTP.Get(axiosInstance)(contractEndpoint(contractId), {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(GETPayload.decode(data))
-        )
-      ),
-      TE.map((payload) => payload.resource)
-    );
+export const getViaAxios: (axiosInstance: AxiosInstance) => GET = (axiosInstance) => (contractId) =>
+  pipe(
+    HTTP.Get(axiosInstance)(contractEndpoint(contractId), {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }),
+    TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GETPayload.decode(data)))),
+    TE.map((payload) => payload.resource)
+  );
 
-const contractEndpoint = (payoutId: PayoutId): string =>
-  `/payouts/${encodeURIComponent(unPayoutId(payoutId))}`;
+const contractEndpoint = (payoutId: PayoutId): string => `/payouts/${encodeURIComponent(unPayoutId(payoutId))}`;

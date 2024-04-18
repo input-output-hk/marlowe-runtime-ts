@@ -1,8 +1,5 @@
 import { AddressBech32, addressBech32 } from "@marlowe.io/runtime-core";
-import {
-  TemplateParametersOf,
-  mkMarloweTemplate,
-} from "@marlowe.io/marlowe-template";
+import { TemplateParametersOf, mkMarloweTemplate } from "@marlowe.io/marlowe-template";
 describe("Delayed payment Template", () => {
   const delayPaymentTemplate = mkMarloweTemplate({
     name: "Delayed payment",

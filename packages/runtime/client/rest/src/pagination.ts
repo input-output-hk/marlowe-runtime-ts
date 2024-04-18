@@ -1,9 +1,5 @@
 import * as t from "io-ts/lib/index.js";
-import {
-  assertGuardEqual,
-  preservedBrand,
-  proxy,
-} from "@marlowe.io/adapter/io-ts";
+import { assertGuardEqual, preservedBrand, proxy } from "@marlowe.io/adapter/io-ts";
 import { unsafeEither } from "@marlowe.io/adapter/fp-ts";
 
 export interface ItemRangeBrand {

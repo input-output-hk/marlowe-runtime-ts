@@ -87,14 +87,7 @@ export { role, Party, Address, Role, RoleName } from "./participants.js";
 
 export { Payee, PayeeAccount, PayeeParty, AccountId } from "./payee.js";
 
-export {
-  Token,
-  TokenName,
-  tokenToString,
-  token,
-  adaToken,
-  lovelace,
-} from "./token.js";
+export { Token, TokenName, tokenToString, token, adaToken, lovelace } from "./token.js";
 
 export { Accounts, MarloweState } from "./state.js";
 

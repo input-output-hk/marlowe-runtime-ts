@@ -23,10 +23,7 @@ export interface Annotated<A> {
  */
 export function isAnnotated(value: unknown): value is Annotated<unknown> {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "annotation" in value &&
-    typeof value["annotation"] !== "undefined"
+    typeof value === "object" && value !== null && "annotation" in value && typeof value["annotation"] !== "undefined"
   );
 }
 
@@ -34,8 +31,7 @@ export function isAnnotated(value: unknown): value is Annotated<unknown> {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Annotated | annotated type}.
  * @category Annotation
  */
-export const AnnotatedGuard = <A>(guard: t.Type<A>): t.Type<Annotated<A>> =>
-  t.type({ annotation: guard });
+export const AnnotatedGuard = <A>(guard: t.Type<A>): t.Type<Annotated<A>> => t.type({ annotation: guard });
 
 /**
  * Recursively removes  {@link index.Annotated | annotations} from an object.
@@ -52,7 +48,7 @@ export function stripAnnotations<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map(stripAnnotations) as T;
   }
-  return R.filterMapWithIndex((key, v) =>
-    key === "annotation" ? O.none : O.some(stripAnnotations(v))
-  )(value as any) as T;
+  return R.filterMapWithIndex((key, v) => (key === "annotation" ? O.none : O.some(stripAnnotations(v))))(
+    value as any
+  ) as T;
 }

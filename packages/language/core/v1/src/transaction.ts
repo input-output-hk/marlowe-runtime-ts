@@ -169,19 +169,13 @@ export type AssertionFailed = "assertion_failed";
  * TODO: Comment
  * @category Transaction Warning
  */
-export const AssertionFailedGuard: t.Type<AssertionFailed> =
-  t.literal("assertion_failed");
+export const AssertionFailedGuard: t.Type<AssertionFailed> = t.literal("assertion_failed");
 
 /**
  * TODO: Comment
  * @category Transaction Warning
  */
-export type TransactionWarning =
-  | NonPositiveDeposit
-  | NonPositivePay
-  | PartialPay
-  | Shadowing
-  | AssertionFailed;
+export type TransactionWarning = NonPositiveDeposit | NonPositivePay | PartialPay | Shadowing | AssertionFailed;
 
 /**
  * TODO: Comment
@@ -236,10 +230,7 @@ export const IntervalInPastGuard: t.Type<IntervalInPast> = t.type({
  * @category Transaction Error
  */
 export type IntervalError = InvalidInterval | IntervalInPast;
-export const IntervalErrorGuard: t.Type<IntervalError> = t.union([
-  InvalidIntervalGuard,
-  IntervalInPastGuard,
-]);
+export const IntervalErrorGuard: t.Type<IntervalError> = t.union([InvalidIntervalGuard, IntervalInPastGuard]);
 
 /**
  * TODO: Comment
@@ -264,9 +255,7 @@ export type ApplyNoMatchError = "TEApplyNoMatchError";
  * TODO: Comment
  * @category Transaction Error
  */
-export const ApplyNoMatchErrorGuard: t.Type<ApplyNoMatchError> = t.literal(
-  "TEApplyNoMatchError"
-);
+export const ApplyNoMatchErrorGuard: t.Type<ApplyNoMatchError> = t.literal("TEApplyNoMatchError");
 
 /**
  * TODO: Comment
@@ -278,9 +267,7 @@ export type UselessTransaction = "TEUselessTransaction";
  * TODO: Comment
  * @category Transaction Error
  */
-export const UselessTransactionGuard: t.Type<UselessTransaction> = t.literal(
-  "TEUselessTransaction"
-);
+export const UselessTransactionGuard: t.Type<UselessTransaction> = t.literal("TEUselessTransaction");
 
 /**
  * TODO: Comment
@@ -292,8 +279,7 @@ export type HashMismatchError = "TEHashMismatch";
  * TODO: Comment
  * @category Transaction Error
  */
-export const HashMismatchErrorGuard: t.Type<HashMismatchError> =
-  t.literal("TEHashMismatch");
+export const HashMismatchErrorGuard: t.Type<HashMismatchError> = t.literal("TEHashMismatch");
 
 /**
  * TODO: Comment
@@ -362,9 +348,7 @@ export const TransactionSuccessGuard: t.Type<TransactionSuccess> = t.type({
  * TODO: Comment
  * @category Transaction
  */
-export type TransactionOutput =
-  | TransactionSuccess
-  | { transaction_error: TransactionError };
+export type TransactionOutput = TransactionSuccess | { transaction_error: TransactionError };
 
 /**
  * TODO: Comment

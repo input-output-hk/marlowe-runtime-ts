@@ -139,9 +139,7 @@ export interface WalletAPI {
  * @param walletAPI An WalletAPI instance
  * @returns Address and collateral information
  */
-export async function getAddressesAndCollaterals(
-  walletAPI: WalletAPI
-): Promise<AddressesAndCollaterals> {
+export async function getAddressesAndCollaterals(walletAPI: WalletAPI): Promise<AddressesAndCollaterals> {
   const changeAddress = await walletAPI.getChangeAddress();
   const usedAddresses = await walletAPI.getUsedAddresses();
   const collateralUTxOs: TxOutRef[] = []; // await walletAPI.getCollaterals(); -- Temporarily disabled

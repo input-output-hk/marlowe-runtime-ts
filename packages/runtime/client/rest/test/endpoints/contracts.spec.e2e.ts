@@ -7,8 +7,7 @@ global.console = console;
 
 describe("contracts endpoints", () => {
   it(
-    "can navigate throught some Marlowe Contracts pages" +
-      "(GET:  /contracts/)",
+    "can navigate throught some Marlowe Contracts pages" + "(GET:  /contracts/)",
     async () => {
       const config = await readTestConfiguration();
       const restClient = mkRestClient(config.runtimeURL);
@@ -57,9 +56,7 @@ describe("contracts endpoints", () => {
       expect(firstPage.page.next).toBeDefined();
 
       await Promise.all(
-        firstPage.contracts.map((contract) =>
-          restClient.getContractById({ contractId: contract.contractId })
-        )
+        firstPage.contracts.map((contract) => restClient.getContractById({ contractId: contract.contractId }))
       );
     },
     100_000

@@ -38,9 +38,6 @@ export const MarloweJSONEncoder: E.Encoder<string, unknown> = {
   encode: (data) => MarloweJSON.stringify(data),
 };
 
-export const MarloweJSONCodec: C.Codec<string, string, unknown> = C.make(
-  MarloweJSONDecoder,
-  MarloweJSONEncoder
-);
+export const MarloweJSONCodec: C.Codec<string, string, unknown> = C.make(MarloweJSONDecoder, MarloweJSONEncoder);
 
 export const minify = (a: string) => a.replace(/[\n\r\s]/g, "");

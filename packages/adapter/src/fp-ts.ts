@@ -18,9 +18,7 @@ export async function unsafeTaskEither<E, A>(te: TE.TaskEither<E, A>) {
   return unsafeEither(res);
 }
 
-export function tryCatchDefault<A>(
-  f: () => Promise<A>
-): TE.TaskEither<Error, A> {
+export function tryCatchDefault<A>(f: () => Promise<A>): TE.TaskEither<Error, A> {
   return TE.tryCatch(f, (err) => {
     if (err instanceof Error) return err;
     else return new Error(String(err));

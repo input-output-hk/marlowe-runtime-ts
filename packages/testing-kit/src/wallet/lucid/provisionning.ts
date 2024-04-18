@@ -1,11 +1,4 @@
-import {
-  Lucid,
-  toUnit,
-  fromText,
-  NativeScript,
-  Script,
-  Assets as LucidAssets,
-} from "lucid-cardano";
+import { Lucid, toUnit, fromText, NativeScript, Script, Assets as LucidAssets } from "lucid-cardano";
 import { addDays } from "date-fns";
 
 import { mergeAssets } from "@marlowe.io/adapter/lucid";
@@ -17,12 +10,7 @@ import { MarloweJSON } from "@marlowe.io/adapter/codec";
 import { logDebug, logInfo } from "../../logging.js";
 
 import { WalletTestDI, mkLucidWalletTest } from "./index.js";
-import {
-  ProvisionRequest,
-  ProvisionResponse,
-  ProvisionScheme,
-  WalletTestAPI,
-} from "../api.js";
+import { ProvisionRequest, ProvisionResponse, ProvisionScheme, WalletTestAPI } from "../api.js";
 
 type RequestWithWallets = {
   [participant: string]: {
@@ -47,34 +35,19 @@ export const provision =
     const { lucid, wallet } = di;
     let requestWithWallets: RequestWithWallets = {};
     await Promise.all(
-      Object.entries(request).map(
-        ([participant, { walletSeedPhrase, scheme }]) => {
-          return Lucid.new(lucid.provider, lucid.network).then(
-            (newLucidInstance) => {
-              const wallet = mkLucidWalletTest(
-                newLucidInstance.selectWalletFromSeed(
-                  walletSeedPhrase.join(` `)
-                )
-              );
-              requestWithWallets[participant] = { wallet, scheme };
-            }
-          );
-        }
-      )
+      Object.entries(request).map(([participant, { walletSeedPhrase, scheme }]) => {
+        return Lucid.new(lucid.provider, lucid.network).then((newLucidInstance) => {
+          const wallet = mkLucidWalletTest(newLucidInstance.selectWalletFromSeed(walletSeedPhrase.join(` `)));
+          requestWithWallets[participant] = { wallet, scheme };
+        });
+      })
     );
 
-    logInfo(
-      `Provisionning Request : ${MarloweJSON.stringify(
-        requestWithWallets,
-        null,
-        4
-      )}`
-    );
+    logInfo(`Provisionning Request : ${MarloweJSON.stringify(requestWithWallets, null, 4)}`);
 
     const mintingDeadline = addDays(Date.now(), 1);
 
-    const [script, policyId] =
-      await mkPolicyWithDeadlineAndOneAuthorizedSigner(di)(mintingDeadline);
+    const [script, policyId] = await mkPolicyWithDeadlineAndOneAuthorizedSigner(di)(mintingDeadline);
 
     const distributions = await Promise.all(
       Object.entries(requestWithWallets).map(([participant, x]) =>
@@ -86,19 +59,12 @@ export const provision =
               RuntimeCore.addressBech32(address),
               {
                 lovelaces: x.scheme.lovelacesToTransfer,
-                tokens: Object.entries(x.scheme.assetsToMint).map(
-                  ([assetName, quantity]) => ({
-                    quantity,
-                    assetId: { assetName, policyId },
-                  })
-                ),
+                tokens: Object.entries(x.scheme.assetsToMint).map(([assetName, quantity]) => ({
+                  quantity,
+                  assetId: { assetName, policyId },
+                })),
               },
-            ] as [
-              string,
-              WalletTestAPI,
-              RuntimeCore.AddressBech32,
-              RuntimeCore.Assets,
-            ]
+            ] as [string, WalletTestAPI, RuntimeCore.AddressBech32, RuntimeCore.Assets]
         )
       )
     );
@@ -110,9 +76,7 @@ export const provision =
     );
 
     logDebug(`Distribution : ${MarloweJSON.stringify(distributions, null, 4)}`);
-    logDebug(
-      `Assets to mint : ${MarloweJSON.stringify(assetsToMint, null, 4)}`
-    );
+    logDebug(`Assets to mint : ${MarloweJSON.stringify(assetsToMint, null, 4)}`);
 
     const mintTx = lucid
       .newTx()
@@ -126,20 +90,14 @@ export const provision =
         lucid.newTx(),
         (tx, aDistribution) =>
           tx
-            .payToAddress(
-              aDistribution[2],
-              toAssetsToTransfer(aDistribution[3])
-            )
+            .payToAddress(aDistribution[2], toAssetsToTransfer(aDistribution[3]))
             .payToAddress(aDistribution[2], { lovelace: 5_000_000n })
             .payToAddress(aDistribution[2], { lovelace: 5_000_000n })
             .payToAddress(aDistribution[2], { lovelace: 5_000_000n }) // add a Collateral
       )
     );
     const result: ProvisionResponse = Object.fromEntries(
-      distributions.map(([participant, wallet, , assetsProvisioned]) => [
-        participant,
-        { wallet, assetsProvisioned },
-      ])
+      distributions.map(([participant, wallet, , assetsProvisioned]) => [participant, { wallet, assetsProvisioned }])
     );
 
     logDebug(`result : ${MarloweJSON.stringify(result, null, 4)}`);
@@ -156,9 +114,7 @@ export const provision =
 const mkPolicyWithDeadlineAndOneAuthorizedSigner =
   ({ lucid }: WalletTestDI) =>
   async (deadline: Date): Promise<[Script, RuntimeCore.PolicyId]> => {
-    const { paymentCredential } = lucid.utils.getAddressDetails(
-      await lucid.wallet.address()
-    );
+    const { paymentCredential } = lucid.utils.getAddressDetails(await lucid.wallet.address());
     const json: NativeScript = {
       type: "all",
       scripts: [
@@ -178,10 +134,7 @@ const toAssetsToTransfer = (assets: RuntimeCore.Assets): LucidAssets => {
   var lucidAssets: { [key: string]: bigint } = {};
   lucidAssets["lovelace"] = assets.lovelaces;
   assets.tokens.map(
-    (token) =>
-      (lucidAssets[
-        toUnit(token.assetId.policyId, fromText(token.assetId.assetName))
-      ] = token.quantity)
+    (token) => (lucidAssets[toUnit(token.assetId.policyId, fromText(token.assetId.assetName))] = token.quantity)
   );
   return lucidAssets;
 };
@@ -189,10 +142,7 @@ const toAssetsToTransfer = (assets: RuntimeCore.Assets): LucidAssets => {
 const toAssetsToMint = (assets: RuntimeCore.Assets): LucidAssets => {
   var lucidAssets: { [key: string]: bigint } = {};
   assets.tokens.map(
-    (token) =>
-      (lucidAssets[
-        toUnit(token.assetId.policyId, fromText(token.assetId.assetName))
-      ] = token.quantity)
+    (token) => (lucidAssets[toUnit(token.assetId.policyId, fromText(token.assetId.assetName))] = token.quantity)
   );
   return lucidAssets;
 };

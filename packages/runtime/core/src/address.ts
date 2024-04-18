@@ -27,8 +27,7 @@ export const AddressBech32Guard = preservedBrand(
 
 export type AddressBech32 = t.TypeOf<typeof AddressBech32Guard>;
 
-export const addressBech32 = (s: string) =>
-  unsafeEither(AddressBech32Guard.decode(s));
+export const addressBech32 = (s: string) => unsafeEither(AddressBech32Guard.decode(s));
 
 export type AddressesAndCollaterals = t.TypeOf<typeof AddressesAndCollaterals>;
 export const AddressesAndCollaterals = t.type({
@@ -37,10 +36,7 @@ export const AddressesAndCollaterals = t.type({
   collateralUTxOs: t.array(TxOutRef),
 });
 
-export type StakeAddressBech32 = Newtype<
-  { readonly StakeAddressBech32: unique symbol },
-  string
->;
+export type StakeAddressBech32 = Newtype<{ readonly StakeAddressBech32: unique symbol }, string>;
 export const StakeAddressBech32 = fromNewtype<StakeAddressBech32>(t.string);
 export const unStakeAddressBech32 = iso<StakeAddressBech32>().unwrap;
 export const stakeAddressBech32 = iso<StakeAddressBech32>().wrap;

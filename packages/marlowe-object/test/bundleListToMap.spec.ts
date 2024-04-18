@@ -1,9 +1,4 @@
-import {
-  ContractBundleList,
-  bundleListToMap,
-  lovelace,
-  Party,
-} from "@marlowe.io/marlowe-object";
+import { ContractBundleList, bundleListToMap, lovelace, Party } from "@marlowe.io/marlowe-object";
 
 describe("bundleListToMap", () => {
   const aParty: Party = { address: "test1234" };
@@ -107,9 +102,7 @@ describe("bundleListToMap", () => {
         main: {
           type: "contract",
           value: {
-            when: [
-              { case: { ref: "partyNotifies" }, then: { ref: "payParty" } },
-            ],
+            when: [{ case: { ref: "partyNotifies" }, then: { ref: "payParty" } }],
             timeout: 0n,
             timeout_continuation: "close",
           },
@@ -149,9 +142,7 @@ describe("bundleListToMap", () => {
       main: "main",
       bundle: [{ type: "contract", value: "close", label: "other" }],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Missing label main/
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Missing label main/);
   });
 
   it("should fail when a transitive reference is missing", () => {
@@ -171,9 +162,7 @@ describe("bundleListToMap", () => {
         },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Missing label other/
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Missing label other/);
   });
   it("should fail if the order is wrong", () => {
     const bundleList: ContractBundleList<undefined> = {
@@ -193,9 +182,7 @@ describe("bundleListToMap", () => {
         { label: "other", type: "contract", value: "close" },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Label other referenced before defined/
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Label other referenced before defined/);
   });
   it("should work for transitive references", () => {
     // This has the same elements as `should fail if the order is wrong`
@@ -257,9 +244,7 @@ describe("bundleListToMap", () => {
         },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Expected main to be a contract but got party instead/
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Expected main to be a contract but got party instead/);
   });
   it("should fail when there is a contract circular dependency", () => {
     const bundleList: ContractBundleList<undefined> = {
@@ -289,9 +274,7 @@ describe("bundleListToMap", () => {
         },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Circular dependency/i
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Circular dependency/i);
   });
   it("should fail when there is a value circular dependency", () => {
     const bundleList: ContractBundleList<undefined> = {
@@ -326,9 +309,7 @@ describe("bundleListToMap", () => {
         },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Circular dependency/i
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Circular dependency/i);
   });
   it("should fail when there is an observation circular dependency", () => {
     const bundleList: ContractBundleList<undefined> = {
@@ -360,8 +341,6 @@ describe("bundleListToMap", () => {
         },
       ],
     };
-    expect(() => bundleListToMap(bundleList)).toThrowError(
-      /Circular dependency/i
-    );
+    expect(() => bundleListToMap(bundleList)).toThrowError(/Circular dependency/i);
   });
 });

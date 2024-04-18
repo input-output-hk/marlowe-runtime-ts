@@ -1,10 +1,5 @@
 import * as t from "io-ts/lib/index.js";
-import {
-  Observation,
-  ObservationGuard,
-  Value,
-  ValueId,
-} from "./value-and-observation.js";
+import { Observation, ObservationGuard, Value, ValueId } from "./value-and-observation.js";
 import { AccountId, AccountIdGuard, Payee } from "./payee.js";
 import { PayeeGuard } from "./payee.js";
 import { Token, TokenGuard } from "./token.js";
@@ -42,13 +37,7 @@ export const CloseGuard: t.Type<Close> = likeLiteral("close");
 // [[lower-name-builders]] DISCUSSION:
 //     What should we do with the lower case constructors? close, pay, role, etc... There are some that are impossible to
 //     make, for example `let` and `if` which are reserved words in JS. For the moment I'm hidding them from the API.
-export const pay = (
-  pay: Value,
-  token: Token,
-  from_account: AccountId,
-  to: Payee,
-  then: Contract
-) => ({
+export const pay = (pay: Value, token: Token, from_account: AccountId, to: Payee, then: Contract) => ({
   pay: pay,
   token: token,
   from_account: from_account,
@@ -244,9 +233,7 @@ export type Case = NormalCase | MerkleizedCase;
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Case | case type}.
  * @category Contract
  */
-export const CaseGuard: t.Type<Case> = t.recursion("Case", () =>
-  t.union([NormalCaseGuard, MerkleizedCaseGuard])
-);
+export const CaseGuard: t.Type<Case> = t.recursion("Case", () => t.union([NormalCaseGuard, MerkleizedCaseGuard]));
 
 /**
  * TODO: Comment
@@ -276,8 +263,7 @@ export const datetoTimeout = (date: Date): Timeout =>
  * @experimental
  */
 // DISCUSSION: I think this should be renamed POSIXtoDate and moved to the time module in the adapter package
-export const timeoutToDate = (timeout: Timeout): Date =>
-  new Date(Number(timeout));
+export const timeoutToDate = (timeout: Timeout): Date => new Date(Number(timeout));
 
 /**
  * TODO: Comment
@@ -312,12 +298,8 @@ export type ContractMatcher<T> = {
  * @hidden
  * @category Contract
  */
-export function matchContract<T>(
-  matcher: ContractMatcher<T>
-): (contract: Contract) => T;
-export function matchContract<T>(
-  matcher: Partial<ContractMatcher<T>>
-): (contract: Contract) => T | undefined;
+export function matchContract<T>(matcher: ContractMatcher<T>): (contract: Contract) => T;
+export function matchContract<T>(matcher: Partial<ContractMatcher<T>>): (contract: Contract) => T | undefined;
 export function matchContract<T>(matcher: Partial<ContractMatcher<T>>) {
   return (contract: Contract) => {
     if (CloseGuard.is(contract) && matcher.close) {
@@ -343,19 +325,14 @@ export function matchContract<T>(matcher: Partial<ContractMatcher<T>>) {
  * @returns The next timeout after minTime, or undefined if there is no timeout after minTime.
  * @category Introspection
  */
-export function getNextTimeout(
-  contract: Contract,
-  minTime: Timeout
-): Timeout | undefined {
+export function getNextTimeout(contract: Contract, minTime: Timeout): Timeout | undefined {
   return matchContract<Timeout | undefined>({
     close: () => undefined,
     pay: (pay) => getNextTimeout(pay.then, minTime),
     if: (ifContract) => {
       const thenTimeout = getNextTimeout(ifContract.then, minTime);
       const elseTimeout = getNextTimeout(ifContract.else, minTime);
-      return thenTimeout && elseTimeout
-        ? Big.min(thenTimeout, elseTimeout)
-        : thenTimeout || elseTimeout;
+      return thenTimeout && elseTimeout ? Big.min(thenTimeout, elseTimeout) : thenTimeout || elseTimeout;
     },
     when: (whenContract) => {
       if (minTime > whenContract.timeout) {

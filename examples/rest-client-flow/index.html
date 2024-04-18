@@ -14,12 +14,7 @@
       <h2>Setup Runtime</h2>
 
       <label for="runtimeUrl">URL to a Marlowe Runtime instance:</label>
-      <input
-        id="runtimeUrl"
-        type="text"
-        autocomplete="on"
-        placeholder="http://localhost:32952"
-      />
+      <input id="runtimeUrl" type="text" autocomplete="on" placeholder="http://localhost:32952" />
     </div>
     <hr />
     <div>
@@ -27,108 +22,62 @@
       <div>
         <label for="parameter-json">Function parameters:</label>
         <p>
-          This should be filled with a JSON object that starts with an array,
-          where each element is a numbered parameter.
+          This should be filled with a JSON object that starts with an array, where each element is a numbered
+          parameter.
         </p>
-        <textarea
-          id="parameter-json"
-          type="text"
-          style="width: 100%; height: 20em"
-        >
-[]</textarea
-        >
+        <textarea id="parameter-json" type="text" style="width: 100%; height: 20em">[]</textarea>
       </div>
       <br />
-      <input
-        id="healthcheck"
-        type="button"
-        value="Healthcheck"
-        class="endpoint"
-      />
+      <input id="healthcheck" type="button" value="Healthcheck" class="endpoint" />
       GETs runtime status with
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#healthcheck"
         >/healthcheck</a
       >
       <br />
-      <input
-        id="getContracts"
-        type="button"
-        value="Get Contracts"
-        class="endpoint"
-      />
+      <input id="getContracts" type="button" value="Get Contracts" class="endpoint" />
       GETs contract header information from
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getContracts"
         >/contracts</a
       >
       <br />
-      <input
-        id="getContractById"
-        type="button"
-        value="Get Contract by id"
-        class="endpoint"
-      />
+      <input id="getContractById" type="button" value="Get Contract by id" class="endpoint" />
       GETs full contract info for
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getContractById"
         >/contracts/:contractId</a
       >
       <br />
-      <input
-        id="buildCreateContractTx"
-        type="button"
-        value="Build Create Contract Tx"
-        class="endpoint"
-      />
+      <input id="buildCreateContractTx" type="button" value="Build Create Contract Tx" class="endpoint" />
       POSTs a new contract
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#buildCreateContractTx"
         >/contracts</a
       >
       <br />
-      <input
-        id="createContractSources"
-        type="button"
-        value="Create Contract Sources"
-        class="endpoint"
-      />
+      <input id="createContractSources" type="button" value="Create Contract Sources" class="endpoint" />
       POSTs a new contract source
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#createContractSources.createContractSources-1"
         >/contracts/sources</a
       >
       <br />
-      <input
-        id="submitContract"
-        type="button"
-        value="Submit Contract"
-        class="endpoint"
-      />
+      <input id="submitContract" type="button" value="Submit Contract" class="endpoint" />
       PUTs a signed transaction through
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#submitContract"
         >/contracts/:contractId</a
       >
       <br />
-      <input
-        id="getTransactionsForContract"
-        type="button"
-        value="Get Transactions For Contract"
-        class="endpoint"
-      />
+      <input id="getTransactionsForContract" type="button" value="Get Transactions For Contract" class="endpoint" />
       GETs transactions from a contract ID
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getTransactionsForContract"
         >/contracts/:contractId/transactions</a
       >
       <br />
-      <input
-        id="getContractTransactionById"
-        type="button"
-        value="Get contract transaction by id"
-        class="endpoint"
-      />
+      <input id="getContractTransactionById" type="button" value="Get contract transaction by id" class="endpoint" />
       GETs contract transaction by ID
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getContractTransactionById"
@@ -147,37 +96,21 @@
         >/contracts/sources/:contractSourceId</a
       >
       <br />
-      <input
-        id="getContractSourceAdjacency"
-        type="button"
-        value="Get adjacent contract Source IDs"
-        class="endpoint"
-      />
+      <input id="getContractSourceAdjacency" type="button" value="Get adjacent contract Source IDs" class="endpoint" />
       GETs the contract Source IDs which are adjacent to a contract
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getContractSourceAdjacency"
         >/contracts/sources/:contractSourceId/adjacency</a
       >
       <br />
-      <input
-        id="getContractSourceClosure"
-        type="button"
-        value="Get contract Source IDs in contract"
-        class="endpoint"
-      />
-      GETs the contract Source IDs which appear in the full hierarchy of a
-      contract source
+      <input id="getContractSourceClosure" type="button" value="Get contract Source IDs in contract" class="endpoint" />
+      GETs the contract Source IDs which appear in the full hierarchy of a contract source
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getContractSourceClosure"
         >/contracts/sources/:contractSourceId/closure</a
       >
       <br />
-      <input
-        id="getNextStepsForContract"
-        type="button"
-        value="Get Next steps for contract"
-        class="endpoint"
-      />
+      <input id="getNextStepsForContract" type="button" value="Get Next steps for contract" class="endpoint" />
       GETs the possible next steps for a contract
       <a
         href="https://input-output-hk.github.io/marlowe-ts-sdk/interfaces/_marlowe_io_runtime_rest_client.index.RestClient.html#getNextStepsForContract"
@@ -219,9 +152,7 @@
               console.log("Contracts", result);
               const nextRange = result.nextRange?.value ?? "-";
               const prevRange = result.prevRange?.value ?? "-";
-              log(
-                `Number of contracts in this range: ${result.headers.length} (full list in the browsers console)`
-              );
+              log(`Number of contracts in this range: ${result.headers.length} (full list in the browsers console)`);
               log(`next range: ${nextRange}`);
               log(`prev range: ${prevRange}`);
               break;

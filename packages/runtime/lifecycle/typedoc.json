@@ -4,12 +4,5 @@
   "tsconfig": "./src/tsconfig.json",
   "categorizeByGroup": false,
   "defaultCategory": "General",
-  "categoryOrder": [
-    "RuntimeLifecycle",
-    "ContractsAPI",
-    "PayoutsAPI",
-    "ApplicableActionsAPI",
-    "New ContractsAPI",
-    "*"
-  ]
+  "categoryOrder": ["RuntimeLifecycle", "ContractsAPI", "PayoutsAPI", "ApplicableActionsAPI", "New ContractsAPI", "*"]
 }

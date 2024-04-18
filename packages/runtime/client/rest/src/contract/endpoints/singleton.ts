@@ -23,9 +23,7 @@ import { ContractId } from "@marlowe.io/runtime-core";
 import { unsafeEither, unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
 import { assertGuardEqual, proxy } from "@marlowe.io/adapter/io-ts";
 
-export type GET = (
-  contractId: ContractId
-) => TE.TaskEither<Error | DecodingError, ContractDetails>;
+export type GET = (contractId: ContractId) => TE.TaskEither<Error | DecodingError, ContractDetails>;
 
 type GETPayload = t.TypeOf<typeof GETPayload>;
 const GETPayload = t.type({
@@ -56,9 +54,7 @@ export const getContractById = async (
       },
     })
   );
-  const payload = unsafeEither(
-    E.mapLeft(formatValidationErrors)(GETPayload.decode(data))
-  );
+  const payload = unsafeEither(E.mapLeft(formatValidationErrors)(GETPayload.decode(data)));
   return payload.resource;
 };
 
@@ -84,19 +80,17 @@ export const SubmitContractRequestGuard = assertGuardEqual(
   })
 );
 
-export const submitContract =
-  (axiosInstance: AxiosInstance) =>
-  (contractId: ContractId, envelope: TextEnvelope) =>
-    axiosInstance
-      .put(contractEndpoint(contractId), envelope, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      })
-      .then((_) => {
-        return;
-      });
+export const submitContract = (axiosInstance: AxiosInstance) => (contractId: ContractId, envelope: TextEnvelope) =>
+  axiosInstance
+    .put(contractEndpoint(contractId), envelope, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+    .then((_) => {
+      return;
+    });
 /**
  * @deprecated
  * @see {@link https://docs.marlowe.iohk.io/api/create-contracts-by-id}
@@ -116,5 +110,4 @@ export const putViaAxios: (axiosInstance: AxiosInstance) => PUT =
       )
     );
 
-const contractEndpoint = (contractId: ContractId): string =>
-  `/contracts/${encodeURIComponent(contractId)}`;
+const contractEndpoint = (contractId: ContractId): string => `/contracts/${encodeURIComponent(contractId)}`;

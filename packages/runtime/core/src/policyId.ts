@@ -6,11 +6,7 @@ export interface PolicyIdBrand {
   readonly PolicyId: unique symbol;
 }
 
-export const PolicyIdGuard = preservedBrand(
-  t.string,
-  (s): s is t.Branded<string, PolicyIdBrand> => true,
-  "PolicyId"
-);
+export const PolicyIdGuard = preservedBrand(t.string, (s): s is t.Branded<string, PolicyIdBrand> => true, "PolicyId");
 
 export type PolicyId = t.TypeOf<typeof PolicyIdGuard>;
 

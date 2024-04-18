@@ -79,9 +79,11 @@ $ npm test
 #### How to Generate a new Seed Phrase for a Bank Wallet ?
 
 1. At the root of the project :
+
 ```bash
 npm run -w @marlowe.io/testing-kit genSeedPhrase
 ```
+
 2. Copy/paste the words within quotes in the env file.
 3. Go to one of your favorite Wallet Extension and restore a wallet with this seedphrase
 4. Get a Payment Address from these Browser extensions to provision your Bank with the faucet.

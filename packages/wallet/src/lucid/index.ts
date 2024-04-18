@@ -15,15 +15,7 @@
   ```
  * @packageDocumentation
  */
-import {
-  C,
-  Lucid,
-  Unit,
-  fromUnit,
-  fromHex,
-  toHex,
-  Assets as LucidAssets,
-} from "lucid-cardano";
+import { C, Lucid, Unit, fromUnit, fromHex, toHex, Assets as LucidAssets } from "lucid-cardano";
 
 import { WalletAPI } from "../api.js";
 import * as runtimeCore from "@marlowe.io/runtime-core";
@@ -32,11 +24,7 @@ import { pipe } from "fp-ts/lib/function.js";
 import * as A from "fp-ts/lib/Array.js";
 import * as R from "fp-ts/lib/Record.js";
 import { mergeAssets } from "@marlowe.io/adapter/lucid";
-import {
-  addressBech32,
-  MarloweTxCBORHex,
-  txOutRef,
-} from "@marlowe.io/runtime-core";
+import { addressBech32, MarloweTxCBORHex, txOutRef } from "@marlowe.io/runtime-core";
 type LucidDI = { lucid: Lucid };
 
 const getAssetName: (unit: Unit) => string = (unit) => {
@@ -67,9 +55,7 @@ const getTokens =
           return runtimeCore.lovelaces(quantity);
         } else {
           return runtimeCore.token(quantity)(
-            runtimeCore.assetId(runtimeCore.policyId(fromUnit(unit).policyId))(
-              getAssetName(unit)
-            )
+            runtimeCore.assetId(runtimeCore.policyId(fromUnit(unit).policyId))(getAssetName(unit))
           );
         }
       })

@@ -12,7 +12,7 @@ import { promises as fs } from "fs";
  *                         to build import maps for different scenarios, e.g. local development, jsdelivr-npm, jsdelivr-gh
  * @see https://github.com/WICG/import-maps#the-basic-idea
  */
-function buildImportMapObject(packagesInfo, importUrlBuilder ) {
+function buildImportMapObject(packagesInfo, importUrlBuilder) {
   // We get the import map entries from the package definition
   const marloweIoImports = pipe(
     packagesInfo,
@@ -28,11 +28,10 @@ function buildImportMapObject(packagesInfo, importUrlBuilder ) {
         // For each exported module we need to create an entry in the import map
         A.map(([exportKey, exportMap]) => {
           // Keys in the export definition are either "." or "./<module-name>"
-          const flatImportName =
-            exportKey === "." ? pkg.name : exportKey.replace(/^\.\//, "");
+          const flatImportName = exportKey === "." ? pkg.name : exportKey.replace(/^\.\//, "");
 
           const importMapKey = `@marlowe.io/${path.join(pkg.name, exportKey)}`;
-          const importMapValue = importUrlBuilder(pkg, flatImportName)
+          const importMapValue = importUrlBuilder(pkg, flatImportName);
 
           return [importMapKey, importMapValue];
         })
@@ -41,8 +40,7 @@ function buildImportMapObject(packagesInfo, importUrlBuilder ) {
     R.fromEntries
   );
   // External dependencies are added manually
-  marloweIoImports["lucid-cardano"] =
-    "https://unpkg.com/lucid-cardano@0.10.7/web/mod.js";
+  marloweIoImports["lucid-cardano"] = "https://unpkg.com/lucid-cardano@0.10.7/web/mod.js";
   return marloweIoImports;
 }
 
@@ -54,29 +52,30 @@ function buildImportMapObject(packagesInfo, importUrlBuilder ) {
  * @param importFrom The source of the imports, it is an object with a type "local", "jsdelivr-npm"
  *                   or "jsdelivr-gh". In case of jsdelivr-npm or jsdelivr-gh the version is required.
  */
-export async function buildImportMapScript (packagesInfo, importFrom, distFolder) {
+export async function buildImportMapScript(packagesInfo, importFrom, distFolder) {
   let outputFile, importMapObject;
 
   if (importFrom.type === "local") {
-    const importUrlBuilder = (pkg, flatImportName) =>
-            `/${pkg.location}/dist/bundled/esm/${flatImportName}.js`;
+    const importUrlBuilder = (pkg, flatImportName) => `/${pkg.location}/dist/bundled/esm/${flatImportName}.js`;
     outputFile = path.join(distFolder, "local-importmap.js");
     importMapObject = buildImportMapObject(packagesInfo, importUrlBuilder);
   } else if (importFrom.type === "jsdelivr-gh") {
     const importUrlBuilder = (pkg, flatImportName) =>
-            `https://cdn.jsdelivr.net/gh/${importFrom.owner}/marlowe-ts-sdk@${importFrom.version}/${pkg.location}/dist/bundled/esm/${flatImportName}.js`
-          ;
+      `https://cdn.jsdelivr.net/gh/${importFrom.owner}/marlowe-ts-sdk@${importFrom.version}/${pkg.location}/dist/bundled/esm/${flatImportName}.js`;
     outputFile = path.join(distFolder, "jsdelivr-gh-importmap.js");
     importMapObject = buildImportMapObject(packagesInfo, importUrlBuilder);
   } else if (importFrom.type === "jsdelivr-npm") {
     const importUrlBuilder = (pkg, flatImportName) =>
-            `https://cdn.jsdelivr.net/npm/@marlowe.io/${pkg.name}@${importFrom.version}/dist/bundled/esm/${flatImportName}.js`
-          ;
+      `https://cdn.jsdelivr.net/npm/@marlowe.io/${pkg.name}@${importFrom.version}/dist/bundled/esm/${flatImportName}.js`;
     outputFile = path.join(distFolder, "jsdelivr-npm-importmap.js");
     importMapObject = buildImportMapObject(packagesInfo, importUrlBuilder);
   }
 
-  const unformatted = `const importMap = ${JSON.stringify({imports: importMapObject}, "", 2)};\nconst im = document.createElement("script");\nim.type = "importmap";\nim.textContent = JSON.stringify(importMap);\ndocument.currentScript.after(im);\n`;
-  const formatted = await prettier.format(unformatted, { parser: "typescript"});
+  const unformatted = `const importMap = ${JSON.stringify(
+    { imports: importMapObject },
+    "",
+    2
+  )};\nconst im = document.createElement("script");\nim.type = "importmap";\nim.textContent = JSON.stringify(importMap);\ndocument.currentScript.after(im);\n`;
+  const formatted = await prettier.format(unformatted, { parser: "typescript" });
   fs.writeFile(outputFile, formatted);
 }

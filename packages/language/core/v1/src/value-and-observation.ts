@@ -53,9 +53,7 @@ export type TimeIntervalStart = "time_interval_start";
  * {@link !io-ts-usage | Dynamic type guard} for the {@link @marlowe.io/language-core-v1!index.TimeIntervalStart | time interval start type}.
  * @category Value
  */
-export const TimeIntervalStartGuard: t.Type<TimeIntervalStart> = t.literal(
-  "time_interval_start"
-);
+export const TimeIntervalStartGuard: t.Type<TimeIntervalStart> = t.literal("time_interval_start");
 
 /**
  * Represents the end time as a POSIXTime of the {@link @marlowe.io/language-core-v1!semantics.Transaction} this value is
@@ -80,9 +78,7 @@ export interface NegValue {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link @marlowe.io/language-core-v1!index.NegValue | neg value type}.
  * @category Value
  */
-export const NegValueGuard: t.Type<NegValue> = t.recursion("NegValue", () =>
-  t.type({ negate: ValueGuard })
-);
+export const NegValueGuard: t.Type<NegValue> = t.recursion("NegValue", () => t.type({ negate: ValueGuard }));
 
 /**
  * Represents `add + and`
@@ -170,9 +166,8 @@ export type ChoiceValue = { value_of_choice: ChoiceId };
  * {@link !io-ts-usage | Dynamic type guard} for the {@link ChoiceValue | choice value type}.
  * @category Value
  */
-export const ChoiceValueGuard: t.Type<ChoiceValue> = t.recursion(
-  "ChoiceValue",
-  () => t.type({ value_of_choice: ChoiceIdGuard })
+export const ChoiceValueGuard: t.Type<ChoiceValue> = t.recursion("ChoiceValue", () =>
+  t.type({ value_of_choice: ChoiceIdGuard })
 );
 
 /**
@@ -197,9 +192,7 @@ export interface UseValue {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link UseValue | use value type}.
  * @category Value
  */
-export const UseValueGuard: t.Type<UseValue> = t.recursion("UseValue", () =>
-  t.type({ use_value: ValueIdGuard })
-);
+export const UseValueGuard: t.Type<UseValue> = t.recursion("UseValue", () => t.type({ use_value: ValueIdGuard }));
 
 /**
  * Ternary conditional expression
@@ -284,9 +277,7 @@ export type ValueMatcher<T> = {
  * @category Value
  */
 export function matchValue<T>(matcher: ValueMatcher<T>): (value: Value) => T;
-export function matchValue<T>(
-  matcher: Partial<ValueMatcher<T>>
-): (value: Value) => T | undefined;
+export function matchValue<T>(matcher: Partial<ValueMatcher<T>>): (value: Value) => T | undefined;
 export function matchValue<T>(matcher: Partial<ValueMatcher<T>>) {
   return (value: Value) => {
     if (AvailableMoneyGuard.is(value) && matcher.availableMoney) {
@@ -362,9 +353,7 @@ export interface NotObs {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link NotObs | not type}.
  * @category Observation
  */
-export const NotObsGuard: t.Type<NotObs> = t.recursion("NotObs", () =>
-  t.type({ not: ObservationGuard })
-);
+export const NotObsGuard: t.Type<NotObs> = t.recursion("NotObs", () => t.type({ not: ObservationGuard }));
 
 /**
  * Observes if the `chose_something_for` choice was made
@@ -378,9 +367,8 @@ export interface ChoseSomething {
  * @category Observation
  */
 // TODO: try to remove recursion
-export const ChoseSomethingGuard: t.Type<ChoseSomething> = t.recursion(
-  "ChoseSomething",
-  () => t.type({ chose_something_for: ChoiceIdGuard })
+export const ChoseSomethingGuard: t.Type<ChoseSomething> = t.recursion("ChoseSomething", () =>
+  t.type({ chose_something_for: ChoiceIdGuard })
 );
 
 /**
@@ -487,21 +475,19 @@ export type Observation =
  * {@link !io-ts-usage | Dynamic type guard} for the {@link @marlowe.io/language-core-v1!index.Observation | observation type}.
  * @category Observation
  */
-export const ObservationGuard: t.Type<Observation> = t.recursion(
-  "Observation",
-  () =>
-    t.union([
-      AndObsGuard,
-      OrObsGuard,
-      NotObsGuard,
-      ChoseSomethingGuard,
-      ValueEQGuard,
-      ValueGTGuard,
-      ValueGEGuard,
-      ValueLTGuard,
-      ValueLEGuard,
-      t.boolean,
-    ])
+export const ObservationGuard: t.Type<Observation> = t.recursion("Observation", () =>
+  t.union([
+    AndObsGuard,
+    OrObsGuard,
+    NotObsGuard,
+    ChoseSomethingGuard,
+    ValueEQGuard,
+    ValueGTGuard,
+    ValueGEGuard,
+    ValueLTGuard,
+    ValueLEGuard,
+    t.boolean,
+  ])
 );
 
 /**
@@ -528,9 +514,7 @@ export type ObservationMatcher<T> = {
  * @hidden
  * @category Observation
  */
-export function matchObservation<T>(
-  matcher: ObservationMatcher<T>
-): (observation: Observation) => T;
+export function matchObservation<T>(matcher: ObservationMatcher<T>): (observation: Observation) => T;
 export function matchObservation<T>(
   matcher: Partial<ObservationMatcher<T>>
 ): (observation: Observation) => T | undefined;

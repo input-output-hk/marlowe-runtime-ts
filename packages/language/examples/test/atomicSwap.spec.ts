@@ -2,18 +2,8 @@ import { AtomicSwap } from "@marlowe.io/language-examples";
 import * as G from "@marlowe.io/language-core-v1/guards";
 import { expectType } from "@marlowe.io/adapter/io-ts";
 
-import {
-  datetoTimeout,
-  close,
-  Party,
-  Payee,
-  Input,
-} from "@marlowe.io/language-core-v1";
-import {
-  TransactionSuccess,
-  emptyState,
-  playTrace,
-} from "@marlowe.io/language-core-v1/semantics";
+import { datetoTimeout, close, Party, Payee, Input } from "@marlowe.io/language-core-v1";
+import { TransactionSuccess, emptyState, playTrace } from "@marlowe.io/language-core-v1/semantics";
 import {
   ConfirmSwap,
   ProvisionOffer,
@@ -134,10 +124,7 @@ describe("Atomic Swap", () => {
           deadline: aDeadlineInTheFuture,
         },
       };
-      const inputFlow: Input[] = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
-      ];
+      const inputFlow: Input[] = [(getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
 
       // Execute
 
@@ -183,8 +170,7 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow: Input[] = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
+        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
         (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
       ];
 
@@ -247,15 +233,9 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
+        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
         (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
-        (
-          getAvailableActions(
-            scheme,
-            waitingForSwapConfirmation
-          )[0] as ConfirmSwap
-        ).input,
+        (getAvailableActions(scheme, waitingForSwapConfirmation)[0] as ConfirmSwap).input,
       ];
 
       // Execute
@@ -326,8 +306,7 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
+        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
         (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
       ];
 
@@ -399,10 +378,7 @@ describe("Atomic Swap", () => {
           deadline: aDeadlineInTheFuture,
         },
       };
-      const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
-      ];
+      const inputFlow = [(getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
 
       // Execute
 
@@ -454,8 +430,7 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer)
-          .input,
+        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
         (getAvailableActions(scheme, waitingForAnswer)[1] as Retract).input,
       ];
 

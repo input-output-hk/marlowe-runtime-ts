@@ -24,9 +24,7 @@ export const ContractIdGuard = preservedBrand(
  */
 export type ContractId = t.Branded<string, ContractIdBrand>;
 
-export const contractId = (s: string) =>
-  unsafeEither(ContractIdGuard.decode(s));
+export const contractId = (s: string) => unsafeEither(ContractIdGuard.decode(s));
 
-export const contractIdToTxId: (contractId: ContractId) => TxId = (
-  contractId
-) => pipe(contractId, split("#"), head, txId);
+export const contractIdToTxId: (contractId: ContractId) => TxId = (contractId) =>
+  pipe(contractId, split("#"), head, txId);

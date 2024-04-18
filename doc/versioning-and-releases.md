@@ -18,51 +18,51 @@ Before version 1, the TS-SDK adheres to beta rules:
 
 1. **Candidate Commit:**
 
-    - Identify a candidate commit on the `main` branch.
+      - Identify a candidate commit on the `main` branch.
 
 2. **CI Checks:**
 
-    - Ensure that all Continuous Integration (CI) checks pass on the candidate commit.
+      - Ensure that all Continuous Integration (CI) checks pass on the candidate commit.
 
 3. **Version Number Update:**
 
-    - Update version numbers in project metadata.
+      - Update version numbers in project metadata.
 
 4. **QA Approval:**
 
-    - Obtain approval from the Quality Assurance (QA) team.
+      - Obtain approval from the Quality Assurance (QA) team.
 
 ### Release Checklist:
 
 1. **Release Notes:**
 
-    - Generate release notes from the `changelog.d` folder(s).
-    - This can be done using `scriv collect` from the nix shell.
+      - Generate release notes from the `changelog.d` folder(s).
+      - This can be done using `scriv collect` from the nix shell.
 
 2. **Release Tag:**
 
-    - Use git to create and push a release tag.
-    - `git tag -a 0.4.0-beta-rc1 -m "Release v0.4.0-beta-rc1"`
-    - `git push --tags`
+      - Use git to create and push a release tag.
+      - `git tag -a 0.4.0-beta-rc1 -m "Release v0.4.0-beta-rc1"`
+      - `git push --tags`
 
 3. **Packages Build and Publish:**
 
-    - Build and publish packages from the release tag.
-    - `npm publish --workspaces` (for the moment @hrajchert and @nhenin have publish access)
-      - If this is a release candidate (e.g. `0.3.0-beta-rc`), then we need to add a `--tag` to avoid overriding `latest` (`npm publish --workspaces --tag rc`).
+      - Build and publish packages from the release tag.
+      - `npm publish --workspaces` (for the moment @hrajchert and @nhenin have publish access)
+            - If this is a release candidate (e.g. `0.3.0-beta-rc`), then we need to add a `--tag` to avoid overriding `latest` (`npm publish --workspaces --tag rc`).
 
 4. **GitHub Release:**
 
-    - Publish release(s) on GitHub along with release notes from the collected changelog.
+      - Publish release(s) on GitHub along with release notes from the collected changelog.
 
 5. **Documentation:**
 
-    - Manually trigger the `deploy docs` github action
+      - Manually trigger the `deploy docs` github action
 
 6. **Announcement:**
 
-    - Contact the marketing and devrel team to announce the release.
+      - Contact the marketing and devrel team to announce the release.
 
 ## Note:
 
-- The release process is currently manual.
+      - The release process is currently manual.

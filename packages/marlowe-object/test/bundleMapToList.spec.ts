@@ -1,9 +1,4 @@
-import {
-  bundleMapToList,
-  ContractBundleMap,
-  lovelace,
-  Party,
-} from "@marlowe.io/marlowe-object";
+import { bundleMapToList, ContractBundleMap, lovelace, Party } from "@marlowe.io/marlowe-object";
 
 describe("bundleMapToList", () => {
   const aParty: Party = { address: "test1234" };
@@ -27,9 +22,7 @@ describe("bundleMapToList", () => {
         main: {
           type: "contract",
           value: {
-            when: [
-              { case: { ref: "partyNotifies" }, then: { ref: "payParty" } },
-            ],
+            when: [{ case: { ref: "partyNotifies" }, then: { ref: "payParty" } }],
             timeout: 0n,
             timeout_continuation: "close",
           },
@@ -167,9 +160,7 @@ describe("bundleMapToList", () => {
         },
       },
     };
-    expect(() => bundleMapToList(bundleMap)).toThrowError(
-      /Missing label other/
-    );
+    expect(() => bundleMapToList(bundleMap)).toThrowError(/Missing label other/);
   });
 
   it("should fail when there is a contract circular dependency", () => {
@@ -198,9 +189,7 @@ describe("bundleMapToList", () => {
         },
       },
     };
-    expect(() => bundleMapToList(bundleMap)).toThrowError(
-      /Circular dependency/
-    );
+    expect(() => bundleMapToList(bundleMap)).toThrowError(/Circular dependency/);
   });
 
   it("should fail when there is an object type mistmatch", () => {
@@ -213,9 +202,7 @@ describe("bundleMapToList", () => {
         },
       },
     };
-    expect(() => bundleMapToList(bundleMap)).toThrowError(
-      /Expected main to be a contract but got party instead/
-    );
+    expect(() => bundleMapToList(bundleMap)).toThrowError(/Expected main to be a contract but got party instead/);
   });
 
   it("should fail when there is a value circular dependency", () => {
@@ -248,9 +235,7 @@ describe("bundleMapToList", () => {
         },
       },
     };
-    expect(() => bundleMapToList(bundleMap)).toThrowError(
-      /Circular dependency/
-    );
+    expect(() => bundleMapToList(bundleMap)).toThrowError(/Circular dependency/);
   });
 
   it("should fail when there is an observation circular dependency", () => {
@@ -280,8 +265,6 @@ describe("bundleMapToList", () => {
         },
       },
     };
-    expect(() => bundleMapToList(bundleMap)).toThrowError(
-      /Circular dependency/
-    );
+    expect(() => bundleMapToList(bundleMap)).toThrowError(/Circular dependency/);
   });
 });

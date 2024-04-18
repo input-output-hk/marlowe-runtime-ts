@@ -6,9 +6,7 @@ import { encryptMessage } from "../custodian/custodian-encript.js";
 import { timeoutToDate } from "@marlowe.io/language-core-v1";
 
 function createPlaygroundLink(contract) {
-  const compressed = LZString.compressToEncodedURIComponent(
-    MarloweJSON.stringify(contract)
-  );
+  const compressed = LZString.compressToEncodedURIComponent(MarloweJSON.stringify(contract));
   const link = `https://play.marlowe.iohk.io/#/importContract?marlowe-view=blockly&contract=${compressed}`;
   return link;
 }
@@ -21,19 +19,13 @@ window.contractId = null;
 
 // Event handlers
 const createContractButton = document.getElementById("create-contract");
-createContractButton.addEventListener(
-  "click",
-  H.tryCatchEvent(createContractFromTemplate)
-);
+createContractButton.addEventListener("click", H.tryCatchEvent(createContractFromTemplate));
 
 const submitButton = document.getElementById("submit");
 submitButton.addEventListener("click", H.tryCatchEvent(submitAllAnswers));
 
 const uploadExcerciseButton = document.getElementById("upload-excercise");
-uploadExcerciseButton.addEventListener(
-  "click",
-  H.tryCatchEvent(createContractFromFileUpload)
-);
+uploadExcerciseButton.addEventListener("click", H.tryCatchEvent(createContractFromFileUpload));
 
 setConsoleElement(document.getElementById("create-console"));
 
@@ -70,10 +62,7 @@ async function createContractFromFileUpload() {
       log(bsAlert("danger", `⛔️ Contract verification failed`));
       yieldSection.style.display = "block";
     } else {
-      logJSON(
-        bsAlert("success", "✅ Contract verification succeeded"),
-        verification
-      );
+      logJSON(bsAlert("success", "✅ Contract verification succeeded"), verification);
       yieldSection.style.display = "none";
       const answerTimeout = timeoutToDate(verification.answerTimeout);
       const rewardTimeout = timeoutToDate(verification.rewardTimeout);
@@ -93,11 +82,7 @@ async function createContractFromTemplate() {
   createContract(answerTimeout, rewardTimeout, true);
 }
 
-async function createContract(
-  answerTimeout,
-  rewardTimeout,
-  showContract = false
-) {
+async function createContract(answerTimeout, rewardTimeout, showContract = false) {
   const surveyParticipant = await getSurveyParticipant();
   const contract = mkWorkshopSurvey({
     surveyParticipant,
@@ -105,22 +90,10 @@ async function createContract(
     rewardTimeout,
   });
   if (showContract) {
-    log(
-      bsAlert(
-        "info",
-        `<a target="blank" href="${createPlaygroundLink(
-          contract
-        )}">See solution in playground</a>`
-      )
-    );
+    log(bsAlert("info", `<a target="blank" href="${createPlaygroundLink(contract)}">See solution in playground</a>`));
   }
 
-  log(
-    bsAlert(
-      "info",
-      "⏳ <strong>Creating contract...</strong> Please wait for the wallet dialog to appear."
-    )
-  );
+  log(bsAlert("info", "⏳ <strong>Creating contract...</strong> Please wait for the wallet dialog to appear."));
 
   const lifecycle = await H.getLifecycle();
   const [contractId] = await lifecycle.contracts.createContract({
@@ -159,26 +132,16 @@ async function submitAllAnswers() {
     input_that_chooses_num: encryptResult.lastDigitsDecimal,
   });
   logJSON("inputs", inputs);
-  log(
-    bsAlert(
-      "info",
-      "⏳ <strong>Submitting answers...</strong> Please wait for the wallet dialog to appear."
-    )
-  );
+  log(bsAlert("info", "⏳ <strong>Submitting answers...</strong> Please wait for the wallet dialog to appear."));
 
   const lifecycle = await H.getLifecycle();
   const txId = await lifecycle.contracts.applyInputs(window.contractId, {
     inputs,
     tags: encryptResult.chunks,
   });
-  logJSON(
-    bsAlert("info", "Inputs applied with the following transaction id:"),
-    txId
-  );
+  logJSON(bsAlert("info", "Inputs applied with the following transaction id:"), txId);
   log(bsAlert("success", "Workshop complete 🎉"));
-  log(
-    "You can inspect the contract in the Scanner to see how the answers are encoded"
-  );
+  log("You can inspect the contract in the Scanner to see how the answers are encoded");
 }
 
 function answersToChoices(answers, surveyParticipant) {

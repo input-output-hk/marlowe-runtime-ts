@@ -17,17 +17,13 @@ export const payoutId = iso<PayoutId>().wrap;
 export const payoutIdToTxId: (payoutId: PayoutId) => TxId = (payoutId) =>
   pipe(payoutId, unPayoutId, split("#"), head, txId);
 
-export type WithdrawalId = Newtype<
-  { readonly WithdrawalId: unique symbol },
-  string
->;
+export type WithdrawalId = Newtype<{ readonly WithdrawalId: unique symbol }, string>;
 export const WithdrawalId = fromNewtype<WithdrawalId>(t.string);
 export const unWithdrawalId = iso<WithdrawalId>().unwrap;
 export const withdrawalId = iso<WithdrawalId>().wrap;
 
-export const withdrawalIdToTxId: (withdrawalId: WithdrawalId) => TxId = (
-  withdrawalId
-) => pipe(withdrawalId, unWithdrawalId, txId);
+export const withdrawalIdToTxId: (withdrawalId: WithdrawalId) => TxId = (withdrawalId) =>
+  pipe(withdrawalId, unWithdrawalId, txId);
 
 // DISCUSSION: PayoutAvailable or AvailablePayout?
 export type PayoutAvailable = t.TypeOf<typeof PayoutAvailable>;

@@ -28,13 +28,10 @@ if (sellTo && buyFrom) {
   fail("You can only choose either --sell-to or --buy-from, but not both");
 }
 const action = sellTo ? "sell" : "buy";
-const address =
-  (sellTo || buyFrom) ?? fail("You must choose either --sell-to or --buy-from");
-const amount =
-  args["--amount"] ?? fail("You must specify the amount of lovelace to escrow");
+const address = (sellTo || buyFrom) ?? fail("You must choose either --sell-to or --buy-from");
+const amount = args["--amount"] ?? fail("You must specify the amount of lovelace to escrow");
 
-const mediator =
-  args["--mediator"] ?? fail("You must specify the mediator address");
+const mediator = args["--mediator"] ?? fail("You must specify the mediator address");
 main(action, address, amount, mediator);
 
 function fail(message: string) {
@@ -47,14 +44,10 @@ function fail(message: string) {
 }
 
 function printHelp(exitStatus: number): never {
-  console.log(
-    "Usage: npm run escrow -- <sell-to | buy-from> <amount> <mediator>"
-  );
+  console.log("Usage: npm run escrow -- <sell-to | buy-from> <amount> <mediator>");
   console.log("");
   console.log("Example:");
-  console.log(
-    "  npm run escrow -- --sell-to addr1_af33.... -a 10000000 --mediator addr1_... "
-  );
+  console.log("  npm run escrow -- --sell-to addr1_af33.... -a 10000000 --mediator addr1_... ");
   console.log("Options:");
   console.log("  --help: Print this message");
   console.log("  action:");
@@ -65,31 +58,16 @@ function printHelp(exitStatus: number): never {
   process.exit(exitStatus);
 }
 
-async function main(
-  action: "buy" | "sell",
-  otherAddress: string,
-  amount: number,
-  mediator: string
-) {
-  const {
-    runtimeURL,
-    blockfrostUrl,
-    blockfrostProjectId,
-    network,
-    seedPhrase,
-  } = await readConfig();
-  const lucid = await Lucid.new(
-    new Blockfrost(blockfrostUrl, blockfrostProjectId),
-    network
-  );
+async function main(action: "buy" | "sell", otherAddress: string, amount: number, mediator: string) {
+  const { runtimeURL, blockfrostUrl, blockfrostProjectId, network, seedPhrase } = await readConfig();
+  const lucid = await Lucid.new(new Blockfrost(blockfrostUrl, blockfrostProjectId), network);
   lucid.selectWalletFromSeed(seedPhrase);
 
   const wallet = mkLucidWallet(lucid);
   const walletAddress = await wallet.getChangeAddress();
 
   const Buyer = action === "sell" ? addressBech32(otherAddress) : walletAddress;
-  const Seller =
-    action === "sell" ? walletAddress : addressBech32(otherAddress);
+  const Seller = action === "sell" ? walletAddress : addressBech32(otherAddress);
   const Mediator = addressBech32(mediator);
 
   const runtime = mkRuntimeLifecycle({

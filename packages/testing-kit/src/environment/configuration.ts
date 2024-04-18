@@ -48,18 +48,14 @@ const rootDir = findRootDir(process.cwd());
  * Read Test Configurations from an env file
  * @returns
  */
-export async function readTestConfiguration(
-  filepath?: string
-): Promise<TestConfiguration> {
+export async function readTestConfiguration(filepath?: string): Promise<TestConfiguration> {
   if (!filepath) {
     filepath = `${rootDir}/env/.test-env.json`;
   }
   const configStr = await readFile(filepath, { encoding: "utf-8" });
   const result = testConfigurationGuard.decode(JSON.parse(configStr));
   if (result._tag === "Left") {
-    throw new Error(
-      `Invalid configuration: ${formatValidationErrors(result.left)}`
-    );
+    throw new Error(`Invalid configuration: ${formatValidationErrors(result.left)}`);
   }
   return result.right;
 }

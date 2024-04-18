@@ -7,13 +7,11 @@ export const ISO8601 = t.string;
 export type POSIXTime = t.TypeOf<typeof POSIXTime>;
 export const POSIXTime = t.bigint;
 
-export const posixTimeToIso8601 = (posixTime: POSIXTime): ISO8601 =>
-  datetoIso8601(new Date(Number(posixTime)));
+export const posixTimeToIso8601 = (posixTime: POSIXTime): ISO8601 => datetoIso8601(new Date(Number(posixTime)));
 
 export const datetoIso8601 = (date: Date): ISO8601 => date.toISOString();
 
-export const iso8601ToPosixTime = (iso8601: ISO8601): POSIXTime =>
-  BigInt(new Date(iso8601).getTime());
+export const iso8601ToPosixTime = (iso8601: ISO8601): POSIXTime => BigInt(new Date(iso8601).getTime());
 
 // a minute in milliseconds
 export const MINUTES = 1000 * 60;
@@ -33,8 +31,7 @@ export const waitForPredicatePromise = async (
     return;
   }
   // Use a promise to wait for the specified interval
-  const wait = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // Wait for the specified interval
   await sleep(seconds);

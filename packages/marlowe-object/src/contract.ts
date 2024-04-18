@@ -2,12 +2,7 @@ import * as t from "io-ts/lib/index.js";
 import { Timeout, BuiltinByteString } from "@marlowe.io/language-core-v1";
 import * as G from "@marlowe.io/language-core-v1/guards";
 
-import {
-  Observation,
-  ObservationGuard,
-  Value,
-  ValueId,
-} from "./value-and-observation.js";
+import { Observation, ObservationGuard, Value, ValueId } from "./value-and-observation.js";
 import { AccountId, AccountIdGuard, Payee } from "./payee.js";
 import { PayeeGuard } from "./payee.js";
 import { Token, TokenGuard } from "./token.js";
@@ -42,8 +37,7 @@ export const close = <A>(annotation?: A) => new Close<A>(annotation);
 export const CloseGuard: t.Type<Close<unknown>> = new t.Type(
   "close",
   (input: unknown): input is Close<unknown> => input == "close",
-  (input, context) =>
-    input == "close" ? t.success("close" as const) : t.failure(input, context),
+  (input, context) => (input == "close" ? t.success("close" as const) : t.failure(input, context)),
   t.identity
 );
 
@@ -175,9 +169,8 @@ export interface NormalCase<A> {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link NormalCase | normal case type}.
  * @category Contract
  */
-export const NormalCaseGuard: t.Type<NormalCase<unknown>> = t.recursion(
-  "Case",
-  () => t.type({ case: ActionGuard, then: ContractGuard })
+export const NormalCaseGuard: t.Type<NormalCase<unknown>> = t.recursion("Case", () =>
+  t.type({ case: ActionGuard, then: ContractGuard })
 );
 
 /**
@@ -223,31 +216,14 @@ export const CaseGuard: t.Type<Case<unknown>> = t.recursion("Case", () =>
  * @typeParam A - An optional {@link index.Annotated | annotation} of the contract nodes.
  * @category Contract
  */
-export type Contract<A> =
-  | Close<A>
-  | Pay<A>
-  | If<A>
-  | When<A>
-  | Let<A>
-  | Assert<A>
-  | Reference;
+export type Contract<A> = Close<A> | Pay<A> | If<A> | When<A> | Let<A> | Assert<A> | Reference;
 
 /**
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Contract | contract type}.
  * @category Contract
  */
-export const ContractGuard: t.Type<Contract<unknown>> = t.recursion(
-  "Contract",
-  () =>
-    t.union([
-      CloseGuard,
-      PayGuard,
-      IfGuard,
-      WhenGuard,
-      LetGuard,
-      AssertGuard,
-      ReferenceGuard,
-    ])
+export const ContractGuard: t.Type<Contract<unknown>> = t.recursion("Contract", () =>
+  t.union([CloseGuard, PayGuard, IfGuard, WhenGuard, LetGuard, AssertGuard, ReferenceGuard])
 );
 
 /**
@@ -270,12 +246,8 @@ export type ContractMatcher<T> = {
  * @hidden
  * @category Contract
  */
-export function matchContract<T>(
-  matcher: ContractMatcher<T>
-): (contract: Contract<unknown>) => T;
-export function matchContract<T>(
-  matcher: Partial<ContractMatcher<T>>
-): (contract: Contract<unknown>) => T | undefined;
+export function matchContract<T>(matcher: ContractMatcher<T>): (contract: Contract<unknown>) => T;
+export function matchContract<T>(matcher: Partial<ContractMatcher<T>>): (contract: Contract<unknown>) => T | undefined;
 export function matchContract<T>(matcher: Partial<ContractMatcher<T>>) {
   return (contract: Contract<unknown>) => {
     if (CloseGuard.is(contract) && matcher.close) {

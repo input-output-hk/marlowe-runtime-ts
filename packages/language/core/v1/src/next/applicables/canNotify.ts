@@ -17,5 +17,4 @@ export const CanNotify = t.type({
 /**
  * @deprecated Deprecated in favour of {@link @marlowe.io/runtime-lifecycle!api.ApplicableActionsAPI}
  */
-export const toInput: (canNotify: CanNotify) => INotify = (canNotify) =>
-  "input_notify";
+export const toInput: (canNotify: CanNotify) => INotify = (canNotify) => "input_notify";

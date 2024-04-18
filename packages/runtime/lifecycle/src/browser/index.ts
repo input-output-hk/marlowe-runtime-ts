@@ -36,22 +36,12 @@
  * @packageDocumentation
  */
 
-import {
-  SupportedWalletName,
-  SupportedWalletNameGuard,
-  mkBrowserWallet,
-} from "@marlowe.io/wallet/browser";
+import { SupportedWalletName, SupportedWalletNameGuard, mkBrowserWallet } from "@marlowe.io/wallet/browser";
 import * as Generic from "../generic/runtime.js";
 
-import {
-  mkFPTSRestClient,
-  mkRestClient,
-} from "@marlowe.io/runtime-rest-client";
+import { mkFPTSRestClient, mkRestClient } from "@marlowe.io/runtime-rest-client";
 import { RuntimeLifecycle } from "../api.js";
-import {
-  InvalidTypeError,
-  strictDynamicTypeCheck,
-} from "@marlowe.io/adapter/io-ts";
+import { InvalidTypeError, strictDynamicTypeCheck } from "@marlowe.io/adapter/io-ts";
 import * as t from "io-ts/lib/index.js";
 
 /**
@@ -74,11 +64,10 @@ export interface BrowserRuntimeLifecycleOptions {
 /**
  * @hidden
  */
-export const BrowserRuntimeLifecycleOptionsGuard: t.Type<BrowserRuntimeLifecycleOptions> =
-  t.type({
-    runtimeURL: t.string,
-    walletName: SupportedWalletNameGuard,
-  });
+export const BrowserRuntimeLifecycleOptionsGuard: t.Type<BrowserRuntimeLifecycleOptions> = t.type({
+  runtimeURL: t.string,
+  walletName: SupportedWalletNameGuard,
+});
 
 function mkRuntimeLifecycleArgumentDynamicTypeCheck(
   options: unknown,
@@ -87,10 +76,7 @@ function mkRuntimeLifecycleArgumentDynamicTypeCheck(
   if (strict) {
     const result = BrowserRuntimeLifecycleOptionsGuard.decode(options);
     if (result._tag === "Left") {
-      throw new InvalidTypeError(
-        result.left,
-        `Invalid argument to mkRuntimeLifecycle(${options})`
-      );
+      throw new InvalidTypeError(result.left, `Invalid argument to mkRuntimeLifecycle(${options})`);
     }
   }
   return true;
@@ -101,9 +87,7 @@ function mkRuntimeLifecycleArgumentDynamicTypeCheck(
  * @param options
  * @category RuntimeLifecycle
  */
-export async function mkRuntimeLifecycle(
-  options: BrowserRuntimeLifecycleOptions
-): Promise<RuntimeLifecycle>;
+export async function mkRuntimeLifecycle(options: BrowserRuntimeLifecycleOptions): Promise<RuntimeLifecycle>;
 /**
  * Creates an instance of RuntimeLifecycle using the browser wallet.
  * @param options
@@ -115,16 +99,10 @@ export async function mkRuntimeLifecycle(
   strict = true
 ): Promise<RuntimeLifecycle> {
   if (!strictDynamicTypeCheck(strict)) {
-    throw new InvalidTypeError(
-      [],
-      `Invalid type for argument 'strict', expected boolean but got ${strict}`
-    );
+    throw new InvalidTypeError([], `Invalid type for argument 'strict', expected boolean but got ${strict}`);
   }
   if (!mkRuntimeLifecycleArgumentDynamicTypeCheck(options, strict)) {
-    throw new InvalidTypeError(
-      [],
-      `Invalid type for argument 'options', expected string but got ${options}`
-    );
+    throw new InvalidTypeError([], `Invalid type for argument 'options', expected string but got ${options}`);
   }
 
   const { runtimeURL, walletName } = options;

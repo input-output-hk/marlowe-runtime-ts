@@ -44,47 +44,35 @@
         <a class="navbar-brand" href="#" style="margin-left: 10px">
           <img alt="Marlowe Logo" src="/doc/image/logo.svg" height="50px" />
         </a>
-        <div
-          class="navbar-brand navbar-right input-lg"
-          style="margin-top: 12px; margin-right: 20px"
-        >
+        <div class="navbar-brand navbar-right input-lg" style="margin-top: 12px; margin-right: 20px">
           <label for="wallet">Select wallet:</label>
           <select id="wallet" name="wallet" style="padding: 3px"></select>
         </div>
       </div>
     </nav>
     <div class="container" style="max-width: 900px; font-size: 20px">
-      <h1 class="text-center" style="color: #511cf7">
-        Survey Participant Contract
-      </h1>
+      <h1 class="text-center" style="color: #511cf7">Survey Participant Contract</h1>
       <div class="row justify-content-center">
         <p style="margin-top: 20px">
           <b>
-            Welcome to this short tutorial where we'll explore how to design and
-            deploy a smart contract using Marlowe. In this guide, we'll create a
-            simple survey contract that records a participant response on the
-            blockchain and rewards them with an NFT.
+            Welcome to this short tutorial where we'll explore how to design and deploy a smart contract using Marlowe.
+            In this guide, we'll create a simple survey contract that records a participant response on the blockchain
+            and rewards them with an NFT.
           </b>
         </p>
       </div>
       <div>
         <div style="display: none">
           <label for="runtimeUrl">URL to a Marlowe Runtime instance:</label>
-          <input
-            id="runtimeUrl"
-            type="text"
-            autocomplete="on"
-            placeholder="http://localhost:32952"
-          />
+          <input id="runtimeUrl" type="text" autocomplete="on" placeholder="http://localhost:32952" />
         </div>
       </div>
       <hr style="margin: 30px 0" />
 
       <h2>Survey</h2>
       <p>
-        The survey will consist of 5 questions. The first 4 are statements that
-        you need to agree or disagree and the 5th question is a text-based
-        answer.
+        The survey will consist of 5 questions. The first 4 are statements that you need to agree or disagree and the
+        5th question is a text-based answer.
       </p>
       <p style="margin-top: 20px"><b> The questions are: </b></p>
       <ol style="margin: 20px 0">
@@ -134,12 +122,10 @@
         <h2 style="margin-bottom: 20px">Step 1: Design the contract</h2>
         <p>
           To design the contract we'll use the Blockly editor in the
-          <a href="https://play.marlowe.iohk.io/">Marlowe Playground</a>. The
-          questions will be modeled using <code>Choice Action</code>. Each
-          question will be answered by the
-          <code> Address $SURVEY_PARTICIPANT_ADDR</code> participant before a
-          parameterized <code> answer timeout</code>. If the contract timeouts
-          we close it.
+          <a href="https://play.marlowe.iohk.io/">Marlowe Playground</a>. The questions will be modeled using
+          <code>Choice Action</code>. Each question will be answered by the
+          <code> Address $SURVEY_PARTICIPANT_ADDR</code> participant before a parameterized
+          <code> answer timeout</code>. If the contract timeouts we close it.
         </p>
       </div>
 
@@ -149,12 +135,8 @@
           <table class="table table-striped">
             <thead>
               <tr>
-                <th style="border-bottom: 1px solid black; font-weight: bold">
-                  Choice Name
-                </th>
-                <th style="border-bottom: 1px solid black; font-weight: bold">
-                  Bounds
-                </th>
+                <th style="border-bottom: 1px solid black; font-weight: bold">Choice Name</th>
+                <th style="border-bottom: 1px solid black; font-weight: bold">Bounds</th>
               </tr>
             </thead>
             <tbody>
@@ -190,16 +172,11 @@
       />
       <div class="row">
         <p class="">
-          After the questions, the <code> $CUSTODIAN_ADDR</code>participant will
-          deposit 1
-          <code>
-            Token "6fcbab5bb175b420cd060edb63af74c5b3d4687163f282ddc5377dd3"
-            "SurveyReward"</code
-          >
+          After the questions, the <code> $CUSTODIAN_ADDR</code>participant will deposit 1
+          <code> Token "6fcbab5bb175b420cd060edb63af74c5b3d4687163f282ddc5377dd3" "SurveyReward"</code>
           directly into the survey participant account before a parameterized
-          <code>reward timeout</code> and then close the contract. After the
-          contract is closed, the payment of the reward token will be made
-          automatically.
+          <code>reward timeout</code> and then close the contract. After the contract is closed, the payment of the
+          reward token will be made automatically.
         </p>
       </div>
       <img
@@ -209,18 +186,15 @@
       />
 
       <div class="row">
-        <h2 style="margin-bottom: 20px">
-          Step 2: Simulate and download the contract
-        </h2>
+        <h2 style="margin-bottom: 20px">Step 2: Simulate and download the contract</h2>
         <p class="">
-          After you have created the contract, send it to simulation and check
-          that there is only one path to receive the
-          <code>SurveyReward</code>, which is to answer the 5 questions and for
-          the custodian to make the deposit.
+          After you have created the contract, send it to simulation and check that there is only one path to receive
+          the
+          <code>SurveyReward</code>, which is to answer the 5 questions and for the custodian to make the deposit.
         </p>
         <p>
-          Set the reward timeout bigger than the answer timeout way far in the
-          future, download the contract as <code>survey.json</code>
+          Set the reward timeout bigger than the answer timeout way far in the future, download the contract as
+          <code>survey.json</code>
         </p>
       </div>
 
@@ -235,18 +209,8 @@
         <h2 style="margin-bottom: 20px">Step 3: Upload the contract</h2>
         <p class="">After you download the contract, you can upload it here:</p>
       </div>
-      <div
-        class="row"
-        style="
-          display: flex;
-          flex-direction: row;
-          justify-content: center;
-          align-items: center;
-        "
-      >
-        <label for="contractFile" class="btn btn-default">
-          Choose a file
-        </label>
+      <div class="row" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+        <label for="contractFile" class="btn btn-default"> Choose a file </label>
         <input
           type="file"
           id="contractFile"
@@ -254,12 +218,7 @@
           accept=".json"
           style="width: 100%; background-color: #eee; padding: 3px 20px"
         />
-        <input
-          id="upload-excercise"
-          class="btn btn-default"
-          type="button"
-          value="Upload selected file"
-        />
+        <input id="upload-excercise" class="btn btn-default" type="button" value="Upload selected file" />
       </div>
       <br />
       <br />
@@ -271,59 +230,36 @@
       </div>
       <br />
       <br />
-      <div
-        id="yield-section"
-        class="row panel panel-info"
-        style="display: none"
-      >
+      <div id="yield-section" class="row panel panel-info" style="display: none">
         <div class="panel-heading">Try again or see the answer 👀</div>
         <div class="panel-body">
           <p>
-            The provided contract is not what we expected, you can try again as
-            many times as you like, or if you just want the answer, you can
-            create the contract by filling these inputs
+            The provided contract is not what we expected, you can try again as many times as you like, or if you just
+            want the answer, you can create the contract by filling these inputs
           </p>
           <label for="answerTimeout">Answer Timeout:</label>
-          <input
-            type="datetime-local"
-            id="answerTimeout"
-            name="answerTimeout"
-          />
+          <input type="datetime-local" id="answerTimeout" name="answerTimeout" />
           Local time
 
           <br /><br />
 
           <label for="rewardTimeout">Reward Timeout:</label>
-          <input
-            type="datetime-local"
-            id="rewardTimeout"
-            name="rewardTimeout"
-          />
+          <input type="datetime-local" id="rewardTimeout" name="rewardTimeout" />
           Local time<br /><br />
           <br />
-          <input
-            id="create-contract"
-            class="btn btn-default"
-            type="button"
-            value="Give me the answer"
-          />
+          <input id="create-contract" class="btn btn-default" type="button" value="Give me the answer" />
         </div>
       </div>
       <hr style="margin: 30px 0" />
       <div class="row" id="submit-answers-section" style="display: none">
         <h2>Step 4: Answer the survey</h2>
-        <p>
-          You can click the following link to see the new contract in the
-          Marlowe Scanner:
-        </p>
+        <p>You can click the following link to see the new contract in the Marlowe Scanner:</p>
         <p><i>ContractId</i>: <a id="contract-id-indicator">-</a></p>
         <p>Please answer the survey:</p>
 
         <div class="">
           <div class="form-group">
-            <label class="" for="answer-1"
-              >I’d like to use/recommend Marlowe for future dApps</label
-            >
+            <label class="" for="answer-1">I’d like to use/recommend Marlowe for future dApps</label>
             <select class="form-control" id="answer-1">
               <option value="5">Highly agree</option>
               <option value="4">Agree</option>
@@ -333,9 +269,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="control-label" for="answer-2"
-              >The survey contract was easy to design</label
-            >
+            <label class="control-label" for="answer-2">The survey contract was easy to design</label>
             <select class="form-control" id="answer-2">
               <option value="5">Highly agree</option>
               <option value="4">Agree</option>
@@ -345,9 +279,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="control-label" for="answer-3"
-              >The Marlowe Runtime was easy to work with</label
-            >
+            <label class="control-label" for="answer-3">The Marlowe Runtime was easy to work with</label>
             <select class="form-control" id="answer-3">
               <option value="5">Highly agree</option>
               <option value="4">Agree</option>
@@ -357,9 +289,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="control-label" for="answer-4"
-              >I am an experienced web3 developer</label
-            >
+            <label class="control-label" for="answer-4">I am an experienced web3 developer</label>
             <select class="form-control" id="answer-4">
               <option value="5">Highly agree</option>
               <option value="4">Agree</option>
@@ -369,9 +299,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="control-label" for="comments"
-              >Please share any comments</label
-            >
+            <label class="control-label" for="comments">Please share any comments</label>
             <textarea
               id="comments"
               class="form-control"
@@ -382,12 +310,7 @@
             <span class="help-block">Maximum 240 characters.</span>
           </div>
 
-          <input
-            id="submit"
-            class="btn btn-default"
-            type="button"
-            value="Submit answers"
-          />
+          <input id="submit" class="btn btn-default" type="button" value="Submit answers" />
         </div>
         <div class="row panel panel-default">
           <div class="panel-heading">

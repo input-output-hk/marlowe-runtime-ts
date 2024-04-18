@@ -33,18 +33,14 @@ export const openRole = "OpenRole";
  *  @category Roles Configuration
  */
 export type Openness = ClosedRole | OpenRole;
-export const OpennessGuard: t.Type<Openness, string> = t.union([
-  ClosedRoleGuard,
-  OpenRoleGuard,
-]);
+export const OpennessGuard: t.Type<Openness, string> = t.union([ClosedRoleGuard, OpenRoleGuard]);
 
 /**
  *  @category Roles Configuration
  */
 export type UsePolicyWithClosedRoleTokens = PolicyId;
 
-export const UsePolicyWithClosedRoleTokensGuard: t.Type<UsePolicyWithClosedRoleTokens> =
-  G.PolicyId;
+export const UsePolicyWithClosedRoleTokensGuard: t.Type<UsePolicyWithClosedRoleTokens> = G.PolicyId;
 
 /**
  *  @category Roles Configuration
@@ -54,12 +50,11 @@ export interface UsePolicyWithOpenRoleTokens {
   policyId: PolicyId;
   openRoleNames: RoleName[];
 }
-export const UsePolicyWithOpenRoleTokensGuard: t.Type<UsePolicyWithOpenRoleTokens> =
-  t.type({
-    script: OpenRoleGuard,
-    policyId: G.PolicyId,
-    openRoleNames: t.array(G.RoleName),
-  });
+export const UsePolicyWithOpenRoleTokensGuard: t.Type<UsePolicyWithOpenRoleTokens> = t.type({
+  script: OpenRoleGuard,
+  policyId: G.PolicyId,
+  openRoleNames: t.array(G.RoleName),
+});
 
 /**
  *  @category Roles Configuration
@@ -113,10 +108,7 @@ export interface ClosedNFTWithMetadata {
  */
 export type Recipient = Openness;
 
-export const RecipientGuard: t.Type<Recipient, string> = t.union([
-  OpenRoleGuard,
-  ClosedRoleGuard,
-]);
+export const RecipientGuard: t.Type<Recipient, string> = t.union([OpenRoleGuard, ClosedRoleGuard]);
 
 /**
  *  @category Roles Configuration
@@ -129,32 +121,23 @@ export const TokenQuantityGuard: t.Type<TokenQuantity> = t.bigint;
  *  @category Roles Configuration
  */
 export interface RoleTokenConfiguration {
-  recipients:
-    | { [x: AddressBech32]: TokenQuantity }
-    | { OpenRole: TokenQuantity };
+  recipients: { [x: AddressBech32]: TokenQuantity } | { OpenRole: TokenQuantity };
   metadata?: TokenMetadata;
 }
 
-export const RoleTokenConfigurationGuard: t.Type<RoleTokenConfiguration> =
-  t.intersection([
-    t.type({
-      recipients: t.union([
-        t.record(OpenRoleGuard, TokenQuantityGuard),
-        t.record(ClosedRoleGuard, TokenQuantityGuard),
-      ]),
-    }),
-    t.partial({ metadata: TokenMetadataGuard }),
-  ]);
+export const RoleTokenConfigurationGuard: t.Type<RoleTokenConfiguration> = t.intersection([
+  t.type({
+    recipients: t.union([t.record(OpenRoleGuard, TokenQuantityGuard), t.record(ClosedRoleGuard, TokenQuantityGuard)]),
+  }),
+  t.partial({ metadata: TokenMetadataGuard }),
+]);
 
 /**
  *  @category Roles Configuration
  */
 export type RoleTokenConfigurations = RoleTokenConfiguration | ClosedRole;
 
-export const RoleConfigurationsGuard = t.union([
-  RoleTokenConfigurationGuard,
-  ClosedRoleGuard,
-]);
+export const RoleConfigurationsGuard = t.union([RoleTokenConfigurationGuard, ClosedRoleGuard]);
 
 /**
  *  @category Roles Configuration
@@ -175,10 +158,7 @@ export const MintRolesTokensGuard = assertGuardEqual(
  *  @category Endpoint : Build Create Contract Tx
  *  @category Roles Configuration
  */
-export type RolesConfiguration =
-  | UsePolicyWithClosedRoleTokens
-  | UsePolicyWithOpenRoleTokens
-  | MintRolesTokens;
+export type RolesConfiguration = UsePolicyWithClosedRoleTokens | UsePolicyWithOpenRoleTokens | MintRolesTokens;
 
 export const RolesConfigurationGuard = t.union([
   UsePolicyWithClosedRoleTokensGuard,
@@ -200,10 +180,7 @@ export const RolesConfigurationGuard = t.union([
  *  @category Endpoint : Build Create Contract Tx
  *  @category Roles Configuration
  */
-export const useMintedRoles = (
-  policyId: PolicyId,
-  openRoleNames?: RoleName[]
-): RolesConfiguration =>
+export const useMintedRoles = (policyId: PolicyId, openRoleNames?: RoleName[]): RolesConfiguration =>
   openRoleNames
     ? { script: openRole, policyId: policyId, openRoleNames: openRoleNames }
     : (policyId as UsePolicyWithClosedRoleTokens);

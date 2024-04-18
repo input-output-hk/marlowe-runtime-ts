@@ -1,21 +1,12 @@
 import { pipe } from "fp-ts/lib/function.js";
 import { addDays } from "date-fns";
 import { AxiosError } from "axios";
-import {
-  datetoTimeout,
-  inputNotify,
-  close,
-} from "@marlowe.io/language-core-v1";
+import { datetoTimeout, inputNotify, close } from "@marlowe.io/language-core-v1";
 import { oneNotifyTrue } from "@marlowe.io/language-examples";
 
 import console from "console";
 import { MINUTES } from "@marlowe.io/adapter/time";
-import {
-  logError,
-  logInfo,
-  mkTestEnvironment,
-  readTestConfiguration,
-} from "@marlowe.io/testing-kit";
+import { logError, logInfo, mkTestEnvironment, readTestConfiguration } from "@marlowe.io/testing-kit";
 
 global.console = console;
 
@@ -24,15 +15,12 @@ describe("Runtime Contract Lifecycle ", () => {
     "can create a Marlowe Contract ",
     async () => {
       try {
-        const { bank, mkLifecycle } = await readTestConfiguration().then(
-          mkTestEnvironment({})
-        );
+        const { bank, mkLifecycle } = await readTestConfiguration().then(mkTestEnvironment({}));
         const runtimeLifecycle = mkLifecycle(bank);
-        const [contractId, txIdContractCreated] =
-          await runtimeLifecycle.contracts.createContract({
-            contract: close,
-            minimumLovelaceUTxODeposit: 3_000_000,
-          });
+        const [contractId, txIdContractCreated] = await runtimeLifecycle.contracts.createContract({
+          contract: close,
+          minimumLovelaceUTxODeposit: 3_000_000,
+        });
         await bank.waitConfirmation(txIdContractCreated);
         logInfo(`contractID created : ${contractId}`);
       } catch (e) {
@@ -48,31 +36,23 @@ describe("Runtime Contract Lifecycle ", () => {
       "can Apply Inputs to a Contract",
       async () => {
         try {
-          const { bank, mkLifecycle } = await readTestConfiguration().then(
-            mkTestEnvironment({})
-          );
+          const { bank, mkLifecycle } = await readTestConfiguration().then(mkTestEnvironment({}));
 
           const runtime = mkLifecycle(bank);
 
           const notifyTimeout = pipe(addDays(Date.now(), 1), datetoTimeout);
-          const [contractId, txIdContractCreated] =
-            await runtime.contracts.createContract({
-              contract: oneNotifyTrue(notifyTimeout),
-              minimumLovelaceUTxODeposit: 3_000_000,
-            });
+          const [contractId, txIdContractCreated] = await runtime.contracts.createContract({
+            contract: oneNotifyTrue(notifyTimeout),
+            minimumLovelaceUTxODeposit: 3_000_000,
+          });
           await bank.waitConfirmation(txIdContractCreated);
           logInfo(
-            `contractID status : ${contractId} -> ${
-              (await runtime.restClient.getContractById({ contractId })).status
-            }`
+            `contractID status : ${contractId} -> ${(await runtime.restClient.getContractById({ contractId })).status}`
           );
           await bank.waitRuntimeSyncingTillCurrentWalletTip(runtime.restClient);
-          const txIdInputsApplied = await runtime.contracts.applyInputs(
-            contractId,
-            {
-              inputs: [inputNotify],
-            }
-          );
+          const txIdInputsApplied = await runtime.contracts.applyInputs(contractId, {
+            inputs: [inputNotify],
+          });
           const result = await bank.waitConfirmation(txIdInputsApplied);
           expect(result).toBe(true);
         } catch (e) {

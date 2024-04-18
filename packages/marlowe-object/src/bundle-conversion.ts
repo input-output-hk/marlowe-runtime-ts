@@ -8,12 +8,7 @@ import { Party, matchParty } from "./participants.js";
 import { Payee, matchPayee } from "./payee.js";
 import { Label } from "./reference.js";
 import { Token } from "./token.js";
-import {
-  Observation,
-  Value,
-  matchObservation,
-  matchValue,
-} from "./value-and-observation.js";
+import { Observation, Value, matchObservation, matchValue } from "./value-and-observation.js";
 
 export class CircularDependencyError extends Error {
   constructor(label: Label) {
@@ -44,13 +39,7 @@ export class LabelRedefinedError extends Error {
   }
 }
 
-export type ObjectTypes =
-  | "action"
-  | "contract"
-  | "observation"
-  | "party"
-  | "token"
-  | "value";
+export type ObjectTypes = "action" | "contract" | "observation" | "party" | "token" | "value";
 
 export class ObjectTypeMismatchError extends Error {
   constructor(label: Label, expected: ObjectTypes, got: ObjectTypes) {
@@ -67,9 +56,7 @@ export class ObjectTypeMismatchError extends Error {
  * @throws {@link ObjectTypeMismatchError} if a bundle entry does not have the expected type.
  * @category Bundle
  */
-export function bundleMapToList<A>(
-  contractBundleMap: ContractBundleMap<A>
-): ContractBundleList<A> {
+export function bundleMapToList<A>(contractBundleMap: ContractBundleMap<A>): ContractBundleList<A> {
   const goValue = (parents: Label[]) =>
     matchValue({
       availableMoney: (v) => {
@@ -268,16 +255,10 @@ export function bundleMapToList<A>(
  * @throws {@link LabelRedefinedError} if a bundle entry is defined more than once.
  * @category Bundle
  */
-export function bundleListToMap<A>(
-  contractBundleList: ContractBundleList<A>
-): ContractBundleMap<A> {
+export function bundleListToMap<A>(contractBundleList: ContractBundleList<A>): ContractBundleMap<A> {
   const bundleMap = {} as BundleM.BundleMap<A>;
 
-  function checkReference(
-    label: Label,
-    expectedType: ObjectTypes,
-    tail: BundleList<A>
-  ) {
+  function checkReference(label: Label, expectedType: ObjectTypes, tail: BundleList<A>) {
     const obj = bundleMap[label];
     if (typeof obj === "undefined") {
       if (tail.some((obj) => obj.label === label)) {

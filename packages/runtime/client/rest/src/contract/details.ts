@@ -18,11 +18,7 @@ import {
   PolicyId,
 } from "@marlowe.io/runtime-core";
 
-import {
-  assertGuardEqual,
-  convertNullableToUndefined,
-  proxy,
-} from "@marlowe.io/adapter/io-ts";
+import { assertGuardEqual, convertNullableToUndefined, proxy } from "@marlowe.io/adapter/io-ts";
 import { TxStatus } from "./transaction/status.js";
 
 // QUESTION: Where do we have global documentation about how Roles and payouts work?

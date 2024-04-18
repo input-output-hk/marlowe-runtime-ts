@@ -1,10 +1,6 @@
 import * as t from "io-ts/lib/index.js";
 import * as G from "@marlowe.io/language-core-v1/guards";
-import {
-  Token as CoreToken,
-  lovelace,
-  TokenName,
-} from "@marlowe.io/language-core-v1";
+import { Token as CoreToken, lovelace, TokenName } from "@marlowe.io/language-core-v1";
 import { Reference, ReferenceGuard } from "./reference.js";
 
 export { CoreToken, lovelace, TokenName };

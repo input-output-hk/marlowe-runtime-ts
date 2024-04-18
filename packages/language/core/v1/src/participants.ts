@@ -88,8 +88,7 @@ export const PartyGuard = t.union([AddressGuard, RoleGuard]);
 /**
  * @hidden
  */
-export const partiesToStrings: (parties: Party[]) => string[] = (parties) =>
-  pipe(parties, A.map(partyToString));
+export const partiesToStrings: (parties: Party[]) => string[] = (parties) => pipe(parties, A.map(partyToString));
 
 /**
  * @hidden

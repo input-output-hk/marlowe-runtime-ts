@@ -1,10 +1,6 @@
 import * as t from "io-ts/lib/index.js";
 
-import {
-  Observation,
-  ObservationGuard,
-  Value,
-} from "./value-and-observation.js";
+import { Observation, ObservationGuard, Value } from "./value-and-observation.js";
 import { ChoiceId, ChoiceIdGuard } from "./choices.js";
 import { Party, PartyGuard } from "./participants.js";
 import { AccountId, AccountIdGuard } from "./payee.js";
@@ -64,9 +60,7 @@ export interface Notify {
  * TODO: Comment
  * @category Action
  */
-export const NotifyGuard: t.Type<Notify> = t.recursion("Notify", () =>
-  t.type({ notify_if: ObservationGuard })
-);
+export const NotifyGuard: t.Type<Notify> = t.recursion("Notify", () => t.type({ notify_if: ObservationGuard }));
 
 /**
  * TODO: Comment

@@ -4,12 +4,7 @@ import { Contract, ContractGuard } from "../contract.js";
 import { Party, PartyGuard } from "../participants.js";
 import { Label, LabelGuard } from "../reference.js";
 import { Token, TokenGuard } from "../token.js";
-import {
-  ValueGuard,
-  Value,
-  Observation,
-  ObservationGuard,
-} from "../value-and-observation.js";
+import { ValueGuard, Value, Observation, ObservationGuard } from "../value-and-observation.js";
 
 /**
  * An entry of a {@link BundleList} that references a {@link Party}.
@@ -180,8 +175,7 @@ export interface ContractBundleList<A> {
 /**
  * {@link !io-ts-usage | Dynamic type guard} for the {@link ContractBundleList | contract bundle type}.
  */
-export const ContractBundleListGuard: t.Type<ContractBundleList<unknown>> =
-  t.type({
-    main: LabelGuard,
-    bundle: BundleListGuard,
-  });
+export const ContractBundleListGuard: t.Type<ContractBundleList<unknown>> = t.type({
+  main: LabelGuard,
+  bundle: BundleListGuard,
+});

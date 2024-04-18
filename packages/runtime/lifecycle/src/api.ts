@@ -13,12 +13,7 @@ import {
 import { RestClient, RestDI } from "@marlowe.io/runtime-rest-client";
 import { RolesConfiguration } from "@marlowe.io/runtime-rest-client/contract";
 import { ISO8601 } from "@marlowe.io/adapter/time";
-import {
-  Contract,
-  Environment,
-  Input,
-  RoleName,
-} from "@marlowe.io/language-core-v1";
+import { Contract, Environment, Input, RoleName } from "@marlowe.io/language-core-v1";
 import { Next } from "@marlowe.io/language-core-v1/next";
 import { SingleInputTx } from "@marlowe.io/language-core-v1/transaction.js";
 import { ContractBundleList } from "@marlowe.io/marlowe-object";
@@ -94,15 +89,12 @@ export type ContractsDI = WalletDI & RestDI;
  * Both options share the same {@link CreateContractRequestBase | request parameters}.
  * @category ContractsAPI
  */
-export type CreateContractRequest =
-  | CreateContractRequestFromContract
-  | CreateContractRequestFromBundle;
+export type CreateContractRequest = CreateContractRequestFromContract | CreateContractRequestFromBundle;
 
 /**
  * @category ContractsAPI
  */
-export interface CreateContractRequestFromContract
-  extends CreateContractRequestBase {
+export interface CreateContractRequestFromContract extends CreateContractRequestBase {
   /**
    * The Marlowe Contract to create
    */
@@ -112,8 +104,7 @@ export interface CreateContractRequestFromContract
 /**
  * @category ContractsAPI
  */
-export interface CreateContractRequestFromBundle
-  extends CreateContractRequestBase {
+export interface CreateContractRequestFromBundle extends CreateContractRequestBase {
   /**
    * The Marlowe Object bundle to create
    */
@@ -315,9 +306,7 @@ export interface ContractsAPI {
    * @returns ContractId (Marlowe id) and TxId (Cardano id) of the submitted Tx
    * @throws DecodingError
    */
-  createContract(
-    createContractRequest: CreateContractRequest
-  ): Promise<[ContractId, TxId]>;
+  createContract(createContractRequest: CreateContractRequest): Promise<[ContractId, TxId]>;
 
   /**
    * Submit to the Cardano Ledger, the Transaction(Tx) that will apply inputs to a given created contract.
@@ -325,18 +314,12 @@ export interface ContractsAPI {
    * @param applyInputsRequest inputs to apply
    * @throws DecodingError
    */
-  applyInputs(
-    contractId: ContractId,
-    applyInputsRequest: ApplyInputsRequest
-  ): Promise<TxId>;
+  applyInputs(contractId: ContractId, applyInputsRequest: ApplyInputsRequest): Promise<TxId>;
 
   /**
    * @deprecated Deprecated in favour of {@link @marlowe.io/runtime-lifecycle!api.ApplicableActionsAPI}
    */
-  getApplicableInputs(
-    contractId: ContractId,
-    environement: Environment
-  ): Promise<Next>;
+  getApplicableInputs(contractId: ContractId, environement: Environment): Promise<Next>;
 
   /**
    * @description

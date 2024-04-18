@@ -51,6 +51,7 @@ lib.iogx.mkShell {
     editorconfig-checker.excludes = [ "jsdelivr-npm-importmap\\.js" ];
 
     prettier.enable = true;
+    prettier.printWidth = 120;
     prettier.extraOptions = "--plugin ${pkgs.nodePackages.prettier-plugin-toml}/lib/node_modules/prettier-plugin-toml/lib/api.js --write";
     prettier.excludes = [ "jsdelivr-npm-importmap\\.js" ];
     prettier.files = "\\.(css|html|js|json|jsx|scss|ts|yaml|toml)$";

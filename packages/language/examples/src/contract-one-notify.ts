@@ -5,9 +5,7 @@ import { Contract, close, Timeout } from "@marlowe.io/language-core-v1";
  * @packageDocumentation
  */
 
-export const oneNotifyTrue: (notifyTimeout: Timeout) => Contract = (
-  notifyTimeout
-) => ({
+export const oneNotifyTrue: (notifyTimeout: Timeout) => Contract = (notifyTimeout) => ({
   when: [{ case: { notify_if: true }, then: close }],
   timeout: notifyTimeout,
   timeout_continuation: close,

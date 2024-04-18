@@ -51,10 +51,7 @@ import * as Either from "fp-ts/lib/Either.js";
   ```
  */
 
-export function assertGuardEqual<A, G extends t.Type<A, any, any>>(
-  proxy: A,
-  guard: G
-): G {
+export function assertGuardEqual<A, G extends t.Type<A, any, any>>(proxy: A, guard: G): G {
   return guard;
 }
 
@@ -74,11 +71,7 @@ export function convertNullableToUndefined<C extends t.Mixed>(
   codec: C,
   name = `fromNullableToUndefined(${codec.name})`
 ): C {
-  return withValidate(
-    codec,
-    (u, c) => (u == null ? t.success(undefined) : codec.validate(u, c)),
-    name
-  );
+  return withValidate(codec, (u, c) => (u == null ? t.success(undefined) : codec.validate(u, c)), name);
 }
 /**
  * Convert an unknown value to `T` if the guard provided is validating the unknown value.
@@ -90,9 +83,7 @@ export function expectType<T>(guard: t.Type<T>, aValue: unknown): T {
   if (guard.is(aValue)) {
     return aValue;
   } else {
-    throw `Expected value from type ${
-      guard.name
-    } but got ${MarloweJSON.stringify(aValue, null, 4)} `;
+    throw `Expected value from type ${guard.name} but got ${MarloweJSON.stringify(aValue, null, 4)} `;
   }
 }
 
@@ -131,14 +122,12 @@ export function likeLiteral<S extends string>(literal: S): t.Type<S> {
   return new t.Type(
     literal,
     (input: unknown): input is S => guard(input),
-    (input, context) =>
-      guard(input) ? t.success(literal) : t.failure(input, context),
+    (input, context) => (guard(input) ? t.success(literal) : t.failure(input, context)),
     t.identity
   );
 }
 
-export interface BrandP<A, B extends A, I>
-  extends t.Type<t.Branded<A, B>, t.Branded<A, B>, I> {}
+export interface BrandP<A, B extends A, I> extends t.Type<t.Branded<A, B>, t.Branded<A, B>, I> {}
 
 // The library io-ts has the helper t.brand which refines a type A into a type B
 // given a predicate. When we use that helper, the resulting codec changes the Actual
@@ -150,11 +139,7 @@ export interface BrandP<A, B extends A, I>
 // This helper is a workaround to that issue, making sure that if the original codec
 // has the same Output than the Actual type, the new codec outputs the branded type
 // So a PositiveInt codec will have the type t.Type<PositiveInt, PositiveInt, unknown>
-export function preservedBrand<
-  C extends t.Any,
-  N extends string,
-  B extends { readonly [K in N]: symbol },
->(
+export function preservedBrand<C extends t.Any, N extends string, B extends { readonly [K in N]: symbol }>(
   codec: C,
   predicate: Refinement<t.TypeOf<C>, t.Branded<t.TypeOf<C>, B>>,
   name: N
@@ -168,11 +153,7 @@ export function preservedBrand<
         Either.chain((a) =>
           predicate(a)
             ? t.success(a as t.Branded<t.TypeOf<C>, B>)
-            : t.failure<t.Branded<t.TypeOf<C>, B>>(
-                a,
-                c,
-                `Value does not satisfy the ${name} constraint`
-              )
+            : t.failure<t.Branded<t.TypeOf<C>, B>>(a, c, `Value does not satisfy the ${name} constraint`)
         )
       ),
     (a) => a

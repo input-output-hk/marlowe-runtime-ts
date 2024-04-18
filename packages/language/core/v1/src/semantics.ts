@@ -81,12 +81,7 @@ import {
   TransactionOutput,
   TransactionWarning,
 } from "./transaction.js";
-import {
-  matchObservation,
-  matchValue,
-  Observation,
-  Value,
-} from "./value-and-observation.js";
+import { matchObservation, matchValue, Observation, Value } from "./value-and-observation.js";
 import * as G from "./guards.js";
 import { POSIXTime } from "@marlowe.io/adapter/time";
 import * as Big from "@marlowe.io/adapter/bigint";
@@ -118,17 +113,8 @@ export { inBounds };
  * The function moneyInAccount returns the number of tokens a particular AccountId has in their account.
  * @hidden
  */
-function moneyInAccount(
-  accountId: AccountId,
-  token: Token,
-  accounts: Accounts
-): bigint {
-  return AssocMap.findWithDefault(
-    accountsCmp,
-    0n,
-    [accountId, token],
-    accounts
-  );
+function moneyInAccount(accountId: AccountId, token: Token, accounts: Accounts): bigint {
+  return AssocMap.findWithDefault(accountsCmp, 0n, [accountId, token], accounts);
 }
 
 /**
@@ -137,12 +123,7 @@ function moneyInAccount(
  * function is called with a negative value or zero the entry is removed from the accounts.
  * @hidden
  */
-function updateMoneyInAccount(
-  accountId: AccountId,
-  token: Token,
-  amount: bigint,
-  accounts: Accounts
-): Accounts {
+function updateMoneyInAccount(accountId: AccountId, token: Token, amount: bigint, accounts: Accounts): Accounts {
   if (amount <= 0n) {
     return AssocMap.remove(accountsCmp, [accountId, token], accounts);
   } else {
@@ -155,12 +136,7 @@ function updateMoneyInAccount(
  * particular AccountId. To ensure that the value always increases we check that money > 0.
  * @hidden
  */
-function addMoneyToAccount(
-  accountId: AccountId,
-  token: Token,
-  amount: bigint,
-  accounts: Accounts
-): Accounts {
+function addMoneyToAccount(accountId: AccountId, token: Token, amount: bigint, accounts: Accounts): Accounts {
   if (amount <= 0n) {
     return accounts;
   } else {
@@ -177,31 +153,16 @@ function addMoneyToAccount(
  * @returns
  * @category Evaluation
  */
-export function evalValue(
-  env: Environment,
-  state: MarloweState,
-  value: Value
-): bigint {
+export function evalValue(env: Environment, state: MarloweState, value: Value): bigint {
   return matchValue({
-    availableMoney: ({ amount_of_token, in_account }) =>
-      moneyInAccount(in_account, amount_of_token, state.accounts),
-    choiceValue: ({ value_of_choice }) =>
-      AssocMap.findWithDefault(choiceIdCmp, 0n, value_of_choice, state.choices),
-    useValue: ({ use_value }) =>
-      AssocMap.findWithDefault(
-        AssocMap.strCmp,
-        0n,
-        use_value,
-        state.boundValues
-      ),
+    availableMoney: ({ amount_of_token, in_account }) => moneyInAccount(in_account, amount_of_token, state.accounts),
+    choiceValue: ({ value_of_choice }) => AssocMap.findWithDefault(choiceIdCmp, 0n, value_of_choice, state.choices),
+    useValue: ({ use_value }) => AssocMap.findWithDefault(AssocMap.strCmp, 0n, use_value, state.boundValues),
     constant: (num) => num,
     negValue: (val) => -evalValue(env, state, val.negate),
-    addValue: ({ add, and }) =>
-      evalValue(env, state, add) + evalValue(env, state, and),
-    subValue: ({ value, minus }) =>
-      evalValue(env, state, value) - evalValue(env, state, minus),
-    mulValue: ({ multiply, times }) =>
-      evalValue(env, state, multiply) * evalValue(env, state, times),
+    addValue: ({ add, and }) => evalValue(env, state, add) + evalValue(env, state, and),
+    subValue: ({ value, minus }) => evalValue(env, state, value) - evalValue(env, state, minus),
+    mulValue: ({ multiply, times }) => evalValue(env, state, multiply) * evalValue(env, state, times),
     divValue: ({ divide, by }) => {
       const n = evalValue(env, state, divide);
       const d = evalValue(env, state, by);
@@ -214,10 +175,7 @@ export function evalValue(
     // TODO: from should be bigint.
     timeIntervalStart: () => BigInt(env.timeInterval.from),
     timeIntervalEnd: () => BigInt(env.timeInterval.to),
-    cond: (c) =>
-      evalObservation(env, state, c.if)
-        ? evalValue(env, state, c.then)
-        : evalValue(env, state, c.else),
+    cond: (c) => (evalObservation(env, state, c.if) ? evalValue(env, state, c.then) : evalValue(env, state, c.else)),
   })(value);
 }
 /**
@@ -228,40 +186,26 @@ export function evalValue(
  * @returns
  * @category Evaluation
  */
-export function evalObservation(
-  env: Environment,
-  state: MarloweState,
-  obs: Observation
-): boolean {
+export function evalObservation(env: Environment, state: MarloweState, obs: Observation): boolean {
   return matchObservation({
     trueObs: () => true,
     falseObs: () => false,
     notObs: (o) => !evalObservation(env, state, o.not),
-    andObs: ({ both, and }) =>
-      evalObservation(env, state, both) && evalObservation(env, state, and),
-    orObs: ({ either, or }) =>
-      evalObservation(env, state, either) || evalObservation(env, state, or),
-    choseSomething: ({ chose_something_for }) =>
-      AssocMap.member(choiceIdCmp, chose_something_for, state.choices),
-    valueGE: ({ value, ge_than }) =>
-      evalValue(env, state, value) >= evalValue(env, state, ge_than),
-    valueGT: ({ value, gt }) =>
-      evalValue(env, state, value) > evalValue(env, state, gt),
-    valueLT: ({ value, lt }) =>
-      evalValue(env, state, value) < evalValue(env, state, lt),
-    valueLE: ({ value, le_than }) =>
-      evalValue(env, state, value) <= evalValue(env, state, le_than),
-    valueEQ: ({ value, equal_to }) =>
-      evalValue(env, state, value) === evalValue(env, state, equal_to),
+    andObs: ({ both, and }) => evalObservation(env, state, both) && evalObservation(env, state, and),
+    orObs: ({ either, or }) => evalObservation(env, state, either) || evalObservation(env, state, or),
+    choseSomething: ({ chose_something_for }) => AssocMap.member(choiceIdCmp, chose_something_for, state.choices),
+    valueGE: ({ value, ge_than }) => evalValue(env, state, value) >= evalValue(env, state, ge_than),
+    valueGT: ({ value, gt }) => evalValue(env, state, value) > evalValue(env, state, gt),
+    valueLT: ({ value, lt }) => evalValue(env, state, value) < evalValue(env, state, lt),
+    valueLE: ({ value, le_than }) => evalValue(env, state, value) <= evalValue(env, state, le_than),
+    valueEQ: ({ value, equal_to }) => evalValue(env, state, value) === evalValue(env, state, equal_to),
   })(obs);
 }
 
 /**
  * @hidden
  */
-type ReduceEffect =
-  | { type: "ReduceNoPayment" }
-  | { type: "ReduceWithPayment"; payment: Payment };
+type ReduceEffect = { type: "ReduceNoPayment" } | { type: "ReduceWithPayment"; payment: Payment };
 
 /**
  * @hidden
@@ -278,8 +222,7 @@ const nonPositivePay = (warn: NonPositivePay): NonPositivePay => warn;
 /**
  * @hidden
  */
-const nonPositiveDeposit = (warn: NonPositiveDeposit): NonPositiveDeposit =>
-  warn;
+const nonPositiveDeposit = (warn: NonPositiveDeposit): NonPositiveDeposit => warn;
 
 /**
  * @hidden
@@ -308,12 +251,7 @@ const noWarning = "NoWarning" as const;
  * TODO: Comment
  * @category Transaction Warning
  */
-export type ReduceWarning =
-  | NoWarning
-  | NonPositivePay
-  | PartialPay
-  | Shadowing
-  | AssertionFailed;
+export type ReduceWarning = NoWarning | NonPositivePay | PartialPay | Shadowing | AssertionFailed;
 
 const ambiguousTimeIntervalError = "TEAmbiguousTimeIntervalError" as const;
 
@@ -346,9 +284,7 @@ const Reduced = (obj: {
 /**
  * @hidden
  */
-function refundOne(
-  accounts: Accounts
-): [Party, Token, bigint, Accounts] | undefined {
+function refundOne(accounts: Accounts): [Party, Token, bigint, Accounts] | undefined {
   if (accounts.length > 0) {
     const [[party, token], balance] = accounts[0];
     const rest = accounts.slice(1);
@@ -391,11 +327,7 @@ function giveMoney(
 /**
  * @hidden
  */
-function reduceContractStep(
-  env: Environment,
-  state: MarloweState,
-  cont: Contract
-): ReduceStepResult {
+function reduceContractStep(env: Environment, state: MarloweState, cont: Contract): ReduceStepResult {
   return matchContract<ReduceStepResult>({
     close: (closeContract) => {
       const refund = refundOne(state.accounts);
@@ -436,12 +368,7 @@ function reduceContractStep(
       const balance = moneyInAccount(from_account, token, state.accounts);
       const paidAmount = Big.min(amountToPay, balance);
       const newBalance = balance - paidAmount;
-      const newAccs = updateMoneyInAccount(
-        from_account,
-        token,
-        newBalance,
-        state.accounts
-      );
+      const newAccs = updateMoneyInAccount(from_account, token, newBalance, state.accounts);
       const warning =
         paidAmount < amountToPay
           ? partialPay({
@@ -452,13 +379,7 @@ function reduceContractStep(
               but_only_paid: paidAmount,
             })
           : noWarning;
-      const [payEffect, finalAccs] = giveMoney(
-        from_account,
-        to,
-        token,
-        paidAmount,
-        newAccs
-      );
+      const [payEffect, finalAccs] = giveMoney(from_account, to, token, paidAmount, newAccs);
       return Reduced({
         state: { ...state, accounts: finalAccs },
         warning: warning,
@@ -467,9 +388,7 @@ function reduceContractStep(
       });
     },
     if: (ifCont) => {
-      const newCont = evalObservation(env, state, ifCont.if)
-        ? ifCont.then
-        : ifCont.else;
+      const newCont = evalObservation(env, state, ifCont.if) ? ifCont.then : ifCont.else;
       return Reduced({
         state: state,
         warning: noWarning,
@@ -493,17 +412,8 @@ function reduceContractStep(
     },
     let: (letCont) => {
       const evaluatedValue = evalValue(env, state, letCont.be);
-      const boundValues = AssocMap.insert(
-        AssocMap.strCmp,
-        letCont.let,
-        evaluatedValue,
-        state.boundValues
-      );
-      const oldValue = AssocMap.lookup(
-        AssocMap.strCmp,
-        letCont.let,
-        state.boundValues
-      );
+      const boundValues = AssocMap.insert(AssocMap.strCmp, letCont.let, evaluatedValue, state.boundValues);
+      const oldValue = AssocMap.lookup(AssocMap.strCmp, letCont.let, state.boundValues);
       const warning =
         oldValue !== undefined
           ? shadowing({
@@ -520,9 +430,7 @@ function reduceContractStep(
       });
     },
     assert: (assertCont) => {
-      const warning = evalObservation(env, state, assertCont.assert)
-        ? noWarning
-        : assertionFailed;
+      const warning = evalObservation(env, state, assertCont.assert) ? noWarning : assertionFailed;
       return Reduced({
         state: state,
         warning: warning,
@@ -552,11 +460,7 @@ type ReduceResult = ContractQuiescentReduceResult | AmbiguousTimeIntervalError;
 /**
  * @hidden
  */
-export function reduceContractUntilQuiescent(
-  env: Environment,
-  state: MarloweState,
-  cont: Contract
-): ReduceResult {
+export function reduceContractUntilQuiescent(env: Environment, state: MarloweState, cont: Contract): ReduceResult {
   function go(
     reduced: boolean,
     goState: MarloweState,
@@ -570,21 +474,10 @@ export function reduceContractUntilQuiescent(
     }
     switch (result.type) {
       case "Reduced":
-        const newWarnings =
-          result.warning == "NoWarning"
-            ? goWarnings
-            : [...goWarnings, result.warning];
+        const newWarnings = result.warning == "NoWarning" ? goWarnings : [...goWarnings, result.warning];
         const newPayments =
-          result.effect.type == "ReduceNoPayment"
-            ? goPayments
-            : [...goPayments, result.effect.payment];
-        return go(
-          true,
-          result.state,
-          result.continuation,
-          newWarnings,
-          newPayments
-        );
+          result.effect.type == "ReduceNoPayment" ? goPayments : [...goPayments, result.effect.payment];
+        return go(true, result.state, result.continuation, newWarnings, newPayments);
       case "NotReduced":
         return {
           type: "ContractQuiescent",
@@ -604,21 +497,14 @@ export function reduceContractUntilQuiescent(
  */
 type ApplyWarning = NoWarning | NonPositiveDeposit;
 
-type ApplyAction =
-  | { type: "AppliedAction"; warning: ApplyWarning; state: MarloweState }
-  | { type: "NotAppliedAction" };
+type ApplyAction = { type: "AppliedAction"; warning: ApplyWarning; state: MarloweState } | { type: "NotAppliedAction" };
 const NotAppliedAction = { type: "NotAppliedAction" } as const;
-const AppliedAction = (obj: {
-  warning: ApplyWarning;
-  state: MarloweState;
-}): ApplyAction => ({ type: "AppliedAction", ...obj });
+const AppliedAction = (obj: { warning: ApplyWarning; state: MarloweState }): ApplyAction => ({
+  type: "AppliedAction",
+  ...obj,
+});
 
-function applyAction(
-  env: Environment,
-  state: MarloweState,
-  input: InputContent,
-  action: Action
-): ApplyAction {
+function applyAction(env: Environment, state: MarloweState, input: InputContent, action: Action): ApplyAction {
   if (G.IDeposit.is(input) && G.Deposit.is(action)) {
     if (
       deepEqual(input.input_from_party, action.party) &&
@@ -635,12 +521,7 @@ function applyAction(
               of_token: action.of_token,
               in_account: action.into_account,
             });
-      const newAccounts = addMoneyToAccount(
-        input.into_account,
-        input.of_token,
-        input.that_deposits,
-        state.accounts
-      );
+      const newAccounts = addMoneyToAccount(input.into_account, input.of_token, input.that_deposits, state.accounts);
       return AppliedAction({
         warning,
         state: { ...state, accounts: newAccounts },
@@ -651,12 +532,7 @@ function applyAction(
       deepEqual(input.for_choice_id, action.for_choice) &&
       inBounds(input.input_that_chooses_num, action.choose_between)
     ) {
-      const newChoices = AssocMap.insert(
-        choiceIdCmp,
-        input.for_choice_id,
-        input.input_that_chooses_num,
-        state.choices
-      );
+      const newChoices = AssocMap.insert(choiceIdCmp, input.for_choice_id, input.input_that_chooses_num, state.choices);
       return AppliedAction({
         warning: noWarning,
         state: { ...state, choices: newChoices },
@@ -674,11 +550,7 @@ function getContinuation(input: Input, cse: Case): Contract | undefined {
   if (G.NormalInput.is(input) && G.NormalCase.is(cse)) {
     return cse.then;
   }
-  if (
-    G.MerkleizedInput.is(input) &&
-    G.MerkleizedCase.is(cse) &&
-    input.continuation_hash == cse.merkleized_then
-  ) {
+  if (G.MerkleizedInput.is(input) && G.MerkleizedCase.is(cse) && input.continuation_hash == cse.merkleized_then) {
     return input.merkleized_continuation;
   }
   return undefined;
@@ -693,11 +565,10 @@ type AppliedResult = {
   state: MarloweState;
   continuation: Contract;
 };
-const AppliedResult = (obj: {
-  warning: ApplyWarning;
-  state: MarloweState;
-  continuation: Contract;
-}): AppliedResult => ({ type: "Applied", ...obj });
+const AppliedResult = (obj: { warning: ApplyWarning; state: MarloweState; continuation: Contract }): AppliedResult => ({
+  type: "Applied",
+  ...obj,
+});
 
 /**
  * Small type guard helper that is not 100% accurate (for real unknowns) but it doesn't check all the properties
@@ -706,12 +577,7 @@ const AppliedResult = (obj: {
  * @hidden
  */
 function isApplied(obj: unknown): obj is AppliedResult {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "type" in obj &&
-    obj.type === "Applied"
-  );
+  return typeof obj === "object" && obj !== null && "type" in obj && obj.type === "Applied";
 }
 
 const noMatchError = "TEApplyNoMatchError" as const;
@@ -737,12 +603,7 @@ function inputToInputContent(input: Input): InputContent {
 /**
  * @hidden
  */
-function applyCases(
-  env: Environment,
-  state: MarloweState,
-  input: Input,
-  cases: Case[]
-): ApplyResult {
+function applyCases(env: Environment, state: MarloweState, input: Input, cases: Case[]): ApplyResult {
   if (cases.length === 0) return noMatchError;
   const [headCase, ...tailCases] = cases;
   const action = headCase.case;
@@ -768,12 +629,7 @@ function applyCases(
 /**
  * @hidden
  */
-function applyInput(
-  env: Environment,
-  state: MarloweState,
-  input: Input,
-  cont: Contract
-): ApplyResult {
+function applyInput(env: Environment, state: MarloweState, input: Input, cont: Contract): ApplyResult {
   return (
     matchContract({
       when: (whenCont) => applyCases(env, state, input, whenCont.when),
@@ -781,9 +637,7 @@ function applyInput(
   );
 }
 
-export function convertReduceWarning(
-  warnings: ReduceWarning[]
-): TransactionWarning[] {
+export function convertReduceWarning(warnings: ReduceWarning[]): TransactionWarning[] {
   return warnings.filter((w) => w !== "NoWarning") as TransactionWarning[];
 }
 
@@ -817,29 +671,15 @@ const ApplyAllSuccess = (obj: {
  * @hidden
  */
 function isApplyAllSuccess(obj: unknown): obj is ApplyAllSuccess {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "type" in obj &&
-    obj.type === "ApplyAllSuccess"
-  );
+  return typeof obj === "object" && obj !== null && "type" in obj && obj.type === "ApplyAllSuccess";
 }
 
-type ApplyAllResult =
-  | ApplyAllSuccess
-  | ApplyNoMatchError
-  | AmbiguousTimeIntervalError
-  | HashMismatchError;
+type ApplyAllResult = ApplyAllSuccess | ApplyNoMatchError | AmbiguousTimeIntervalError | HashMismatchError;
 
 /**
  * @hidden
  */
-export function applyAllInputs(
-  env: Environment,
-  state: MarloweState,
-  cont: Contract,
-  inputs: Input[]
-): ApplyAllResult {
+export function applyAllInputs(env: Environment, state: MarloweState, cont: Contract, inputs: Input[]): ApplyAllResult {
   function go(
     contractChanged: boolean,
     goState: MarloweState,
@@ -854,10 +694,7 @@ export function applyAllInputs(
     }
     switch (reduceResult.type) {
       case "ContractQuiescent":
-        const newWarnigns = [
-          ...goWarnings,
-          ...convertReduceWarning(reduceResult.warnings),
-        ];
+        const newWarnigns = [...goWarnings, ...convertReduceWarning(reduceResult.warnings)];
         const newPayments = [...goPayments, ...reduceResult.payments];
         if (goInputs.length == 0) {
           return ApplyAllSuccess({
@@ -869,12 +706,7 @@ export function applyAllInputs(
           });
         } else {
           const [headInput, ...tailInputs] = goInputs;
-          const applyResult = applyInput(
-            env,
-            reduceResult.state,
-            headInput,
-            reduceResult.continuation
-          );
+          const applyResult = applyInput(env, reduceResult.state, headInput, reduceResult.continuation);
           if (isApplied(applyResult)) {
             return go(
               true,
@@ -898,30 +730,23 @@ type IntervalTrimmed = {
   environment: Environment;
   state: MarloweState;
 };
-const intervalTrimmed = (obj: {
-  environment: Environment;
-  state: MarloweState;
-}): IntervalTrimmed => ({ type: "IntervalTrimmed", ...obj });
+const intervalTrimmed = (obj: { environment: Environment; state: MarloweState }): IntervalTrimmed => ({
+  type: "IntervalTrimmed",
+  ...obj,
+});
 
 const invalidInterval = (from: bigint, to: bigint): IntervalError => ({
   invalidInterval: { from, to },
 });
-const intervalInPastError = (
-  from: bigint,
-  to: bigint,
-  minTime: bigint
-): IntervalError => ({ intervalInPastError: { from, to, minTime } });
+const intervalInPastError = (from: bigint, to: bigint, minTime: bigint): IntervalError => ({
+  intervalInPastError: { from, to, minTime },
+});
 
 type IntervalResult = IntervalTrimmed | IntervalError;
 
-function fixInterval(
-  interval: TimeInterval,
-  state: MarloweState
-): IntervalResult {
-  if (interval.to < interval.from)
-    return invalidInterval(interval.from, interval.to);
-  if (interval.to < state.minTime)
-    return intervalInPastError(interval.from, interval.to, state.minTime);
+function fixInterval(interval: TimeInterval, state: MarloweState): IntervalResult {
+  if (interval.to < interval.from) return invalidInterval(interval.from, interval.to);
+  if (interval.to < state.minTime) return intervalInPastError(interval.from, interval.to, state.minTime);
   const newFrom = Big.max(interval.from, state.minTime);
   const environment = { timeInterval: { from: newFrom, to: interval.to } };
   return intervalTrimmed({
@@ -947,11 +772,7 @@ function transactionError(transaction_error: TransactionError) {
  * @returns Wether the transaction was successful or not and the new state of the contract.
  * @category Evaluation
  */
-export function computeTransaction(
-  tx: Transaction,
-  state: MarloweState,
-  cont: Contract
-): TransactionOutput {
+export function computeTransaction(tx: Transaction, state: MarloweState, cont: Contract): TransactionOutput {
   const fixIntervalResult = fixInterval(tx.tx_interval, state);
 
   if (G.IntervalError.is(fixIntervalResult)) {
@@ -967,10 +788,7 @@ export function computeTransaction(
     tx.tx_inputs
   );
   if (isApplyAllSuccess(applyAllInputsResult)) {
-    if (
-      !applyAllInputsResult.contractChanged &&
-      (!G.Close.is(cont) || state.accounts.length == 0)
-    ) {
+    if (!applyAllInputsResult.contractChanged && (!G.Close.is(cont) || state.accounts.length == 0)) {
       return transactionError("TEUselessTransaction");
     } else {
       return {
@@ -1015,11 +833,7 @@ export function emptyState(minTime: POSIXTime): MarloweState {
  * @returns The resulting state and contract, along with the accumulated warnings and payments or a {@link TransactionError}.
  * @category Evaluation
  */
-export function playTrace(
-  initialTime: POSIXTime,
-  contract: Contract,
-  transactions: Transaction[]
-): TransactionOutput {
+export function playTrace(initialTime: POSIXTime, contract: Contract, transactions: Transaction[]): TransactionOutput {
   function go(prev: TransactionOutput, txs: Transaction[]): TransactionOutput {
     if (txs.length === 0) return prev;
     if (!G.TransactionSuccess.is(prev)) return prev;
@@ -1047,11 +861,7 @@ export function playTrace(
   );
 }
 
-export function playSingleInputTxTrace(
-  initialTime: POSIXTime,
-  contract: Contract,
-  transactions: SingleInputTx[]
-) {
+export function playSingleInputTxTrace(initialTime: POSIXTime, contract: Contract, transactions: SingleInputTx[]) {
   const txs = transactions.map((tx) => {
     const tx_inputs = typeof tx.input === "undefined" ? [] : [tx.input];
     return {

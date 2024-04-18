@@ -88,9 +88,7 @@ export function escrowWithCollateral({
 
   const buyer: Party = Role("Buyer");
   const seller: Party = Role("Seller");
-  const burnAddress: Party = Address(
-    "addr_test1vqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3lgle2"
-  );
+  const burnAddress: Party = Address("addr_test1vqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3lgle2");
 
   function depositCollateral(
     party: Party,
@@ -98,11 +96,7 @@ export function escrowWithCollateral({
     timeoutContinuation: Contract,
     continuation: Contract
   ): Contract {
-    return When(
-      [Case(Deposit(party, party, ada, collateral), continuation)],
-      timeout,
-      timeoutContinuation
-    );
+    return When([Case(Deposit(party, party, ada, collateral), continuation)], timeout, timeoutContinuation);
   }
 
   function burnCollaterals(continuation: Contract): Contract {
@@ -115,28 +109,12 @@ export function escrowWithCollateral({
     );
   }
 
-  function deposit(
-    timeout: Timeout,
-    timeoutContinuation: Contract,
-    continuation: Contract
-  ): Contract {
-    return When(
-      [Case(Deposit(seller, buyer, ada, price), continuation)],
-      timeout,
-      timeoutContinuation
-    );
+  function deposit(timeout: Timeout, timeoutContinuation: Contract, continuation: Contract): Contract {
+    return When([Case(Deposit(seller, buyer, ada, price), continuation)], timeout, timeoutContinuation);
   }
 
-  function choice(
-    choiceName: string,
-    chooser: Party,
-    choiceValue: SomeNumber,
-    continuation: Contract
-  ): Case {
-    return Case(
-      Choice(ChoiceId(choiceName, chooser), [Bound(choiceValue, choiceValue)]),
-      continuation
-    );
+  function choice(choiceName: string, chooser: Party, choiceValue: SomeNumber, continuation: Contract): Case {
+    return Case(Choice(ChoiceId(choiceName, chooser), [Bound(choiceValue, choiceValue)]), continuation);
   }
 
   function choices(
@@ -147,13 +125,7 @@ export function escrowWithCollateral({
   ): Contract {
     var caseList: Case[] = new Array(list.length);
     list.forEach(
-      (element, index) =>
-        (caseList[index] = choice(
-          element.name,
-          chooser,
-          element.value,
-          element.continuation
-        ))
+      (element, index) => (caseList[index] = choice(element.name, chooser, element.value, element.continuation))
     );
     return When(caseList, timeout, timeoutContinuation);
   }
@@ -182,13 +154,9 @@ export function escrowWithCollateral({
     return refundSellerCollateral(refundBuyerCollateral(continuation));
   }
 
-  const refundBuyer: Contract = explicitRefunds
-    ? Pay(buyer, Party(buyer), ada, price, Close)
-    : Close;
+  const refundBuyer: Contract = explicitRefunds ? Pay(buyer, Party(buyer), ada, price, Close) : Close;
 
-  const refundSeller: Contract = explicitRefunds
-    ? Pay(seller, Party(seller), ada, price, Close)
-    : Close;
+  const refundSeller: Contract = explicitRefunds ? Pay(seller, Party(seller), ada, price, Close) : Close;
 
   const contract: Contract = depositCollateral(
     seller,

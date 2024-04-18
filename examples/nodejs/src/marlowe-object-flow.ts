@@ -24,22 +24,14 @@ import {
 } from "@marlowe.io/runtime-core";
 import { ContractBundleMap, lovelace, close } from "@marlowe.io/marlowe-object";
 import { input, select } from "@inquirer/prompts";
-import {
-  RuntimeLifecycle,
-  ApplicableAction,
-  CanDeposit,
-  CanAdvance,
-} from "@marlowe.io/runtime-lifecycle/api";
+import { RuntimeLifecycle, ApplicableAction, CanDeposit, CanAdvance } from "@marlowe.io/runtime-lifecycle/api";
 import arg from "arg";
 import * as t from "io-ts/lib/index.js";
 import { mkSourceMap, SourceMap } from "./experimental-features/source-map.js";
 import { POSIXTime, posixTimeToIso8601 } from "@marlowe.io/adapter/time";
 import { SingleInputTx } from "@marlowe.io/language-core-v1/semantics";
 import * as ObjG from "@marlowe.io/marlowe-object/guards";
-import {
-  TemplateParametersOf,
-  mkMarloweTemplate,
-} from "@marlowe.io/marlowe-template";
+import { TemplateParametersOf, mkMarloweTemplate } from "@marlowe.io/marlowe-template";
 
 // When this script is called, start with main.
 main();
@@ -62,9 +54,7 @@ function parseCli() {
     console.log("  npm run marlowe-object-flow -- --config alice.config");
     console.log("Options:");
     console.log("  --help: Print this message");
-    console.log(
-      "  --config | -c: The path to the config file [default .config.json]"
-    );
+    console.log("  --config | -c: The path to the config file [default .config.json]");
     process.exit(exitStatus);
   }
   return args;
@@ -137,10 +127,7 @@ function dateInFutureValidator(value: string) {
  * @param lifecycle An instance of the RuntimeLifecycle
  * @param rewardAddress An optional reward address to stake the contract rewards
  */
-async function createContractMenu(
-  lifecycle: RuntimeLifecycle,
-  rewardAddress?: StakeAddressBech32
-) {
+async function createContractMenu(lifecycle: RuntimeLifecycle, rewardAddress?: StakeAddressBech32) {
   const payee = addressBech32(
     await input({
       message: "Enter the payee address",
@@ -167,16 +154,12 @@ async function createContractMenu(
   const releaseDeadline = new Date(releaseDeadlineStr);
 
   const walletAddress = await lifecycle.wallet.getChangeAddress();
-  console.log(
-    `Making a delayed payment:\n * from  ${walletAddress}\n * to ${payee}\n * for ${amount} lovelaces\n`
-  );
+  console.log(`Making a delayed payment:\n * from  ${walletAddress}\n * to ${payee}\n * for ${amount} lovelaces\n`);
   console.log(
     `The payment must be deposited before ${depositDeadline} and can be released to the payee after ${releaseDeadline}`
   );
   if (rewardAddress) {
-    console.log(
-      `In the meantime, the contract will stake rewards to ${rewardAddress}`
-    );
+    console.log(`In the meantime, the contract will stake rewards to ${rewardAddress}`);
   }
 
   const scheme = {
@@ -219,9 +202,7 @@ async function loadContractMenu(lifecycle: RuntimeLifecycle) {
     return;
   }
   if (validationResult === "InvalidContract") {
-    console.log(
-      "Invalid contract, it does not have the expected contract source"
-    );
+    console.log("Invalid contract, it does not have the expected contract source");
     return;
   }
 
@@ -230,19 +211,10 @@ async function loadContractMenu(lifecycle: RuntimeLifecycle) {
   console.log(`  * Pay from: ${validationResult.scheme.payer}`);
   console.log(`  * Pay to: ${validationResult.scheme.payee}`);
   console.log(`  * Amount: ${validationResult.scheme.amount} lovelaces`);
-  console.log(
-    `  * Deposit deadline: ${validationResult.scheme.depositDeadline}`
-  );
-  console.log(
-    `  * Release deadline: ${validationResult.scheme.releaseDeadline}`
-  );
+  console.log(`  * Deposit deadline: ${validationResult.scheme.depositDeadline}`);
+  console.log(`  * Release deadline: ${validationResult.scheme.releaseDeadline}`);
 
-  return contractMenu(
-    lifecycle,
-    validationResult.scheme,
-    validationResult.sourceMap,
-    cid
-  );
+  return contractMenu(lifecycle, validationResult.scheme, validationResult.sourceMap, cid);
 }
 
 /**
@@ -256,31 +228,21 @@ async function contractMenu(
 ): Promise<void> {
   // Get and print the contract logical state.
   const inputHistory = await lifecycle.contracts.getInputHistory(contractId);
-  const contractState = getState(
-    datetoTimeout(new Date()),
-    inputHistory,
-    sourceMap
-  );
+  const contractState = getState(datetoTimeout(new Date()), inputHistory, sourceMap);
 
   printState(contractState, scheme);
 
   // See what actions are applicable to the current contract state
-  const { contractDetails, actions } =
-    await lifecycle.applicableActions.getApplicableActions(contractId);
+  const { contractDetails, actions } = await lifecycle.applicableActions.getApplicableActions(contractId);
 
   if (contractDetails.type === "closed") return;
 
-  const myActionsFilter =
-    await lifecycle.applicableActions.mkFilter(contractDetails);
+  const myActionsFilter = await lifecycle.applicableActions.mkFilter(contractDetails);
   const myActions = actions.filter(myActionsFilter);
 
   const choices: Array<{
     name: string;
-    value:
-      | CanDeposit
-      | CanAdvance
-      | { actionType: "check-state" }
-      | { actionType: "return" };
+    value: CanDeposit | CanAdvance | { actionType: "check-state" } | { actionType: "return" };
   }> = [
     {
       name: "Re-check contract state",
@@ -325,10 +287,7 @@ async function contractMenu(
     case "Advance":
     case "Deposit":
       console.log("Applying input");
-      const applicableInput = await lifecycle.applicableActions.getInput(
-        contractDetails,
-        selectedAction
-      );
+      const applicableInput = await lifecycle.applicableActions.getInput(contractDetails, selectedAction);
       const txId = await lifecycle.applicableActions.applyInput(contractId, {
         input: applicableInput,
       });
@@ -338,10 +297,7 @@ async function contractMenu(
   }
 }
 
-async function mainLoop(
-  lifecycle: RuntimeLifecycle,
-  rewardAddress?: StakeAddressBech32
-) {
+async function mainLoop(lifecycle: RuntimeLifecycle, rewardAddress?: StakeAddressBech32) {
   try {
     while (true) {
       const address = await lifecycle.wallet.getChangeAddress();
@@ -420,11 +376,7 @@ const delayPaymentTemplate = mkMarloweTemplate({
  */
 type DelayPaymentParameters = TemplateParametersOf<typeof delayPaymentTemplate>;
 
-type DelayPaymentAnnotations =
-  | "initialDeposit"
-  | "WaitForRelease"
-  | "PaymentMissedClose"
-  | "PaymentReleasedClose";
+type DelayPaymentAnnotations = "initialDeposit" | "WaitForRelease" | "PaymentMissedClose" | "PaymentReleasedClose";
 
 const DelayPaymentAnnotationsGuard = t.union([
   t.literal("initialDeposit"),
@@ -433,9 +385,7 @@ const DelayPaymentAnnotationsGuard = t.union([
   t.literal("PaymentReleasedClose"),
 ]);
 
-function mkDelayPayment(
-  scheme: DelayPaymentParameters
-): ContractBundleMap<DelayPaymentAnnotations> {
+function mkDelayPayment(scheme: DelayPaymentParameters): ContractBundleMap<DelayPaymentAnnotations> {
   return {
     main: "initial-deposit",
     objects: {
@@ -478,12 +428,7 @@ function mkDelayPayment(
 /**
  * The delay payment contract can be in one of the following logical states:
  */
-type DelayPaymentState =
-  | InitialState
-  | PaymentDeposited
-  | PaymentMissed
-  | PaymentReady
-  | Closed;
+type DelayPaymentState = InitialState | PaymentDeposited | PaymentMissed | PaymentReady | Closed;
 /**
  * In the initial state the contract is waiting for the payment to be deposited
  */
@@ -525,14 +470,10 @@ function printState(state: DelayPaymentState, scheme: DelayPaymentParameters) {
       console.log(`Waiting ${scheme.payer} to deposit ${scheme.amount}`);
       break;
     case "PaymentDeposited":
-      console.log(
-        `Payment deposited, waiting until ${scheme.releaseDeadline} to be able to release the payment`
-      );
+      console.log(`Payment deposited, waiting until ${scheme.releaseDeadline} to be able to release the payment`);
       break;
     case "PaymentMissed":
-      console.log(
-        `Payment missed on ${scheme.depositDeadline}, contract can be closed to retrieve minUTXO`
-      );
+      console.log(`Payment missed on ${scheme.depositDeadline}, contract can be closed to retrieve minUTXO`);
       break;
     case "PaymentReady":
       console.log(`Payment ready to be released`);
@@ -630,15 +571,10 @@ async function validateExistingContract(
 async function main() {
   const args = parseCli();
   const config = await readConfig(args["--config"]);
-  const lucid = await Lucid.new(
-    new Blockfrost(config.blockfrostUrl, config.blockfrostProjectId),
-    config.network
-  );
+  const lucid = await Lucid.new(new Blockfrost(config.blockfrostUrl, config.blockfrostProjectId), config.network);
   lucid.selectWalletFromSeed(config.seedPhrase);
   const rewardAddressStr = await lucid.wallet.rewardAddress();
-  const rewardAddress = rewardAddressStr
-    ? stakeAddressBech32(rewardAddressStr)
-    : undefined;
+  const rewardAddress = rewardAddressStr ? stakeAddressBech32(rewardAddressStr) : undefined;
   const runtimeURL = config.runtimeURL;
 
   const wallet = mkLucidWallet(lucid);

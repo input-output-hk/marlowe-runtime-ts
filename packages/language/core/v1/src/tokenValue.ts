@@ -22,16 +22,19 @@ export const TokenValue = t.type({ amount: t.bigint, token: T.TokenGuard });
  * search [[token-vs-token_value]]
  * @hidden
  */
-export const tokenValue: (amount: bigint) => (token: T.Token) => TokenValue =
-  (amount) => (token) => ({ amount: amount, token: token });
+export const tokenValue: (amount: bigint) => (token: T.Token) => TokenValue = (amount) => (token) => ({
+  amount: amount,
+  token: token,
+});
 
 /**
  * search [[token-vs-token_value]]
  * @hidden
  */
-export const lovelaceValue: (lovelaces: bigint) => TokenValue = (
-  lovelaces
-) => ({ amount: lovelaces, token: T.adaToken });
+export const lovelaceValue: (lovelaces: bigint) => TokenValue = (lovelaces) => ({
+  amount: lovelaces,
+  token: T.adaToken,
+});
 
 /**
  * search [[token-vs-token_value]]

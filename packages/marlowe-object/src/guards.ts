@@ -42,10 +42,7 @@ export {
 
 export { ChoiceIdGuard as ChoiceId } from "./choices.js";
 
-export {
-  ReferenceGuard as Reference,
-  LabelGuard as Label,
-} from "./reference.js";
+export { ReferenceGuard as Reference, LabelGuard as Label } from "./reference.js";
 export { PartyGuard as Party } from "./participants.js";
 export {
   PayeeAccountGuard as PayeeAccount,
@@ -99,10 +96,7 @@ export const BundleListObject = {
   Action: BL.ObjectActionGuard,
 };
 
-export {
-  BundleMapGuard as BundleMap,
-  ContractBundleMapGuard as ContractBundleMap,
-} from "./bundle-map/bundle-map.js";
+export { BundleMapGuard as BundleMap, ContractBundleMapGuard as ContractBundleMap } from "./bundle-map/bundle-map.js";
 
 export const BundleMapObject = {
   Party: BM.ObjectPartyGuard,

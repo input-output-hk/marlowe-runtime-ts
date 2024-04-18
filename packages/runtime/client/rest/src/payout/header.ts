@@ -1,11 +1,6 @@
 import * as t from "io-ts/lib/index.js";
 
-import {
-  ContractIdGuard,
-  AssetId,
-  PayoutId,
-  WithdrawalId,
-} from "@marlowe.io/runtime-core";
+import { ContractIdGuard, AssetId, PayoutId, WithdrawalId } from "@marlowe.io/runtime-core";
 import { PayoutStatus } from "./status.js";
 import { optionFromNullable } from "io-ts-types";
 

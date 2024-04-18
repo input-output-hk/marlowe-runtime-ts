@@ -20,30 +20,8 @@
  * @packageDocumentation
  */
 import * as C from "./index.js";
-import type {
-  Timeout,
-  Value,
-  Party,
-  ChoiceId,
-  Token,
-  Contract,
-  Observation,
-  Action,
-  Payee,
-  Case,
-} from "./index.js";
-export {
-  Timeout,
-  Value,
-  Party,
-  ChoiceId,
-  Token,
-  Contract,
-  Observation,
-  Action,
-  Payee,
-  Case,
-};
+import type { Timeout, Value, Party, ChoiceId, Token, Contract, Observation, Action, Payee, Case } from "./index.js";
+export { Timeout, Value, Party, ChoiceId, Token, Contract, Observation, Action, Payee, Case };
 
 export type SomeNumber = number | string | bigint;
 
@@ -55,9 +33,7 @@ function coerceNumber(n: SomeNumber): bigint {
     return n;
   } else if (typeof n == "number") {
     if (n > Number.MAX_SAFE_INTEGER || n < -Number.MAX_SAFE_INTEGER) {
-      throw new Error(
-        "Unsafe use of JavaScript numbers. For amounts this large, please use bigint."
-      );
+      throw new Error("Unsafe use of JavaScript numbers. For amounts this large, please use bigint.");
     }
     return BigInt(n);
   } else {
@@ -105,28 +81,19 @@ export type EValue = SomeNumber | Value;
 function coerceValue(val: EValue): Value {
   if (typeof val == "number") {
     if (val > Number.MAX_SAFE_INTEGER || val < -Number.MAX_SAFE_INTEGER) {
-      throw new Error(
-        "Unsafe use of JavaScript numbers. For amounts this large, please use bigint."
-      );
+      throw new Error("Unsafe use of JavaScript numbers. For amounts this large, please use bigint.");
     }
     return BigInt(val);
   } else if (typeof val == "bigint") {
     return val;
-  } else if (
-    typeof val == "string" &&
-    val != "time_interval_start" &&
-    val != "time_interval_end"
-  ) {
+  } else if (typeof val == "string" && val != "time_interval_start" && val != "time_interval_end") {
     return BigInt(val);
   } else {
     return val;
   }
 }
 
-export const AvailableMoney = function (
-  token: Token,
-  accountId: AccountId
-): Value {
+export const AvailableMoney = function (token: Token, accountId: AccountId): Value {
   return { amount_of_token: token, in_account: accountId };
 };
 
@@ -166,25 +133,15 @@ export const UseValue = function (valueId: ValueId): Value {
   return { use_value: valueId };
 };
 
-export const Cond = function (
-  obs: Observation,
-  contThen: EValue,
-  contElse: EValue
-): Value {
+export const Cond = function (obs: Observation, contThen: EValue, contElse: EValue): Value {
   return { if: obs, then: coerceValue(contThen), else: coerceValue(contElse) };
 };
 
-export const AndObs = function (
-  lhs: Observation,
-  rhs: Observation
-): Observation {
+export const AndObs = function (lhs: Observation, rhs: Observation): Observation {
   return { both: lhs, and: rhs };
 };
 
-export const OrObs = function (
-  lhs: Observation,
-  rhs: Observation
-): Observation {
+export const OrObs = function (lhs: Observation, rhs: Observation): Observation {
   return { either: lhs, or: rhs };
 };
 
@@ -220,19 +177,11 @@ export const TrueObs: Observation = true;
 
 export const FalseObs: Observation = false;
 
-export const Bound = function (
-  boundMin: SomeNumber,
-  boundMax: SomeNumber
-): C.Bound {
+export const Bound = function (boundMin: SomeNumber, boundMax: SomeNumber): C.Bound {
   return { from: coerceNumber(boundMin), to: coerceNumber(boundMax) };
 };
 
-export const Deposit = function (
-  accId: AccountId,
-  party: Party,
-  token: Token,
-  value: EValue
-): Action {
+export const Deposit = function (accId: AccountId, party: Party, token: Token, value: EValue): Action {
   return {
     party: party,
     deposits: coerceValue(value),
@@ -281,19 +230,11 @@ export const Pay = function (
   };
 };
 
-export const If = function (
-  obs: Observation,
-  contThen: Contract,
-  contElse: Contract
-): Contract {
+export const If = function (obs: Observation, contThen: Contract, contElse: Contract): Contract {
   return { if: obs, then: contThen, else: contElse };
 };
 
-export const When = function (
-  cases: Case[],
-  timeout: ETimeout,
-  timeoutCont: Contract
-): Contract {
+export const When = function (cases: Case[], timeout: ETimeout, timeoutCont: Contract): Contract {
   var coercedTimeout: Timeout;
   if (typeof timeout == "object") {
     coercedTimeout = timeout;
@@ -307,11 +248,7 @@ export const When = function (
   };
 };
 
-export const Let = function (
-  valueId: ValueId,
-  value: Value,
-  cont: Contract
-): Contract {
+export const Let = function (valueId: ValueId, value: Value, cont: Contract): Contract {
   return { let: valueId, be: value, then: cont };
 };
 

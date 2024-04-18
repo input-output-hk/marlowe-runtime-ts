@@ -23,9 +23,7 @@ import { TxStatus } from "../../contract/transaction/status.js";
 import { PayoutHeader } from "../../payout/header.js";
 import { assertGuardEqual, proxy } from "@marlowe.io/adapter/io-ts";
 
-export type GET = (
-  withdrawalId: WithdrawalId
-) => TE.TaskEither<Error | DecodingError, WithdrawalDetails>;
+export type GET = (withdrawalId: WithdrawalId) => TE.TaskEither<Error | DecodingError, WithdrawalDetails>;
 
 /**
  * Request options for the {@link index.RestClient#getWithdrawalById | Get withdrawal by ID } endpoint
@@ -67,21 +65,16 @@ export type GetWithdrawalByIdResponse = {
 /**
  * @see {@link https://docs.marlowe.iohk.io/api/get-withdrawal-by-id}
  */
-export const getViaAxios: (axiosInstance: AxiosInstance) => GET =
-  (axiosInstance) => (withdrawalId) =>
-    pipe(
-      HTTP.Get(axiosInstance)(endpointURI(withdrawalId), {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(WithdrawalDetails.decode(data))
-        )
-      )
-    );
+export const getViaAxios: (axiosInstance: AxiosInstance) => GET = (axiosInstance) => (withdrawalId) =>
+  pipe(
+    HTTP.Get(axiosInstance)(endpointURI(withdrawalId), {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }),
+    TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(WithdrawalDetails.decode(data))))
+  );
 
 export type PUT = (
   withdrawalId: WithdrawalId,
@@ -94,16 +87,12 @@ export type PUT = (
 export const putViaAxios: (axiosInstance: AxiosInstance) => PUT =
   (axiosInstance) => (withdrawalId, hexTransactionWitnessSet) =>
     pipe(
-      HTTP.Put(axiosInstance)(
-        endpointURI(withdrawalId),
-        transactionWitnessSetTextEnvelope(hexTransactionWitnessSet),
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      HTTP.Put(axiosInstance)(endpointURI(withdrawalId), transactionWitnessSetTextEnvelope(hexTransactionWitnessSet), {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
     );
 
 const endpointURI = (withdrawalId: WithdrawalId): string =>
