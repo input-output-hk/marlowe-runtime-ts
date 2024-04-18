@@ -140,7 +140,7 @@ function mkApplicableActionsAPI(
  * TODO comment
  * @category New ContractsAPI
  */
-type ComputeApplicableActionsRequest = {
+export type ComputeApplicableActionsRequest = {
   environment?: Environment;
   contractDetails?: ContractDetails;
 };

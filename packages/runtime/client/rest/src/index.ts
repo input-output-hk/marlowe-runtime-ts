@@ -609,6 +609,11 @@ export interface ContractsAPI {
  */
 export type RestDI = { restClient: RestClient };
 
+/**
+ *
+ * @description Dependency Injection for the Wallet API
+ * @hidden
+ */
 export type DeprecatedRestDI = { deprecatedRestAPI: FPTSRestAPI };
 
 /**

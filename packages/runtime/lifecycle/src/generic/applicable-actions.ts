@@ -40,7 +40,7 @@ import {
   Tags,
   TxId,
 } from "@marlowe.io/runtime-core";
-import { RestClient, RestDI, Tip } from "@marlowe.io/runtime-rest-client";
+import { RestDI } from "@marlowe.io/runtime-rest-client";
 import { WalletAPI, WalletDI } from "@marlowe.io/wallet";
 import * as Big from "@marlowe.io/adapter/bigint";
 import { ContractSourceId } from "@marlowe.io/marlowe-object";

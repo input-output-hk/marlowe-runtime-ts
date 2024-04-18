@@ -31,9 +31,20 @@ import {
   ContractInstanceAPI,
 } from "./generic/new-contract-api.js";
 import {
+  ApplyInputsRequest,
   ContractsAPI,
+  CreateContractRequest,
   CreateContractRequestBase,
+  CreateContractRequestFromBundle,
+  CreateContractRequestFromContract,
 } from "./generic/contracts.js";
+import {
+  ContractsAPI as NewContractsAPI,
+  ApplicableActionsAPI as NewApplicableActionsAPI,
+  ComputeApplicableActionsRequest,
+} from "./generic/new-contract-api.js";
+import * as NewContract from "./generic/new-contract-api.js";
+
 export {
   ApplicableActionsAPI,
   ApplicableAction,
@@ -50,8 +61,15 @@ export {
   ContractDetails,
   ContractInstanceAPI,
   CreateContractRequestBase,
+  ContractsAPI,
+  ApplyInputsRequest,
+  CreateContractRequest,
+  NewContractsAPI,
+  NewApplicableActionsAPI,
+  ComputeApplicableActionsRequest,
+  CreateContractRequestFromContract,
+  CreateContractRequestFromBundle,
 };
-import * as NewContract from "./generic/new-contract-api.js";
 
 /**
  * This is the main entry point of the @marlowe.io/runtime-lifecycle package. It provides a set of APIs to
@@ -70,9 +88,15 @@ export interface RuntimeLifecycle {
    * Access to the low-level REST API as defined in the {@link @marlowe.io/runtime-rest-client! } package. It is re-exported here for convenience.
    */
   restClient: RestClient;
+
+  /**
+   * The new contract API is a high level API that lets you create and interact with Marlowe contracts.
+   */
   newContractAPI: NewContract.ContractsAPI;
+
   /**
    * The contracts API is a high level API that lets you create and interact with Marlowe contracts.
+   *  @deprecated Use {@link RuntimeLifecycle.newContractAPI} instead.
    */
   contracts: ContractsAPI;
   payouts: PayoutsAPI;

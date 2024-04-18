@@ -1,5 +1,3 @@
-import * as TE from "fp-ts/lib/TaskEither.js";
-import { pipe } from "fp-ts/lib/function.js";
 import { Option } from "fp-ts/lib/Option.js";
 import {
   Contract,
@@ -8,7 +6,7 @@ import {
   Party,
   RoleName,
 } from "@marlowe.io/language-core-v1";
-import { tryCatchDefault, unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
+import { unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
 
 import {
   getAddressesAndCollaterals,
@@ -20,8 +18,6 @@ import {
   ContractId,
   contractIdToTxId,
   TxId,
-  AddressesAndCollaterals,
-  HexTransactionWitnessSet,
   transactionWitnessSetTextEnvelope,
   BlockHeader,
   StakeAddressBech32,
@@ -36,14 +32,12 @@ import {
   ItemRange,
   DeprecatedRestDI,
 } from "@marlowe.io/runtime-rest-client";
-import { DecodingError } from "@marlowe.io/adapter/codec";
 
 import { Next, noNext } from "@marlowe.io/language-core-v1/next";
 import {
   BuildCreateContractTxRequest,
   BuildCreateContractTxRequestOptions,
   RolesConfiguration,
-  TransactionTextEnvelope,
 } from "@marlowe.io/runtime-rest-client/contract";
 import { SingleInputTx } from "@marlowe.io/language-core-v1/transaction.js";
 import { ISO8601, iso8601ToPosixTime } from "@marlowe.io/adapter/time";
