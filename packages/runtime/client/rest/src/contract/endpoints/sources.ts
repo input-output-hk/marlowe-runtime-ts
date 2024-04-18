@@ -25,8 +25,9 @@ export interface CreateContractSourcesRequest {
   bundle: ContractBundleList<unknown>;
 }
 
-export const CreateContractSourcesRequestGuard: t.Type<CreateContractSourcesRequest> =
-  t.type({ bundle: ObjG.ContractBundleList });
+export const CreateContractSourcesRequestGuard: t.Type<CreateContractSourcesRequest> = t.type({
+  bundle: ObjG.ContractBundleList,
+});
 
 export interface CreateContractSourcesResponse {
   contractSourceId: ContractSourceId;
@@ -35,24 +36,16 @@ export interface CreateContractSourcesResponse {
   };
 }
 
-const CreateContractSourcesResponseGuard: t.Type<CreateContractSourcesResponse> =
-  t.type({
-    contractSourceId: ContractSourceIdGuard,
-    intermediateIds: t.record(t.string, ContractSourceIdGuard),
-  });
+const CreateContractSourcesResponseGuard: t.Type<CreateContractSourcesResponse> = t.type({
+  contractSourceId: ContractSourceIdGuard,
+  intermediateIds: t.record(t.string, ContractSourceIdGuard),
+});
 
 export const createContractSources = (axiosInstance: AxiosInstance) => {
-  return async (
-    main: Label,
-    bundle: BundleList<unknown>
-  ): Promise<CreateContractSourcesResponse> => {
-    const response = await axiosInstance.post(
-      "/contracts/sources",
-      stripAnnotations(bundle),
-      {
-        params: { main },
-      }
-    );
+  return async (main: Label, bundle: BundleList<unknown>): Promise<CreateContractSourcesResponse> => {
+    const response = await axiosInstance.post("/contracts/sources", stripAnnotations(bundle), {
+      params: { main },
+    });
     return pipe(
       CreateContractSourcesResponseGuard.decode(response.data),
       E.match(
@@ -72,27 +65,19 @@ export interface GetContractBySourceIdRequest {
 
 export const GetContractBySourceIdRequestGuard = assertGuardEqual(
   proxy<GetContractBySourceIdRequest>(),
-  t.intersection([
-    t.type({ contractSourceId: ContractSourceIdGuard }),
-    t.partial({ expand: t.boolean }),
-  ])
+  t.intersection([t.type({ contractSourceId: ContractSourceIdGuard }), t.partial({ expand: t.boolean })])
 );
 
 export type GetContractBySourceIdResponse = Contract;
 
-const GetContractBySourceIdResponseGuard: t.Type<GetContractBySourceIdResponse> =
-  G.Contract;
+const GetContractBySourceIdResponseGuard: t.Type<GetContractBySourceIdResponse> = G.Contract;
 
 export const getContractSourceById =
   (axiosInstance: AxiosInstance) =>
-  async ({
-    contractSourceId,
-    expand,
-  }: GetContractBySourceIdRequest): Promise<GetContractBySourceIdResponse> => {
-    const response = await axiosInstance.get(
-      `/contracts/sources/${encodeURIComponent(contractSourceId)}`,
-      { params: { expand } }
-    );
+  async ({ contractSourceId, expand }: GetContractBySourceIdRequest): Promise<GetContractBySourceIdResponse> => {
+    const response = await axiosInstance.get(`/contracts/sources/${encodeURIComponent(contractSourceId)}`, {
+      params: { expand },
+    });
     return pipe(
       GetContractBySourceIdResponseGuard.decode(response.data),
       E.match(
@@ -108,24 +93,22 @@ export interface GetContractSourceAdjacencyRequest {
   contractSourceId: ContractSourceId;
 }
 
-export const GetContractSourceAdjacencyRequestGuard: t.Type<GetContractSourceAdjacencyRequest> =
-  t.type({ contractSourceId: ContractSourceIdGuard });
+export const GetContractSourceAdjacencyRequestGuard: t.Type<GetContractSourceAdjacencyRequest> = t.type({
+  contractSourceId: ContractSourceIdGuard,
+});
 
 export interface GetContractSourceAdjacencyResponse {
   results: ContractSourceId[];
 }
 
-const GetContractSourceAdjacencyResponseGuard: t.Type<GetContractSourceAdjacencyResponse> =
-  t.type({ results: t.array(ContractSourceIdGuard) });
+const GetContractSourceAdjacencyResponseGuard: t.Type<GetContractSourceAdjacencyResponse> = t.type({
+  results: t.array(ContractSourceIdGuard),
+});
 
 export const getContractSourceAdjacency =
   (axiosInstance: AxiosInstance) =>
-  async ({
-    contractSourceId,
-  }: GetContractSourceAdjacencyRequest): Promise<GetContractSourceAdjacencyResponse> => {
-    const response = await axiosInstance.get(
-      `/contracts/sources/${encodeURIComponent(contractSourceId)}/adjacency`
-    );
+  async ({ contractSourceId }: GetContractSourceAdjacencyRequest): Promise<GetContractSourceAdjacencyResponse> => {
+    const response = await axiosInstance.get(`/contracts/sources/${encodeURIComponent(contractSourceId)}/adjacency`);
     return pipe(
       GetContractSourceAdjacencyResponseGuard.decode(response.data),
       E.match(
@@ -141,24 +124,22 @@ export interface GetContractSourceClosureRequest {
   contractSourceId: ContractSourceId;
 }
 
-export const GetContractSourceClosureRequestGuard: t.Type<GetContractSourceClosureRequest> =
-  t.type({ contractSourceId: ContractSourceIdGuard });
+export const GetContractSourceClosureRequestGuard: t.Type<GetContractSourceClosureRequest> = t.type({
+  contractSourceId: ContractSourceIdGuard,
+});
 
 export interface GetContractSourceClosureResponse {
   results: ContractSourceId[];
 }
 
-const GetContractSourceClosureResponseGuard: t.Type<GetContractSourceClosureResponse> =
-  t.type({ results: t.array(ContractSourceIdGuard) });
+const GetContractSourceClosureResponseGuard: t.Type<GetContractSourceClosureResponse> = t.type({
+  results: t.array(ContractSourceIdGuard),
+});
 
 export const getContractSourceClosure =
   (axiosInstance: AxiosInstance) =>
-  async ({
-    contractSourceId,
-  }: GetContractSourceClosureRequest): Promise<GetContractSourceClosureResponse> => {
-    const response = await axiosInstance.get(
-      `/contracts/sources/${encodeURIComponent(contractSourceId)}/closure`
-    );
+  async ({ contractSourceId }: GetContractSourceClosureRequest): Promise<GetContractSourceClosureResponse> => {
+    const response = await axiosInstance.get(`/contracts/sources/${encodeURIComponent(contractSourceId)}/closure`);
     return pipe(
       GetContractSourceClosureResponseGuard.decode(response.data),
       E.match(

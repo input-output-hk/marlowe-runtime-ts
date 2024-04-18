@@ -33,47 +33,37 @@ import {
 import { TxHeader, TxHeaderGuard } from "../header.js";
 import { assertGuardEqual, proxy } from "@marlowe.io/adapter/io-ts";
 import { Input } from "@marlowe.io/language-core-v1";
-import {
-  ItemRange,
-  ItemRangeGuard,
-  Page,
-  PageGuard,
-} from "../../../pagination.js";
+import { ItemRange, ItemRangeGuard, Page, PageGuard } from "../../../pagination.js";
 
 export type GETHeadersByRange = (
   contractId: ContractId,
   range?: ItemRange
 ) => TE.TaskEither<Error | DecodingError, GetTransactionsForContractResponse>;
 
-export const getHeadersByRangeViaAxios: (
-  axiosInstance: AxiosInstance
-) => GETHeadersByRange = (axiosInstance) => (contractId, range) =>
-  pipe(
-    HTTP.GetWithDataAndHeaders(axiosInstance)(
-      transactionsEndpoint(contractId),
-      range ? { headers: { Range: range } } : {}
-    ),
-    TE.map(([headers, data]) => ({
-      data: data,
-      page: {
-        current: headers["content-range"],
-        next: headers["next-range"],
-        total: Number(headers["total-count"]).valueOf(),
-      },
-    })),
-    TE.chainW((data) =>
-      TE.fromEither(
-        E.mapLeft(formatValidationErrors)(GetContractsRawResponse.decode(data))
-      )
-    ),
-    TE.map((rawResponse) => ({
-      transactions: pipe(
-        rawResponse.data.results,
-        A.map((result) => result.resource)
+export const getHeadersByRangeViaAxios: (axiosInstance: AxiosInstance) => GETHeadersByRange =
+  (axiosInstance) => (contractId, range) =>
+    pipe(
+      HTTP.GetWithDataAndHeaders(axiosInstance)(
+        transactionsEndpoint(contractId),
+        range ? { headers: { Range: range } } : {}
       ),
-      page: rawResponse.page,
-    }))
-  );
+      TE.map(([headers, data]) => ({
+        data: data,
+        page: {
+          current: headers["content-range"],
+          next: headers["next-range"],
+          total: Number(headers["total-count"]).valueOf(),
+        },
+      })),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GetContractsRawResponse.decode(data)))),
+      TE.map((rawResponse) => ({
+        transactions: pipe(
+          rawResponse.data.results,
+          A.map((result) => result.resource)
+        ),
+        page: rawResponse.page,
+      }))
+    );
 
 type GetContractsRawResponse = t.TypeOf<typeof GetContractsRawResponse>;
 const GetContractsRawResponse = t.type({
@@ -180,34 +170,18 @@ export type POST = (
 ) => TE.TaskEither<Error | DecodingError, TransactionTextEnvelope>;
 
 export const postViaAxios: (axiosInstance: AxiosInstance) => POST =
-  (axiosInstance) =>
-  (contractId, postTransactionsRequest, addressesAndCollaterals) =>
+  (axiosInstance) => (contractId, postTransactionsRequest, addressesAndCollaterals) =>
     pipe(
-      HTTP.Post(axiosInstance)(
-        transactionsEndpoint(contractId),
-        postTransactionsRequest,
-        {
-          headers: {
-            Accept:
-              "application/vendor.iog.marlowe-runtime.apply-inputs-tx-json",
-            "Content-Type": "application/json",
-            "X-Change-Address": addressesAndCollaterals.changeAddress,
-            "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) =>
-              a.join(",")
-            ),
-            "X-Collateral-UTxO": pipe(
-              addressesAndCollaterals.collateralUTxOs,
-              A.map(unTxOutRef),
-              (a) => a.join(",")
-            ),
-          },
-        }
-      ),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(PostResponse.decode(data))
-        )
-      ),
+      HTTP.Post(axiosInstance)(transactionsEndpoint(contractId), postTransactionsRequest, {
+        headers: {
+          Accept: "application/vendor.iog.marlowe-runtime.apply-inputs-tx-json",
+          "Content-Type": "application/json",
+          "X-Change-Address": addressesAndCollaterals.changeAddress,
+          "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) => a.join(",")),
+          "X-Collateral-UTxO": pipe(addressesAndCollaterals.collateralUTxOs, A.map(unTxOutRef), (a) => a.join(",")),
+        },
+      }),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(PostResponse.decode(data)))),
       TE.map((payload) => payload.resource)
     );
 

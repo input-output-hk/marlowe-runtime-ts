@@ -7,12 +7,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
     return false;
   }
 
-  if (
-    typeof a !== "object" ||
-    typeof b !== "object" ||
-    a === null ||
-    b === null
-  ) {
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
     return false;
   }
 

@@ -1,7 +1,4 @@
-import {
-  TemplateParametersOf,
-  mkMarloweTemplate,
-} from "@marlowe.io/marlowe-template";
+import { TemplateParametersOf, mkMarloweTemplate } from "@marlowe.io/marlowe-template";
 describe("Template basic types", () => {
   const basicTemplate = mkMarloweTemplate({
     name: "Basic types template",

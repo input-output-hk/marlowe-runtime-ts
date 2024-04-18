@@ -1,10 +1,7 @@
 import { MarloweJSON } from "@marlowe.io/adapter/codec";
 import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/browser";
 import { mkRestClient } from "@marlowe.io/runtime-rest-client";
-import {
-  mkBrowserWallet,
-  getInstalledWalletExtensions,
-} from "@marlowe.io/wallet";
+import { mkBrowserWallet, getInstalledWalletExtensions } from "@marlowe.io/wallet";
 
 export function clearConsole() {
   const consoleDiv = document.getElementById("console");
@@ -38,10 +35,7 @@ export function logJSON(message, json) {
 
 export function getRuntimeUrl() {
   const runtimeUrlInput = document.getElementById("runtimeUrl");
-  return (
-    (runtimeUrlInput && runtimeUrlInput.value) ||
-    "https://marlowe-runtime-preprod-web.demo.scdev.aws.iohkdev.io/"
-  );
+  return (runtimeUrlInput && runtimeUrlInput.value) || "https://marlowe-runtime-preprod-web.demo.scdev.aws.iohkdev.io/";
 }
 
 export function setupLocalStorageRuntimeUrl() {
@@ -75,9 +69,7 @@ export function setupWallet() {
     installedWalletExtensions.forEach((installedWalletExtension) => {
       const option = document.createElement("option");
       option.value = installedWalletExtension.name;
-      option.text =
-        installedWalletExtension.name.charAt(0).toUpperCase() +
-        installedWalletExtension.name.slice(1);
+      option.text = installedWalletExtension.name.charAt(0).toUpperCase() + installedWalletExtension.name.slice(1);
       walletInput.add(option);
     });
   }
@@ -102,10 +94,7 @@ export function getRestClient() {
 }
 
 export async function getLifecycle() {
-  if (
-    typeof window.runtimeLifecycle == "undefined" ||
-    window.runtimeLifecycle == null
-  ) {
+  if (typeof window.runtimeLifecycle == "undefined" || window.runtimeLifecycle == null) {
     const walletInput = document.getElementById("wallet");
     const walletName = walletInput.value;
     const runtimeURL = getRuntimeUrl();
@@ -118,17 +107,10 @@ export async function getLifecycle() {
   return window.runtimeLifecycle;
 }
 
-export function setContractIdIndicator(
-  contractId,
-  indicatorId,
-  network = "preprod"
-) {
+export function setContractIdIndicator(contractId, indicatorId, network = "preprod") {
   const contractIdIndicator = document.getElementById(indicatorId);
   contractIdIndicator.innerHTML = contractId;
-  const url = `https://${network}.marlowescan.com/contractView?tab=state&contractId=${contractId.replace(
-    "#",
-    "%23"
-  )}`;
+  const url = `https://${network}.marlowescan.com/contractView?tab=state&contractId=${contractId.replace("#", "%23")}`;
   contractIdIndicator.href = url;
   contractIdIndicator.target = "_blank";
 }

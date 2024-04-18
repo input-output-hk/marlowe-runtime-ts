@@ -43,9 +43,7 @@ const verifyConnection = (walletInfo, callback) => {
   logJSON("walletInfo", walletInfo);
   callback(
     //
-    window.confirm(
-      `Do you want to connect to wallet ${walletInfo.name} (${walletInfo.address})?`
-    )
+    window.confirm(`Do you want to connect to wallet ${walletInfo.name} (${walletInfo.address})?`)
   );
 };
 
@@ -74,47 +72,43 @@ const dAppConnect = new CardanoPeerConnect.DAppPeerConnect({
 });
 window.dAppConnect = dAppConnect;
 
-document
-  .getElementById("disconnect-wallet")
-  .addEventListener("click", async () => {
-    // NOTE: dAppConnect doesn't have a disconnect method, and this is currently
-    //       not working. It's not clear how to disconnect from the wallet.
-    //       https://github.com/fabianbormann/cardano-peer-connect/issues/57
-    logJSON("adapter", adapter);
-    logJSON("dAppConnect", dAppConnect);
-    const walletInfo = { version: 1, name: "a", icon: "bubu" };
-    dAppConnect.meerkat.api.disconnect(
-      // dAppConnect.dAppInfo.address,
-      dAppConnect.connectedWallet,
-      walletInfo,
-      (connectStatus) => {
-        console.log(connectStatus);
-        debugger;
-      }
-    );
+document.getElementById("disconnect-wallet").addEventListener("click", async () => {
+  // NOTE: dAppConnect doesn't have a disconnect method, and this is currently
+  //       not working. It's not clear how to disconnect from the wallet.
+  //       https://github.com/fabianbormann/cardano-peer-connect/issues/57
+  logJSON("adapter", adapter);
+  logJSON("dAppConnect", dAppConnect);
+  const walletInfo = { version: 1, name: "a", icon: "bubu" };
+  dAppConnect.meerkat.api.disconnect(
+    // dAppConnect.dAppInfo.address,
+    dAppConnect.connectedWallet,
+    walletInfo,
+    (connectStatus) => {
+      console.log(connectStatus);
+      debugger;
+    }
+  );
+});
+
+document.getElementById("create-contract").addEventListener("click", async () => {
+  const wallet = adapter.getWallet();
+  const runtime = mkRuntimeLifecycle({
+    runtimeURL: H.getRuntimeUrl(),
+    wallet,
   });
 
-document
-  .getElementById("create-contract")
-  .addEventListener("click", async () => {
-    const wallet = adapter.getWallet();
-    const runtime = mkRuntimeLifecycle({
-      runtimeURL: H.getRuntimeUrl(),
-      wallet,
-    });
-
-    const [contractId, txId] = await runtime.contracts.createContract({
-      contract: "close",
-      tags: {
-        "cip-45": "true",
-      },
-    });
-
-    log(`contractId: ${contractId}`);
-    log(`waiting for txId ${txId}`);
-    await wallet.waitConfirmation(txId);
-    log("transaction confirmed");
+  const [contractId, txId] = await runtime.contracts.createContract({
+    contract: "close",
+    tags: {
+      "cip-45": "true",
+    },
   });
+
+  log(`contractId: ${contractId}`);
+  log(`waiting for txId ${txId}`);
+  await wallet.waitConfirmation(txId);
+  log("transaction confirmed");
+});
 
 document.getElementById("wallet-flow").addEventListener("click", async () => {
   const wallet = adapter.getWallet();
@@ -134,8 +128,7 @@ document.getElementById("wallet-flow").addEventListener("click", async () => {
 
   log(`- <b>Tokens</b>: (${tokensResult.length} tokens)`);
   tokensResult.map((token) => {
-    const tokenName =
-      token.assetId.assetName == "" ? "lovelaces" : token.assetId.assetName;
+    const tokenName = token.assetId.assetName == "" ? "lovelaces" : token.assetId.assetName;
     log(`&nbsp;&nbsp;&nbsp; <i>${tokenName}</i> - ${token.quantity}`);
   });
   log("");
@@ -146,9 +139,7 @@ document.getElementById("wallet-flow").addEventListener("click", async () => {
 
   const usedAddresses = await wallet.getUsedAddresses();
   log(`- <b>Used Addresses</b>: (${usedAddresses.length} addresses)`);
-  usedAddresses.map((usedAddress) =>
-    log("&nbsp;&nbsp;&nbsp; - " + usedAddress)
-  );
+  usedAddresses.map((usedAddress) => log("&nbsp;&nbsp;&nbsp; - " + usedAddress));
   log("");
 
   const collaterals = await wallet.getCollaterals();

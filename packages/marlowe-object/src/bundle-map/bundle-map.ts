@@ -4,12 +4,7 @@ import { Contract, ContractGuard } from "../contract.js";
 import { Party, PartyGuard } from "../participants.js";
 import { Label, LabelGuard } from "../reference.js";
 import { Token, TokenGuard } from "../token.js";
-import {
-  ValueGuard,
-  Value,
-  Observation,
-  ObservationGuard,
-} from "../value-and-observation.js";
+import { ValueGuard, Value, Observation, ObservationGuard } from "../value-and-observation.js";
 
 /**
  * An entry of a {@link BundleMap} that references a {@link Party}.
@@ -154,10 +149,7 @@ export type BundleMap<A> = Record<Label, ObjectType<A>>;
  * {@link !io-ts-usage | Dynamic type guard} for the {@link BundleMap | bundle type}.
  * @category Object
  */
-export const BundleMapGuard: t.Type<BundleMap<unknown>> = t.record(
-  LabelGuard,
-  ObjectTypeGuard
-);
+export const BundleMapGuard: t.Type<BundleMap<unknown>> = t.record(LabelGuard, ObjectTypeGuard);
 
 /**
  * A contract bundle is just a {@link BundleMap} with a main entrypoint.
@@ -171,8 +163,7 @@ export interface ContractBundleMap<A> {
 /**
  * {@link !io-ts-usage | Dynamic type guard} for the {@link ContractBundleList | contract bundle type}.
  */
-export const ContractBundleMapGuard: t.Type<ContractBundleMap<unknown>> =
-  t.type({
-    main: LabelGuard,
-    objects: BundleMapGuard,
-  });
+export const ContractBundleMapGuard: t.Type<ContractBundleMap<unknown>> = t.type({
+  main: LabelGuard,
+  objects: BundleMapGuard,
+});

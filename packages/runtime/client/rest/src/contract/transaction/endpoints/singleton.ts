@@ -50,22 +50,17 @@ export const GetContractTransactionByIdRequestGuard = assertGuardEqual(
   })
 );
 
-export const getViaAxios: (axiosInstance: AxiosInstance) => GET =
-  (axiosInstance) => (contractId, transactionId) =>
-    pipe(
-      HTTP.Get(axiosInstance)(endpointURI(contractId, transactionId), {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(GETPayload.decode(data))
-        )
-      ),
-      TE.map((payload) => payload.resource)
-    );
+export const getViaAxios: (axiosInstance: AxiosInstance) => GET = (axiosInstance) => (contractId, transactionId) =>
+  pipe(
+    HTTP.Get(axiosInstance)(endpointURI(contractId, transactionId), {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }),
+    TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GETPayload.decode(data)))),
+    TE.map((payload) => payload.resource)
+  );
 
 /**
  * Request options for the {@link index.RestClient#submitContractTransaction | Submit contract transaction } endpoint
@@ -108,7 +103,4 @@ export const putViaAxios: (axiosInstance: AxiosInstance) => PUT =
     );
 
 const endpointURI = (contractId: ContractId, transactionId: TxId): string =>
-  `/contracts/${pipe(contractId, encodeURIComponent)}/transactions/${pipe(
-    transactionId,
-    encodeURIComponent
-  )}`;
+  `/contracts/${pipe(contractId, encodeURIComponent)}/transactions/${pipe(transactionId, encodeURIComponent)}`;

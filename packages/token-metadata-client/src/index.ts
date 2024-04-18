@@ -27,8 +27,7 @@ interface TokenMetadataJSONResponse {
 
 const cardano_foundation_server_url =
   "https://raw.githubusercontent.com/cardano-foundation/cardano-token-registry/master/mappings/";
-const iohk_server_url =
-  "https://raw.githubusercontent.com/input-output-hk/metadata-registry-testnet/master/registry/";
+const iohk_server_url = "https://raw.githubusercontent.com/input-output-hk/metadata-registry-testnet/master/registry/";
 
 export const lookupTokenMetadata = async (
   policyId: string,
@@ -43,8 +42,7 @@ export const lookupTokenMetadata = async (
       description: "Cardano ADA",
     };
   } else {
-    const server_url =
-      network === "mainnet" ? cardano_foundation_server_url : iohk_server_url;
+    const server_url = network === "mainnet" ? cardano_foundation_server_url : iohk_server_url;
     const response = await fetch(`${server_url}/${policyId + assetName}.json`);
     const json: TokenMetadataJSONResponse = await response.json();
     return {
@@ -59,7 +57,5 @@ export const lookupTokenMetadata = async (
   }
 };
 
-export const formatToken = (
-  { decimals, ticker, name }: TokenMetadata,
-  value: number
-): string => `${value * 10 ** -(decimals || 0)} ${ticker || name}`;
+export const formatToken = ({ decimals, ticker, name }: TokenMetadata, value: number): string =>
+  `${value * 10 ** -(decimals || 0)} ${ticker || name}`;

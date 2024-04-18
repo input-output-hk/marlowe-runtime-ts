@@ -85,28 +85,12 @@ export function escrow({
   const seller: Party = Role("Seller");
   const arbiter: Party = Role("Mediator");
 
-  function choice(
-    choiceName: string,
-    chooser: Party,
-    choiceValue: SomeNumber,
-    continuation: Contract
-  ): Case {
-    return Case(
-      Choice(ChoiceId(choiceName, chooser), [Bound(choiceValue, choiceValue)]),
-      continuation
-    );
+  function choice(choiceName: string, chooser: Party, choiceValue: SomeNumber, continuation: Contract): Case {
+    return Case(Choice(ChoiceId(choiceName, chooser), [Bound(choiceValue, choiceValue)]), continuation);
   }
 
-  function deposit(
-    timeout: Timeout,
-    timeoutContinuation: Contract,
-    continuation: Contract
-  ): Contract {
-    return When(
-      [Case(Deposit(seller, buyer, ada, price), continuation)],
-      timeout,
-      timeoutContinuation
-    );
+  function deposit(timeout: Timeout, timeoutContinuation: Contract, continuation: Contract): Contract {
+    return When([Case(Deposit(seller, buyer, ada, price), continuation)], timeout, timeoutContinuation);
   }
 
   function choices(
@@ -117,13 +101,7 @@ export function escrow({
   ): Contract {
     var caseList: Case[] = new Array(list.length);
     list.forEach(
-      (element, index) =>
-        (caseList[index] = choice(
-          element.name,
-          chooser,
-          element.value,
-          element.continuation
-        ))
+      (element, index) => (caseList[index] = choice(element.name, chooser, element.value, element.continuation))
     );
     return When(caseList, timeout, timeoutContinuation);
   }
@@ -136,13 +114,9 @@ export function escrow({
     return Pay(buyer, Party(seller), ada, price, continuation);
   }
 
-  const refundBuyer: Contract = explicitRefunds
-    ? Pay(buyer, Party(buyer), ada, price, Close)
-    : Close;
+  const refundBuyer: Contract = explicitRefunds ? Pay(buyer, Party(buyer), ada, price, Close) : Close;
 
-  const refundSeller: Contract = explicitRefunds
-    ? Pay(seller, Party(seller), ada, price, Close)
-    : Close;
+  const refundSeller: Contract = explicitRefunds ? Pay(seller, Party(seller), ada, price, Close) : Close;
 
   const contract: Contract = deposit(
     depositTimeout,

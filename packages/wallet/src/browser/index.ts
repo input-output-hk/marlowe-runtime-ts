@@ -24,11 +24,10 @@ import {
  */
 export type SupportedWalletName = "nami" | "eternl" | "lace";
 
-export const SupportedWalletNameGuard: t.Type<SupportedWalletName> =
-  assertGuardEqual(
-    proxy<SupportedWalletName>(),
-    t.union([t.literal("nami"), t.literal("eternl"), t.literal("lace")])
-  );
+export const SupportedWalletNameGuard: t.Type<SupportedWalletName> = assertGuardEqual(
+  proxy<SupportedWalletName>(),
+  t.union([t.literal("nami"), t.literal("eternl"), t.literal("lace")])
+);
 
 /**
  * The BroswerWalletExtension is an interface for interacting with a querying the list of Browser Cardano Wallet Extensions.
@@ -81,9 +80,7 @@ type ExtensionDI = { extension: Lucid.WalletApi };
  * @param walletName - The name of the wallet to get an instance of.
  * @returns An instance of the BrowserWalletAPI class.
  */
-export async function mkBrowserWallet(
-  walletName: SupportedWalletName
-): Promise<WalletAPI> {
+export async function mkBrowserWallet(walletName: SupportedWalletName): Promise<WalletAPI> {
   if (
     getInstalledWalletExtensions()
       .map((extension) => extension.name.toLowerCase())
@@ -118,9 +115,7 @@ export const waitConfirmation =
     return new Promise<boolean>((txConfirm) => {
       const pollingId = setInterval(async () => {
         const utxos = await getUTxOs(di)();
-        const isConfirmed =
-          utxos.filter((utxo) => unTxOutRef(utxo).split("#", 2)[0] == txHash)
-            .length > 0;
+        const isConfirmed = utxos.filter((utxo) => unTxOutRef(utxo).split("#", 2)[0] == txHash).length > 0;
         if (isConfirmed) {
           clearInterval(pollingId);
           return txConfirm(true);
@@ -209,9 +204,7 @@ export const getLovelaces =
   };
 
 function deserializeAddress(addressHex: string): AddressBech32 {
-  return addressBech32(
-    C.Address.from_bytes(hex.decode(addressHex)).to_bech32(undefined)
-  );
+  return addressBech32(C.Address.from_bytes(hex.decode(addressHex)).to_bech32(undefined));
 }
 
 function deserializeTxOutRef(utxoStr: string): TxOutRef {
@@ -220,8 +213,7 @@ function deserializeTxOutRef(utxoStr: string): TxOutRef {
   return txOutRef(input.transaction_id + "#" + input.index);
 }
 
-const deserializeValue = (value: string) =>
-  C.Value.from_bytes(hex.decode(value));
+const deserializeValue = (value: string) => C.Value.from_bytes(hex.decode(value));
 
 const valueToTokens = (value: Lucid.C.Value) => {
   const tokenValues: Token[] = [lovelaces(valueToLovelaces(value))];
@@ -236,8 +228,7 @@ const valueToTokens = (value: Lucid.C.Value) => {
         const policyAssetNames = policyAssets.keys();
         for (let j = 0; j < policyAssetNames.len(); j += 1) {
           const assetName = policyAssetNames.get(j);
-          const quantity =
-            policyAssets.get(assetName) ?? C.BigNum.from_str("0");
+          const quantity = policyAssets.get(assetName) ?? C.BigNum.from_str("0");
           tokenValues.push(
             token(BigInt(quantity.to_str()).valueOf())(
               assetId(policyId(aPolicyId.to_hex()))(
@@ -253,5 +244,4 @@ const valueToTokens = (value: Lucid.C.Value) => {
   return tokenValues;
 };
 
-const valueToLovelaces = (value: Lucid.C.Value) =>
-  BigInt(value.coin().to_str()).valueOf();
+const valueToLovelaces = (value: Lucid.C.Value) => BigInt(value.coin().to_str()).valueOf();

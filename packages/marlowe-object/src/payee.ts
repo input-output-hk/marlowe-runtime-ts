@@ -79,9 +79,7 @@ export type PayeeMatcher<T> = {
  * @category Payee
  */
 export function matchPayee<T>(matcher: PayeeMatcher<T>): (payee: Payee) => T;
-export function matchPayee<T>(
-  matcher: Partial<PayeeMatcher<T>>
-): (payee: Payee) => T | undefined;
+export function matchPayee<T>(matcher: Partial<PayeeMatcher<T>>): (payee: Payee) => T | undefined;
 export function matchPayee<T>(matcher: Partial<PayeeMatcher<T>>) {
   return (payee: Payee) => {
     if (PayeePartyGuard.is(payee) && matcher.party) {

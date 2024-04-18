@@ -2,12 +2,7 @@ import { AxiosInstance } from "axios";
 import * as HTTP from "@marlowe.io/adapter/http";
 import { unsafeEither, unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
 import { ISO8601 } from "@marlowe.io/adapter/time";
-import {
-  BlockHeader,
-  BlockHeaderGuard,
-  NetworkId,
-  bigintGuard,
-} from "@marlowe.io/runtime-core";
+import { BlockHeader, BlockHeaderGuard, NetworkId, bigintGuard } from "@marlowe.io/runtime-core";
 import { formatValidationErrors } from "jsonbigint-io-ts-reporters";
 import * as E from "fp-ts/lib/Either.js";
 import * as t from "io-ts/lib/index.js";
@@ -59,33 +54,21 @@ export type RuntimeStatus = {
   };
 };
 
-export const healthcheck = async (
-  axiosInstance: AxiosInstance
-): Promise<RuntimeStatus> => {
-  const headers = await unsafeTaskEither(
-    HTTP.GetWithHeaders(axiosInstance)("/healthcheck")
-  );
+export const healthcheck = async (axiosInstance: AxiosInstance): Promise<RuntimeStatus> => {
+  const headers = await unsafeTaskEither(HTTP.GetWithHeaders(axiosInstance)("/healthcheck"));
 
   return {
     networkId: headers["x-network-id"],
     version: headers["x-runtime-version"],
     tips: {
       node: unsafeEither(
-        E.mapLeft(formatValidationErrors)(
-          TipGuard.decode(MarloweJSONCodec.decode(headers["x-node-tip"]))
-        )
+        E.mapLeft(formatValidationErrors)(TipGuard.decode(MarloweJSONCodec.decode(headers["x-node-tip"])))
       ),
       runtimeChain: unsafeEither(
-        E.mapLeft(formatValidationErrors)(
-          TipGuard.decode(
-            MarloweJSONCodec.decode(headers["x-runtime-chain-tip"])
-          )
-        )
+        E.mapLeft(formatValidationErrors)(TipGuard.decode(MarloweJSONCodec.decode(headers["x-runtime-chain-tip"])))
       ),
       runtime: unsafeEither(
-        E.mapLeft(formatValidationErrors)(
-          TipGuard.decode(MarloweJSONCodec.decode(headers["x-runtime-tip"]))
-        )
+        E.mapLeft(formatValidationErrors)(TipGuard.decode(MarloweJSONCodec.decode(headers["x-runtime-tip"])))
       ),
     },
   };

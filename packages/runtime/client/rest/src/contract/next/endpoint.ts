@@ -16,18 +16,16 @@ import * as t from "io-ts/lib/index.js";
 
 export type GET = (
   contractId: ContractId
-) => (
-  environment: Environment
-) => (parties: Party[]) => TE.TaskEither<Error | DecodingError, Next>;
+) => (environment: Environment) => (parties: Party[]) => TE.TaskEither<Error | DecodingError, Next>;
 
 export const getViaAxios: (axiosInstance: AxiosInstance) => GET =
   (axiosInstance) => (contractId) => (environment) => (parties) =>
     pipe(
       HTTP.Get(axiosInstance)(
         contractNextEndpoint(contractId) +
-          `?validityStart=${posixTimeToIso8601(
-            environment.timeInterval.from
-          )}&validityEnd=${posixTimeToIso8601(environment.timeInterval.to)}&` +
+          `?validityStart=${posixTimeToIso8601(environment.timeInterval.from)}&validityEnd=${posixTimeToIso8601(
+            environment.timeInterval.to
+          )}&` +
           stringify({ party: parties }, { indices: false }),
         {
           headers: {
@@ -36,13 +34,10 @@ export const getViaAxios: (axiosInstance: AxiosInstance) => GET =
           },
         }
       ),
-      TE.chainW((data) =>
-        TE.fromEither(E.mapLeft(formatValidationErrors)(Next.decode(data)))
-      )
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(Next.decode(data))))
     );
 
-const contractNextEndpoint = (contractId: ContractId): string =>
-  `/contracts/${encodeURIComponent(contractId)}/next`;
+const contractNextEndpoint = (contractId: ContractId): string => `/contracts/${encodeURIComponent(contractId)}/next`;
 
 export interface GetNextStepsForContractRequest {
   contractId: ContractId;

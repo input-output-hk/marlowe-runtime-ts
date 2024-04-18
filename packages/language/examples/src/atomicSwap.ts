@@ -96,11 +96,7 @@ export type Scheme = {
 /* #region State */
 export type State = ActiveState | Closed;
 
-export type ActiveState =
-  | WaitingSellerOffer
-  | NoSellerOfferInTime
-  | WaitingForAnswer
-  | WaitingForSwapConfirmation;
+export type ActiveState = WaitingSellerOffer | NoSellerOfferInTime | WaitingForAnswer | WaitingForSwapConfirmation;
 
 export type WaitingSellerOffer = {
   typeName: "WaitingSellerOffer";
@@ -226,11 +222,7 @@ export class UnexpectedActiveSwapContractState extends Error {
   public scheme: Scheme;
   public state: MarloweState;
   public inputHistory: SingleInputTx[];
-  constructor(
-    scheme: Scheme,
-    inputHistory: SingleInputTx[],
-    state: MarloweState
-  ) {
+  constructor(scheme: Scheme, inputHistory: SingleInputTx[], state: MarloweState) {
     super("Swap Contract / Unexpected Active State");
     this.scheme = scheme;
     this.state = state;
@@ -249,10 +241,7 @@ export class UnexpectedClosedSwapContractState extends Error {
   }
 }
 
-export const getAvailableActions = (
-  scheme: Scheme,
-  state: ActiveState
-): Action[] => {
+export const getAvailableActions = (scheme: Scheme, state: ActiveState): Action[] => {
   switch (state.typeName) {
     case "WaitingSellerOffer":
       return [
@@ -309,21 +298,11 @@ export const getAvailableActions = (
   }
 };
 
-export const getState = (
-  scheme: Scheme,
-  now: Timeout,
-  inputHistory: SingleInputTx[],
-  state?: MarloweState
-): State => {
-  return state
-    ? getActiveState(scheme, now, inputHistory, state)
-    : getClosedState(scheme, inputHistory);
+export const getState = (scheme: Scheme, now: Timeout, inputHistory: SingleInputTx[], state?: MarloweState): State => {
+  return state ? getActiveState(scheme, now, inputHistory, state) : getClosedState(scheme, inputHistory);
 };
 
-export const getClosedState = (
-  scheme: Scheme,
-  inputHistory: SingleInputTx[]
-): Closed => {
+export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): Closed => {
   switch (inputHistory.length) {
     // Offer Provision Deadline has passed and there is one reduced applied to close the contract
     case 0:
@@ -338,11 +317,8 @@ export const getClosedState = (
       };
     case 2: {
       const isRetracted =
-        G.IChoice.is(inputHistory[1].input) &&
-        inputHistory[1].input.for_choice_id.choice_name == "retract";
-      const nbDeposits = inputHistory.filter((singleInputTx) =>
-        G.IDeposit.is(singleInputTx.input)
-      ).length;
+        G.IChoice.is(inputHistory[1].input) && inputHistory[1].input.for_choice_id.choice_name == "retract";
+      const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
       if (isRetracted && nbDeposits === 1) {
         return {
           typeName: "Closed",
@@ -358,12 +334,8 @@ export const getClosedState = (
       break;
     }
     case 3: {
-      const nbDeposits = inputHistory.filter((singleInputTx) =>
-        G.IDeposit.is(singleInputTx.input)
-      ).length;
-      const nbNotify = inputHistory.filter((singleInputTx) =>
-        G.INotify.is(singleInputTx.input)
-      ).length;
+      const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
+      const nbNotify = inputHistory.filter((singleInputTx) => G.INotify.is(singleInputTx.input)).length;
       if (nbDeposits === 2 && nbNotify === 1) {
         return {
           typeName: "Closed",
@@ -383,18 +355,14 @@ export const getActiveState = (
 ): ActiveState => {
   switch (inputHistory.length) {
     case 0:
-      return now < scheme.offer.deadline
-        ? { typeName: "WaitingSellerOffer" }
-        : { typeName: "NoSellerOfferInTime" };
+      return now < scheme.offer.deadline ? { typeName: "WaitingSellerOffer" } : { typeName: "NoSellerOfferInTime" };
     case 1:
       if (now < scheme.ask.deadline) {
         return { typeName: "WaitingForAnswer" };
       }
       break;
     case 2: {
-      const nbDeposits = inputHistory.filter((singleInputTx) =>
-        G.IDeposit.is(singleInputTx.input)
-      ).length;
+      const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
       if (nbDeposits === 2 && now < scheme.swapConfirmation.deadline) {
         return { typeName: "WaitingForSwapConfirmation" };
       }

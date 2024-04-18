@@ -9,9 +9,5 @@
     },
     "types": ["node", "jest"]
   },
-  "references": [
-    { "path": "../../adapter/src" },
-    { "path": "../../language/core/v1/src" },
-    { "path": "../src" }
-  ]
+  "references": [{ "path": "../../adapter/src" }, { "path": "../../language/core/v1/src" }, { "path": "../src" }]
 }

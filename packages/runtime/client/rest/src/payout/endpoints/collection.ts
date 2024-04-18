@@ -17,12 +17,7 @@ import { AssetId, ContractIdGuard } from "@marlowe.io/runtime-core";
 import { ContractId } from "@marlowe.io/runtime-core";
 import { PayoutHeader } from "../header.js";
 import { PayoutStatus } from "../status.js";
-import {
-  ItemRange,
-  ItemRangeGuard,
-  Page,
-  PageGuard,
-} from "../../pagination.js";
+import { ItemRange, ItemRangeGuard, Page, PageGuard } from "../../pagination.js";
 import { assertGuardEqual, proxy } from "@marlowe.io/adapter/io-ts";
 
 export type GetPayoutsRequest = {
@@ -57,12 +52,9 @@ export type GETHeadersByRange = (
   contractIds: ContractId[]
 ) => (
   roles: AssetId[]
-) => (
-  statusOption: O.Option<PayoutStatus>
-) => TE.TaskEither<Error | DecodingError, GETByRangeResponse>;
+) => (statusOption: O.Option<PayoutStatus>) => TE.TaskEither<Error | DecodingError, GETByRangeResponse>;
 
-const roleToParameter = (roleToken: AssetId) =>
-  `${roleToken.policyId}.${roleToken.assetName}`;
+const roleToParameter = (roleToken: AssetId) => `${roleToken.policyId}.${roleToken.assetName}`;
 const statusOptionToParameter = (statusOption: O.Option<PayoutStatus>) =>
   pipe(
     statusOption,
@@ -72,9 +64,7 @@ const statusOptionToParameter = (statusOption: O.Option<PayoutStatus>) =>
     )
   );
 
-export const getHeadersByRangeViaAxios: (
-  axiosInstance: AxiosInstance
-) => GETHeadersByRange =
+export const getHeadersByRangeViaAxios: (axiosInstance: AxiosInstance) => GETHeadersByRange =
   (axiosInstance) => (range) => (contractIds) => (roles) => (statusOption) =>
     pipe(
       {
@@ -90,8 +80,7 @@ export const getHeadersByRangeViaAxios: (
           ),
         configs: range ? { headers: { Range: range } } : {},
       },
-      ({ url, configs }) =>
-        HTTP.GetWithDataAndHeaders(axiosInstance)(url, configs),
+      ({ url, configs }) => HTTP.GetWithDataAndHeaders(axiosInstance)(url, configs),
       TE.map(([headers, data]) => ({
         data: data,
         page: {
@@ -100,11 +89,7 @@ export const getHeadersByRangeViaAxios: (
           total: Number(headers["total-count"]).valueOf(),
         },
       })),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(GETByRangeRawResponse.decode(data))
-        )
-      ),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GETByRangeRawResponse.decode(data)))),
       TE.map((rawResponse) => ({
         payouts: pipe(
           rawResponse.data.results,
@@ -117,9 +102,7 @@ export const getHeadersByRangeViaAxios: (
 export type GETByRangeRawResponse = t.TypeOf<typeof GETByRangeRawResponse>;
 export const GETByRangeRawResponse = t.type({
   data: t.type({
-    results: t.array(
-      t.type({ links: t.type({ payout: t.string }), resource: PayoutHeader })
-    ),
+    results: t.array(t.type({ links: t.type({ payout: t.string }), resource: PayoutHeader })),
   }),
   page: PageGuard,
 });

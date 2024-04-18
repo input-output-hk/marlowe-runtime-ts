@@ -1,10 +1,7 @@
 import * as t from "io-ts/lib/index.js";
 import { DateFromEpochMS, StringSplitCodec, TokenCodec } from "./codecs.js";
 import { AddressBech32, AddressBech32Guard } from "@marlowe.io/runtime-core";
-import {
-  BigIntOrNumber,
-  BigIntOrNumberGuard,
-} from "@marlowe.io/adapter/bigint";
+import { BigIntOrNumber, BigIntOrNumberGuard } from "@marlowe.io/adapter/bigint";
 import { Token } from "@marlowe.io/language-core-v1";
 
 /**
@@ -91,18 +88,17 @@ export type TemplateParam<Name extends string> =
  * @internal
  * @category Type functions
  */
-export type TypeOfParam<Param extends TemplateParam<any>> =
-  Param extends StringParam<infer Name>
-    ? string
-    : Param extends ValueParam<infer Name>
-    ? BigIntOrNumber
-    : Param extends AddressParam<infer Name>
-    ? AddressBech32
-    : Param extends DateParam<infer Name>
-    ? Date
-    : Param extends TokenParam<infer Name>
-    ? Token
-    : never;
+export type TypeOfParam<Param extends TemplateParam<any>> = Param extends StringParam<infer Name>
+  ? string
+  : Param extends ValueParam<infer Name>
+  ? BigIntOrNumber
+  : Param extends AddressParam<infer Name>
+  ? AddressBech32
+  : Param extends DateParam<infer Name>
+  ? Date
+  : Param extends TokenParam<infer Name>
+  ? Token
+  : never;
 
 /**
  * This type function receives a list of {@link TemplateParam} and returns
@@ -124,9 +120,7 @@ export type TemplateType<T extends readonly TemplateParam<any>[]> = {
   [K in TemplateKeys<T>]: TypeOfParam<Extract<T[number], { name: K }>>;
 };
 
-function templateParamCodec<Param extends TemplateParam<any>>(
-  param: Param
-): t.Mixed {
+function templateParamCodec<Param extends TemplateParam<any>>(param: Param): t.Mixed {
   switch (param.type) {
     case "string":
       return StringSplitCodec;
@@ -146,21 +140,13 @@ function templateParamCodec<Param extends TemplateParam<any>>(
 /**
  * @hidden
  */
-export function templateParamsCodec<T extends readonly TemplateParam<any>[]>(
-  template: T
-): t.Mixed {
+export function templateParamsCodec<T extends readonly TemplateParam<any>[]>(template: T): t.Mixed {
   return t.tuple(template.map(templateParamCodec) as any);
 }
 
 /**
  * @hidden
  */
-export function templateParamsObjectGuard<
-  T extends readonly TemplateParam<any>[],
->(template: T): t.Mixed {
-  return t.type(
-    Object.fromEntries(
-      template.map((param) => [param.name, templateParamCodec(param)])
-    ) as any
-  );
+export function templateParamsObjectGuard<T extends readonly TemplateParam<any>[]>(template: T): t.Mixed {
+  return t.type(Object.fromEntries(template.map((param) => [param.name, templateParamCodec(param)])) as any);
 }

@@ -34,36 +34,24 @@ export function mkPayoutLifecycle(
 const fetchAvailablePayouts =
   ({ wallet, deprecatedRestAPI }: PayoutsDI) =>
   (filters?: Filters): Promise<PayoutAvailable[]> => {
-    return unsafeTaskEither(
-      fetchAvailablePayoutsFpTs(deprecatedRestAPI)(wallet)(
-        O.fromNullable(filters)
-      )
-    );
+    return unsafeTaskEither(fetchAvailablePayoutsFpTs(deprecatedRestAPI)(wallet)(O.fromNullable(filters)));
   };
 const withdrawPayouts =
   ({ wallet, deprecatedRestAPI }: PayoutsDI) =>
   (payoutIds: PayoutId[]): Promise<void> => {
-    return unsafeTaskEither(
-      withdrawPayoutsFpTs(deprecatedRestAPI)(wallet)(payoutIds)
-    );
+    return unsafeTaskEither(withdrawPayoutsFpTs(deprecatedRestAPI)(wallet)(payoutIds));
   };
 const fetchWithdrawnPayouts =
   ({ wallet, deprecatedRestAPI }: PayoutsDI) =>
   (filters?: Filters): Promise<PayoutWithdrawn[]> => {
-    return unsafeTaskEither(
-      fetchWithdrawnPayoutsFpTs(deprecatedRestAPI)(wallet)(
-        O.fromNullable(filters)
-      )
-    );
+    return unsafeTaskEither(fetchWithdrawnPayoutsFpTs(deprecatedRestAPI)(wallet)(O.fromNullable(filters)));
   };
 
 const fetchAvailablePayoutsFpTs: (
   restAPI: FPTSRestAPI
 ) => (
   walletApi: WalletAPI
-) => (
-  filtersOption: O.Option<Filters>
-) => TE.TaskEither<Error | DecodingError, PayoutAvailable[]> =
+) => (filtersOption: O.Option<Filters>) => TE.TaskEither<Error | DecodingError, PayoutAvailable[]> =
   (restAPI) => (walletApi) => (filtersOption) =>
     pipe(
       getAssetIds(walletApi),
@@ -89,11 +77,7 @@ const fetchAvailablePayoutsFpTs: (
           TE.map((result) => result.payouts)
         )
       ),
-      TE.chain((payouts) =>
-        TE.sequenceArray(
-          payouts.map((payout) => restAPI.payouts.get(payout.payoutId))
-        )
-      ),
+      TE.chain((payouts) => TE.sequenceArray(payouts.map((payout) => restAPI.payouts.get(payout.payoutId)))),
       TE.map((payoutsDetails) =>
         payoutsDetails.map((payoutDetails) => ({
           payoutId: payoutDetails.payoutId,
@@ -108,9 +92,7 @@ const fetchWithdrawnPayoutsFpTs: (
   restAPI: FPTSRestAPI
 ) => (
   walletApi: WalletAPI
-) => (
-  filtersOption: O.Option<Filters>
-) => TE.TaskEither<Error | DecodingError, PayoutWithdrawn[]> =
+) => (filtersOption: O.Option<Filters>) => TE.TaskEither<Error | DecodingError, PayoutWithdrawn[]> =
   (restAPI) => (walletApi) => (filtersOption) =>
     pipe(
       getAssetIds(walletApi),
@@ -136,11 +118,7 @@ const fetchWithdrawnPayoutsFpTs: (
           TE.map((result) => result.payouts)
         )
       ),
-      TE.chain((payouts) =>
-        TE.sequenceArray(
-          payouts.map((payout) => restAPI.payouts.get(payout.payoutId))
-        )
-      ),
+      TE.chain((payouts) => TE.sequenceArray(payouts.map((payout) => restAPI.payouts.get(payout.payoutId)))),
       TE.map((payoutsDetails) =>
         payoutsDetails.map((payoutDetails) =>
           pipe(
@@ -164,9 +142,7 @@ const fetchWithdrawnPayoutsFpTs: (
       )
     );
 
-const getAssetIds: (walletApi: WalletAPI) => TE.TaskEither<Error, AssetId[]> = (
-  walletAPI
-) =>
+const getAssetIds: (walletApi: WalletAPI) => TE.TaskEither<Error, AssetId[]> = (walletAPI) =>
   pipe(
     tryCatchDefault(walletAPI.getTokens),
     TE.map((tokens) => tokens.map((token) => token.assetId))
@@ -174,33 +150,22 @@ const getAssetIds: (walletApi: WalletAPI) => TE.TaskEither<Error, AssetId[]> = (
 
 export const withdrawPayoutsFpTs: (
   client: FPTSRestAPI
-) => (
-  wallet: WalletAPI
-) => (payoutIds: PayoutId[]) => TE.TaskEither<Error | DecodingError, void> =
+) => (wallet: WalletAPI) => (payoutIds: PayoutId[]) => TE.TaskEither<Error | DecodingError, void> =
   (client) => (wallet) => (payoutIds) =>
     pipe(
       tryCatchDefault(() => getAddressesAndCollaterals(wallet)),
-      TE.chain((addressesAndCollaterals) =>
-        client.withdrawals.post(payoutIds, addressesAndCollaterals)
-      ),
+      TE.chain((addressesAndCollaterals) => client.withdrawals.post(payoutIds, addressesAndCollaterals)),
       TE.chainW((withdrawalTextEnvelope) =>
         pipe(
-          tryCatchDefault(() =>
-            wallet.signTx(withdrawalTextEnvelope.tx.cborHex)
-          ),
+          tryCatchDefault(() => wallet.signTx(withdrawalTextEnvelope.tx.cborHex)),
           TE.chain((hexTransactionWitnessSet) =>
-            client.withdrawals.withdrawal.put(
-              withdrawalTextEnvelope.withdrawalId,
-              hexTransactionWitnessSet
-            )
+            client.withdrawals.withdrawal.put(withdrawalTextEnvelope.withdrawalId, hexTransactionWitnessSet)
           ),
           TE.map(() => withdrawalTextEnvelope.withdrawalId)
         )
       ),
       TE.chainFirstW((withdrawalId) =>
-        tryCatchDefault(() =>
-          wallet.waitConfirmation(pipe(withdrawalId, withdrawalIdToTxId))
-        )
+        tryCatchDefault(() => wallet.waitConfirmation(pipe(withdrawalId, withdrawalIdToTxId)))
       ),
       TE.map(constVoid)
     );

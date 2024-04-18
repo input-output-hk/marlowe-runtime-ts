@@ -3,13 +3,7 @@ import * as G from "@marlowe.io/language-core-v1/guards";
 import { ChoiceId, ChoiceIdGuard } from "./choices.js";
 import { AccountId, AccountIdGuard } from "./payee.js";
 import { Token, TokenGuard } from "./token.js";
-import {
-  Constant,
-  TimeIntervalStart,
-  TimeIntervalEnd,
-  UseValue,
-  ValueId,
-} from "@marlowe.io/language-core-v1";
+import { Constant, TimeIntervalStart, TimeIntervalEnd, UseValue, ValueId } from "@marlowe.io/language-core-v1";
 import { Reference, ReferenceGuard } from "./reference.js";
 
 export { Constant, TimeIntervalStart, TimeIntervalEnd, UseValue, ValueId };
@@ -43,9 +37,7 @@ export interface NegValue {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link NegValue | neg value type}.
  * @category Value
  */
-export const NegValueGuard: t.Type<NegValue> = t.recursion("NegValue", () =>
-  t.type({ negate: ValueGuard })
-);
+export const NegValueGuard: t.Type<NegValue> = t.recursion("NegValue", () => t.type({ negate: ValueGuard }));
 
 /**
  * Marlowe Object version of {@link @marlowe.io/language-core-v1!index.AddValue | Core AddValue}.
@@ -124,9 +116,8 @@ export type ChoiceValue = { value_of_choice: ChoiceId };
  * {@link !io-ts-usage | Dynamic type guard} for the {@link ChoiceValue | choice value type}.
  * @category Value
  */
-export const ChoiceValueGuard: t.Type<ChoiceValue> = t.recursion(
-  "ChoiceValue",
-  () => t.type({ value_of_choice: ChoiceIdGuard })
+export const ChoiceValueGuard: t.Type<ChoiceValue> = t.recursion("ChoiceValue", () =>
+  t.type({ value_of_choice: ChoiceIdGuard })
 );
 
 /**
@@ -216,9 +207,7 @@ export type ValueMatcher<T> = {
  * @category Value
  */
 export function matchValue<T>(matcher: ValueMatcher<T>): (value: Value) => T;
-export function matchValue<T>(
-  matcher: Partial<ValueMatcher<T>>
-): (value: Value) => T | undefined;
+export function matchValue<T>(matcher: Partial<ValueMatcher<T>>): (value: Value) => T | undefined;
 export function matchValue<T>(matcher: Partial<ValueMatcher<T>>) {
   return (value: Value) => {
     if (AvailableMoneyGuard.is(value) && matcher.availableMoney) {
@@ -296,9 +285,7 @@ export interface NotObs {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link NotObs | not type}.
  * @category Observation
  */
-export const NotObsGuard: t.Type<NotObs> = t.recursion("NotObs", () =>
-  t.type({ not: ObservationGuard })
-);
+export const NotObsGuard: t.Type<NotObs> = t.recursion("NotObs", () => t.type({ not: ObservationGuard }));
 
 /**
  * Marlowe Object version of {@link @marlowe.io/language-core-v1!index.ChoseSomething | Core ChoseSomething}.
@@ -312,9 +299,8 @@ export interface ChoseSomething {
  * @category Observation
  */
 // TODO: try to remove recursion
-export const ChoseSomethingGuard: t.Type<ChoseSomething> = t.recursion(
-  "ChoseSomething",
-  () => t.type({ chose_something_for: ChoiceIdGuard })
+export const ChoseSomethingGuard: t.Type<ChoseSomething> = t.recursion("ChoseSomething", () =>
+  t.type({ chose_something_for: ChoiceIdGuard })
 );
 
 /**
@@ -423,22 +409,20 @@ export type Observation =
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Observation | observation type}.
  * @category Observation
  */
-export const ObservationGuard: t.Type<Observation> = t.recursion(
-  "Observation",
-  () =>
-    t.union([
-      AndObsGuard,
-      OrObsGuard,
-      NotObsGuard,
-      ChoseSomethingGuard,
-      ValueEQGuard,
-      ValueGTGuard,
-      ValueGEGuard,
-      ValueLTGuard,
-      ValueLEGuard,
-      t.boolean,
-      ReferenceGuard,
-    ])
+export const ObservationGuard: t.Type<Observation> = t.recursion("Observation", () =>
+  t.union([
+    AndObsGuard,
+    OrObsGuard,
+    NotObsGuard,
+    ChoseSomethingGuard,
+    ValueEQGuard,
+    ValueGTGuard,
+    ValueGEGuard,
+    ValueLTGuard,
+    ValueLEGuard,
+    t.boolean,
+    ReferenceGuard,
+  ])
 );
 
 /**
@@ -466,9 +450,7 @@ export type ObservationMatcher<T> = {
  * @hidden
  * @category Observation
  */
-export function matchObservation<T>(
-  matcher: ObservationMatcher<T>
-): (observation: Observation) => T;
+export function matchObservation<T>(matcher: ObservationMatcher<T>): (observation: Observation) => T;
 export function matchObservation<T>(
   matcher: Partial<ObservationMatcher<T>>
 ): (observation: Observation) => T | undefined;

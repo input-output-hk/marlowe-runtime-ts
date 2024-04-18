@@ -1,12 +1,7 @@
 import * as t from "io-ts/lib/index.js";
 import { Metadata, MetadataGuard } from "@marlowe.io/runtime-core";
 import { BigIntOrNumberGuard } from "@marlowe.io/adapter/bigint";
-import {
-  TemplateParam,
-  TemplateType,
-  templateParamsCodec,
-  templateParamsObjectGuard,
-} from "./template-param.js";
+import { TemplateParam, TemplateType, templateParamsCodec, templateParamsObjectGuard } from "./template-param.js";
 
 /**
  * This class represents an error while decoding the Metadata according to a {@link MarloweTemplate}.
@@ -73,40 +68,21 @@ export class MarloweTemplate<ObjectParams extends object> {
           }
 
           if ("v" in metadatum === false) {
-            return t.failure(
-              val,
-              ctx,
-              "Metadata entry 9041 doesn't have a version field"
-            );
+            return t.failure(val, ctx, "Metadata entry 9041 doesn't have a version field");
           }
           if ("params" in metadatum === false) {
-            return t.failure(
-              val,
-              ctx,
-              "Metadata entry 9041 doesn't have a params field"
-            );
+            return t.failure(val, ctx, "Metadata entry 9041 doesn't have a params field");
           }
 
           const version = metadatum["v" as any];
 
-          if (
-            !BigIntOrNumberGuard.is(version) ||
-            BigIntOrNumberGuard.encode(version) !== 1n
-          ) {
-            return t.failure(
-              val,
-              ctx,
-              "Metadata entry 9041 has an invalid version"
-            );
+          if (!BigIntOrNumberGuard.is(version) || BigIntOrNumberGuard.encode(version) !== 1n) {
+            return t.failure(val, ctx, "Metadata entry 9041 has an invalid version");
           }
 
           const paramList = paramListCodec.decode(metadatum["params" as any]);
           if (paramList._tag === "Left") {
-            return t.failure(
-              paramList.left[0].value,
-              paramList.left[0].context,
-              "Invalid params"
-            );
+            return t.failure(paramList.left[0].value, paramList.left[0].context, "Invalid params");
           }
           const result = {} as any;
           templateParams.forEach((param, ix) => {
@@ -181,18 +157,14 @@ export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 /**
  * @category Template
  */
-export type TemplateParametersOf<T> = T extends MarloweTemplate<infer U>
-  ? U
-  : never;
+export type TemplateParametersOf<T> = T extends MarloweTemplate<infer U> ? U : never;
 
 /**
  * Options to create a new {@link MarloweTemplate}.
  * @typeParam ListParams - An ordered list of the different parameters that conform the marlowe template.
  * @category Template
  */
-export interface MkTemplateOptions<
-  ListParams extends readonly TemplateParam<any>[],
-> {
+export interface MkTemplateOptions<ListParams extends readonly TemplateParam<any>[]> {
   /**
    * The name of the template.
    */
@@ -217,9 +189,7 @@ export interface MkTemplateOptions<
  * @typeParam ListParams - An ordered list of the different parameters that conform the template.
  * @category Template
  */
-export function mkMarloweTemplate<
-  ListParams extends readonly TemplateParam<any>[],
->(
+export function mkMarloweTemplate<ListParams extends readonly TemplateParam<any>[]>(
   options: MkTemplateOptions<ListParams>
 ): MarloweTemplate<Expand<TemplateType<ListParams>>> {
   return new MarloweTemplate(options);

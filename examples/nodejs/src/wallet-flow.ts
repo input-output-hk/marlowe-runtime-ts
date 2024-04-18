@@ -6,10 +6,7 @@ const log = console.log.bind(console);
 
 async function main() {
   const config = await readConfig();
-  const lucid = await Lucid.new(
-    new Blockfrost(config.blockfrostUrl, config.blockfrostProjectId),
-    config.network
-  );
+  const lucid = await Lucid.new(new Blockfrost(config.blockfrostUrl, config.blockfrostProjectId), config.network);
   lucid.selectWalletFromSeed(config.seedPhrase);
 
   const wallet = mkLucidWallet(lucid);
@@ -23,8 +20,7 @@ async function main() {
   const tokensResult = await wallet.getTokens();
   log(`* Tokens: (${tokensResult.length} tokens)`);
   tokensResult.map((token) => {
-    const tokenName =
-      token.assetId.assetName == "" ? "lovelaces" : token.assetId.assetName;
+    const tokenName = token.assetId.assetName == "" ? "lovelaces" : token.assetId.assetName;
     log(`   ${tokenName} - ${token.quantity}`);
   });
   log("");

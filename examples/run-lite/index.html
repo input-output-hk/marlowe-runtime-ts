@@ -15,12 +15,7 @@
       <h2>1. Setup contract and Runtime</h2>
 
       <label for="runtimeUrl">URL to a Marlowe Runtime instance:</label>
-      <input
-        id="runtimeUrl"
-        type="text"
-        autocomplete="on"
-        placeholder="http://localhost:32952"
-      />
+      <input id="runtimeUrl" type="text" autocomplete="on" placeholder="http://localhost:32952" />
       <br />
       <label for="wallet">Select wallet:</label>
       <select id="wallet" name="wallet">
@@ -30,9 +25,7 @@
       <div>
         <h3>1.1 Create contract</h3>
         <label for="contract">JSON Contract:</label>
-        <textarea id="contract" type="text" style="width: 100%; height: 20em">
-"close"</textarea
-        >
+        <textarea id="contract" type="text" style="width: 100%; height: 20em">"close"</textarea>
       </div>
       <br />
       <input id="create-contract" type="button" value="Create contract" />
@@ -82,9 +75,7 @@
       const consoleDiv = document.getElementById("console");
 
       function setContractIdIndicator(contractId) {
-        const contractIdIndicator = document.getElementById(
-          "contract-id-indicator"
-        );
+        const contractIdIndicator = document.getElementById("contract-id-indicator");
         contractIdIndicator.innerHTML = contractId;
         // TODO: Add a network selector
         const url = `https://preprod.marlowescan.com/contractView?tab=state&contractId=${contractId.replace(

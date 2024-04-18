@@ -16,11 +16,7 @@
     <br />
     <div>
       <label for="unsigned-tx">Unsigned TX:</label>
-      <textarea
-        id="unsigned-tx"
-        type="text"
-        style="width: 100%; height: 20em"
-      ></textarea>
+      <textarea id="unsigned-tx" type="text" style="width: 100%; height: 20em"></textarea>
       <input id="sign-tx" type="button" value="Sign tx" />
       <br />
     </div>
@@ -29,10 +25,7 @@
     <div id="console"></div>
     <script type="module">
       import { clearConsole, log } from "../js/poc-helpers.js";
-      import {
-        mkBrowserWallet,
-        getInstalledWalletExtensions,
-      } from "@marlowe.io/wallet";
+      import { mkBrowserWallet, getInstalledWalletExtensions } from "@marlowe.io/wallet";
 
       const walletInput = document.getElementById("wallet");
       const installedWalletExtensions = getInstalledWalletExtensions();
@@ -46,9 +39,7 @@
         installedWalletExtensions.forEach((walletExtension) => {
           const option = document.createElement("option");
           option.value = walletExtension.name;
-          option.text =
-            walletExtension.name.charAt(0).toUpperCase() +
-            walletExtension.name.slice(1);
+          option.text = walletExtension.name.charAt(0).toUpperCase() + walletExtension.name.slice(1);
           walletInput.add(option);
         });
       }
@@ -61,9 +52,7 @@
         const installedWalletExtensions = getInstalledWalletExtensions().filter(
           (extension) => extension.name === walletName
         )[0];
-        log(
-          `<img src="${installedWalletExtensions.icon}" width="200" height="200" /> `
-        );
+        log(`<img src="${installedWalletExtensions.icon}" width="200" height="200" /> `);
         log(`API Version : "${installedWalletExtensions.apiVersion}"`);
         log(`Supports Marlowe ? : "${installedWalletExtensions.supported}"`);
         log(`<h2>Accessing ${walletName} Wallet Extension</h2>`);
@@ -86,10 +75,7 @@
 
         log(`- <b>Tokens</b>: (${tokensResult.length} tokens)`);
         tokensResult.map((token) => {
-          const tokenName =
-            token.assetId.assetName == ""
-              ? "lovelaces"
-              : token.assetId.assetName;
+          const tokenName = token.assetId.assetName == "" ? "lovelaces" : token.assetId.assetName;
           log(`&nbsp;&nbsp;&nbsp; <i>${tokenName}</i> - ${token.quantity}`);
         });
         log("");
@@ -100,16 +86,12 @@
 
         const usedAddresses = await wallet.getUsedAddresses();
         log(`- <b>Used Addresses</b>: (${usedAddresses.length} addresses)`);
-        usedAddresses.map((usedAddress) =>
-          log("&nbsp;&nbsp;&nbsp; - " + usedAddress)
-        );
+        usedAddresses.map((usedAddress) => log("&nbsp;&nbsp;&nbsp; - " + usedAddress));
         log("");
 
         const collaterals = await wallet.getCollaterals();
         log(`- <b>Collaterals</b>: (${collaterals.length} collaterals)`);
-        collaterals.map((collateral) =>
-          log("&nbsp;&nbsp;&nbsp; - " + collateral)
-        );
+        collaterals.map((collateral) => log("&nbsp;&nbsp;&nbsp; - " + collateral));
         log("");
 
         const utxos = await wallet.getUTxOs();

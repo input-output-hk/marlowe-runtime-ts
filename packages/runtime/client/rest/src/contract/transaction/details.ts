@@ -4,12 +4,7 @@ import * as O from "fp-ts/lib/Option.js";
 
 import { ISO8601 } from "@marlowe.io/adapter/time";
 import * as G from "@marlowe.io/language-core-v1/guards";
-import {
-  BuiltinByteString,
-  Contract,
-  Input,
-  MarloweState,
-} from "@marlowe.io/language-core-v1";
+import { BuiltinByteString, Contract, Input, MarloweState } from "@marlowe.io/language-core-v1";
 import {
   TagsGuard,
   MetadataGuard,

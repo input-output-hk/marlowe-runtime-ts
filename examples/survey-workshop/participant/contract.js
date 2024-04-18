@@ -58,9 +58,7 @@ export function verifySurveyContract(actual, optionalSurveyParticipant = null) {
   const result = Survey.verifySurvey(expectedQuestions, actual);
   let match = result.match;
   if (!match) {
-    result.logs.forEach((entry) =>
-      entry.length === 1 ? H.log(entry[0]) : H.logJSON(entry[0], entry[1])
-    );
+    result.logs.forEach((entry) => (entry.length === 1 ? H.log(entry[0]) : H.logJSON(entry[0], entry[1])));
   } else {
     if (result.answerTimeout > result.rewardTimeout) {
       H.logJSON("The answer timeout should happen before the reward timeout", {
@@ -81,8 +79,7 @@ export function verifySurveyContract(actual, optionalSurveyParticipant = null) {
     }
     if (optionalSurveyParticipant !== null) {
       if (
-        result.surveyParticipant.address !==
-          optionalSurveyParticipant.address &&
+        result.surveyParticipant.address !== optionalSurveyParticipant.address &&
         result.surveyParticipant.address !== "$SURVEY_PARTICIPANT_ADDR"
       ) {
         H.log(
@@ -92,10 +89,7 @@ export function verifySurveyContract(actual, optionalSurveyParticipant = null) {
       }
     }
 
-    if (
-      result.custodian.address !== custodianParty.address &&
-      result.custodian.address !== "$CUSTODIAN_ADDR"
-    ) {
+    if (result.custodian.address !== custodianParty.address && result.custodian.address !== "$CUSTODIAN_ADDR") {
       H.log(
         `The custodian should be either ${custodianParty.address} or $CUSTODIAN_ADDR but it currently is ${result.custodian.address}`
       );

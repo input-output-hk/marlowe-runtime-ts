@@ -10,15 +10,5 @@
   "tsconfig": "./src/tsconfig.json",
   "categorizeByGroup": false,
   "defaultCategory": "General",
-  "categoryOrder": [
-    "Contract",
-    "Observation",
-    "Action",
-    "Value",
-    "Payee",
-    "Party",
-    "Token",
-    "Choice",
-    "*"
-  ]
+  "categoryOrder": ["Contract", "Observation", "Action", "Value", "Payee", "Party", "Token", "Choice", "*"]
 }

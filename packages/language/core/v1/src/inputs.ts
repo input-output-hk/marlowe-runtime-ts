@@ -1,11 +1,6 @@
 import * as t from "io-ts/lib/index.js";
 import { Contract, ContractGuard } from "./contract.js";
-import {
-  ChoiceId,
-  ChoiceIdGuard,
-  ChosenNum,
-  ChosenNumGuard,
-} from "./choices.js";
+import { ChoiceId, ChoiceIdGuard, ChosenNum, ChosenNumGuard } from "./choices.js";
 import { Party, PartyGuard } from "./participants.js";
 import { AccountId, AccountIdGuard } from "./payee.js";
 import { Token, TokenGuard } from "./token.js";
@@ -98,11 +93,7 @@ export type InputContent = IDeposit | IChoice | INotify;
  * TODO: Comment
  * @category Input
  */
-export const InputContentGuard: t.Type<InputContent> = t.union([
-  IDepositGuard,
-  IChoiceGuard,
-  INotifyGuard,
-]);
+export const InputContentGuard: t.Type<InputContent> = t.union([IDepositGuard, IChoiceGuard, INotifyGuard]);
 
 /**
  * TODO: Comment
@@ -121,17 +112,17 @@ export interface MerkleizedHashAndContinuation {
   merkleized_continuation: Contract;
 }
 
-export const MerkleizedHashAndContinuationGuard: t.Type<MerkleizedHashAndContinuation> =
-  t.type({
-    continuation_hash: BuiltinByteStringGuard,
-    merkleized_continuation: ContractGuard,
-  });
+export const MerkleizedHashAndContinuationGuard: t.Type<MerkleizedHashAndContinuation> = t.type({
+  continuation_hash: BuiltinByteStringGuard,
+  merkleized_continuation: ContractGuard,
+});
 
 export type MerkleizedDeposit = IDeposit & MerkleizedHashAndContinuation;
 
-export const MerkleizedDepositGuard: t.Type<MerkleizedDeposit> = t.intersection(
-  [IDepositGuard, MerkleizedHashAndContinuationGuard]
-);
+export const MerkleizedDepositGuard: t.Type<MerkleizedDeposit> = t.intersection([
+  IDepositGuard,
+  MerkleizedHashAndContinuationGuard,
+]);
 
 export type MerkleizedChoice = IChoice & MerkleizedHashAndContinuation;
 
@@ -149,19 +140,12 @@ export const MerkleizedNotifyGuard = MerkleizedHashAndContinuationGuard;
  * TODO: Revisit
  * @category Input
  */
-export type MerkleizedInput =
-  | MerkleizedDeposit
-  | MerkleizedChoice
-  | MerkleizedNotify;
+export type MerkleizedInput = MerkleizedDeposit | MerkleizedChoice | MerkleizedNotify;
 /**
  * TODO: Revisit
  * @category Input
  */
-export const MerkleizedInputGuard = t.union([
-  MerkleizedDepositGuard,
-  MerkleizedChoiceGuard,
-  MerkleizedNotifyGuard,
-]);
+export const MerkleizedInputGuard = t.union([MerkleizedDepositGuard, MerkleizedChoiceGuard, MerkleizedNotifyGuard]);
 /**
  * TODO: Revisit
  * @category Input
@@ -171,7 +155,4 @@ export type Input = NormalInput | MerkleizedInput;
  * TODO: Revisit
  * @category Input
  */
-export const InputGuard: t.Type<Input> = t.union([
-  MerkleizedInputGuard,
-  NormalInputGuard,
-]);
+export const InputGuard: t.Type<Input> = t.union([MerkleizedInputGuard, NormalInputGuard]);

@@ -6,10 +6,7 @@ import * as R from "fp-ts/lib/Record.js";
 import * as O from "fp-ts/lib/Option.js";
 import { pipe } from "fp-ts/lib/function.js";
 
-const projectRoot = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  ".."
-);
+const projectRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 async function readJSON(path) {
   const contents = await fs.readFile(path);
@@ -17,7 +14,7 @@ async function readJSON(path) {
 }
 
 async function getPackages() {
-  const rootPackageJson = await readJSON(path.join(projectRoot, "package.json"))
+  const rootPackageJson = await readJSON(path.join(projectRoot, "package.json"));
   return rootPackageJson.workspaces;
 }
 
@@ -26,15 +23,15 @@ async function getPackageInfo(packageLocation) {
   return {
     exports: packageJson.exports,
     name: packageJson.name.replace("@marlowe.io/", ""),
-    location: packageLocation
+    location: packageLocation,
   };
 }
 
 /**
-  * This function builds an input object as required by rollup using the package information
-  * as provided by getPackageInfo.
-  * For each exported module in the package.json we create an entry in the input object.
-  */
+ * This function builds an input object as required by rollup using the package information
+ * as provided by getPackageInfo.
+ * For each exported module in the package.json we create an entry in the input object.
+ */
 export function buildRollupInput(packageInfo) {
   return pipe(
     packageInfo.exports,
@@ -47,19 +44,18 @@ export function buildRollupInput(packageInfo) {
     // available in the ESM bundle.
     A.filter(([exportKey, exportMap]) => !exportKey.includes("*")),
     A.map(([exportKey, exportMap]) => {
-      const moduleEntryPoint = exportKey === "." ? packageInfo.name : exportKey.replace(/^\.\//, '');
-      return [moduleEntryPoint, path.join(packageInfo.location, exportMap.import)]
-    } ),
+      const moduleEntryPoint = exportKey === "." ? packageInfo.name : exportKey.replace(/^\.\//, "");
+      return [moduleEntryPoint, path.join(packageInfo.location, exportMap.import)];
+    }),
     R.fromEntries
-  )
+  );
 }
 
 /**
  * Gets the package information (name, location, exports) for all packages in the SDK.
  */
-export async function getAllPackageInfo () {
+export async function getAllPackageInfo() {
   const pkgs = await getPackages();
   const packageInfos = await Promise.all(pkgs.map(getPackageInfo));
   return packageInfos;
 }
-

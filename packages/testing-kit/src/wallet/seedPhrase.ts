@@ -14,8 +14,7 @@ export const SeedPhraseGuard = t.brand(
 
 export type SeedPhrase = t.TypeOf<typeof SeedPhraseGuard>;
 
-export const seedPhrase = (s: string[]) =>
-  unsafeEither(SeedPhraseGuard.decode(s));
+export const seedPhrase = (s: string[]) => unsafeEither(SeedPhraseGuard.decode(s));
 
 export type SeedSize = "15-words" | "24-words";
 

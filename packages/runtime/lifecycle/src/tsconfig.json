@@ -7,9 +7,7 @@
       "@marlowe.io/runtime-core/*": ["../../../runtime/core/src/*"],
       "@marlowe.io/wallet/*": ["../../../wallet/src/*"],
       "@marlowe.io/language-core-v1/*": ["../../../language/core/v1/src/*"],
-      "@marlowe.io/runtime-rest-client/*": [
-        "../../../runtime/client/rest/src/*"
-      ]
+      "@marlowe.io/runtime-rest-client/*": ["../../../runtime/client/rest/src/*"]
     }
   },
   "references": [

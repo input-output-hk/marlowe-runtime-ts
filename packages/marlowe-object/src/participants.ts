@@ -35,9 +35,7 @@ export type PartyMatcher<T> = {
  * @category Party
  */
 export function matchParty<T>(matcher: PartyMatcher<T>): (party: Party) => T;
-export function matchParty<T>(
-  matcher: Partial<PartyMatcher<T>>
-): (party: Party) => T | undefined;
+export function matchParty<T>(matcher: Partial<PartyMatcher<T>>): (party: Party) => T | undefined;
 export function matchParty<T>(matcher: Partial<PartyMatcher<T>>) {
   return (party: Party) => {
     if (G.Address.is(party) && matcher.address) {

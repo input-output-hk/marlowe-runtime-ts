@@ -16,10 +16,7 @@
         local web server to point to the correct version -->
     <script src="/importmap"></script>
     <script type="module">
-      import {
-        mkBrowserWallet,
-        getInstalledWalletExtensions,
-      } from "@marlowe.io/wallet";
+      import { mkBrowserWallet, getInstalledWalletExtensions } from "@marlowe.io/wallet";
       import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/browser";
       const consoleDiv = document.getElementById("console");
       const walletInput = document.getElementById("wallet");
@@ -34,9 +31,7 @@
         installedWalletExtensions.forEach((installedWalletExtension) => {
           const option = document.createElement("option");
           option.value = installedWalletExtension.name;
-          option.text =
-            installedWalletExtension.name.charAt(0).toUpperCase() +
-            installedWalletExtension.name.slice(1);
+          option.text = installedWalletExtension.name.charAt(0).toUpperCase() + installedWalletExtension.name.slice(1);
           walletInput.add(option);
         });
       }
@@ -52,9 +47,7 @@
         const walletName = walletInput.value;
         const runtimeURL = "http://localhost:32788";
 
-        log(
-          `<h2>Connecting the runtime instance at ${runtimeURL} and the ${walletName} Wallet Extension</h2>`
-        );
+        log(`<h2>Connecting the runtime instance at ${runtimeURL} and the ${walletName} Wallet Extension</h2>`);
         const runtimeLifecycle = await mkRuntimeLifecycle({
           walletName: walletName,
           runtimeURL: runtimeURL,
@@ -65,9 +58,7 @@
 
         const avalaiblePayouts = await runtimeLifecycle.payouts
           .available()
-          .catch((err) =>
-            log(`Error while retrieving availaible payouts : ${err}`)
-          );
+          .catch((err) => log(`Error while retrieving availaible payouts : ${err}`));
         log(`nbPayouts retrieved : ${avalaiblePayouts.length}`);
         log("Payouts flow done 🎉");
       }

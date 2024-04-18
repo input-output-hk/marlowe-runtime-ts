@@ -42,8 +42,7 @@ export const token = (currency_symbol: PolicyId, token_name: TokenName) => ({
 /**
  * @hidden
  */
-export const tokenToString: (token: Token) => string = (token) =>
-  `${token.currency_symbol}|${token.token_name}`;
+export const tokenToString: (token: Token) => string = (token) => `${token.currency_symbol}|${token.token_name}`;
 
 /**
  * The native {@link Token} of the Cardano blockchain. 1 Million lovelaces is one ADA.

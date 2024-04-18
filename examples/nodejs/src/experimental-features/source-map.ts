@@ -1,15 +1,7 @@
 import * as M from "fp-ts/lib/Map.js";
 
-import {
-  ContractBundleMap,
-  bundleMapToList,
-  isAnnotated,
-  stripAnnotations,
-} from "@marlowe.io/marlowe-object";
-import {
-  CreateContractRequestBase,
-  RuntimeLifecycle,
-} from "@marlowe.io/runtime-lifecycle/api";
+import { ContractBundleMap, bundleMapToList, isAnnotated, stripAnnotations } from "@marlowe.io/marlowe-object";
+import { CreateContractRequestBase, RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
 
 import { ContractClosure, getContractClosure } from "./contract-closure.js";
 import * as Core from "@marlowe.io/language-core-v1";
@@ -17,11 +9,7 @@ import * as CoreG from "@marlowe.io/language-core-v1/guards";
 import * as Obj from "@marlowe.io/marlowe-object";
 import * as ObjG from "@marlowe.io/marlowe-object/guards";
 
-import {
-  SingleInputTx,
-  TransactionOutput,
-  playSingleInputTxTrace,
-} from "@marlowe.io/language-core-v1/semantics";
+import { SingleInputTx, TransactionOutput, playSingleInputTxTrace } from "@marlowe.io/language-core-v1/semantics";
 import { RestClient } from "@marlowe.io/runtime-rest-client";
 import { ContractId, TxId } from "@marlowe.io/runtime-core";
 import { deepEqual } from "@marlowe.io/adapter/deep-equal";
@@ -30,13 +18,9 @@ function annotateInputFromClosure(contractClosure: ContractClosure) {
   return function (input: Core.Input): Core.Input {
     if (input === "input_notify") return "input_notify";
     if ("merkleized_continuation" in input) {
-      const annotatedContinuation = contractClosure.contracts.get(
-        input.continuation_hash
-      );
+      const annotatedContinuation = contractClosure.contracts.get(input.continuation_hash);
       if (typeof annotatedContinuation === "undefined")
-        throw new Error(
-          `Cant find continuation for ${input.continuation_hash}`
-        );
+        throw new Error(`Cant find continuation for ${input.continuation_hash}`);
       return { ...input, merkleized_continuation: annotatedContinuation };
     } else {
       return input;
@@ -63,10 +47,9 @@ async function annotatedClosure<T>(
   restClient: RestClient,
   sourceObjectMap: ContractBundleMap<T>
 ): Promise<ContractClosure> {
-  const { contractSourceId, intermediateIds } =
-    await restClient.createContractSources({
-      bundle: bundleMapToList(sourceObjectMap),
-    });
+  const { contractSourceId, intermediateIds } = await restClient.createContractSources({
+    bundle: bundleMapToList(sourceObjectMap),
+  });
 
   const closure = await getContractClosure({ restClient })(contractSourceId);
 
@@ -74,14 +57,11 @@ async function annotatedClosure<T>(
   // We need to reverse this object in order to annotate the closure using the source annotations.
   // It is possible for two different source entries to have the same hash and different annotations.
   // In that case the last annotation will prevail.
-  const sourceMap = Object.fromEntries(
-    Object.entries(intermediateIds).map(([source, hash]) => [hash, source])
-  );
+  const sourceMap = Object.fromEntries(Object.entries(intermediateIds).map(([source, hash]) => [hash, source]));
 
   function getSourceContract(ref: Obj.Label) {
     const sourceContractObject = sourceObjectMap.objects[ref];
-    if (typeof sourceContractObject === "undefined")
-      throw new Error(`Cant find source for ${ref}`);
+    if (typeof sourceContractObject === "undefined") throw new Error(`Cant find source for ${ref}`);
 
     return sourceContractObject.value as Obj.Contract<unknown>;
   }
@@ -93,10 +73,7 @@ async function annotatedClosure<T>(
     return dst;
   }
 
-  function annotateContract(
-    source: Obj.Contract<unknown>,
-    dst: Core.Contract
-  ): Core.Contract {
+  function annotateContract(source: Obj.Contract<unknown>, dst: Core.Contract): Core.Contract {
     let srcContract = source;
     if (ObjG.Reference.is(source)) {
       srcContract = getSourceContract(source.ref);
@@ -139,10 +116,7 @@ async function annotatedClosure<T>(
       const srcWhen = srcContract;
       return copyAnnotation(srcWhen, {
         ...dst,
-        timeout_continuation: annotateContract(
-          srcWhen.timeout_continuation,
-          dst.timeout_continuation
-        ),
+        timeout_continuation: annotateContract(srcWhen.timeout_continuation, dst.timeout_continuation),
         when: dst.when.map((dstCase, index) => {
           const srcCase = srcWhen.when[index];
           if ("merkleized_then" in srcCase) {
@@ -180,9 +154,7 @@ export interface SourceMap<T> {
   closure: ContractClosure;
   annotateHistory(history: SingleInputTx[]): SingleInputTx[];
   playHistory(history: SingleInputTx[]): TransactionOutput;
-  createContract(
-    options: CreateContractRequestBase
-  ): Promise<[ContractId, TxId]>;
+  createContract(options: CreateContractRequestBase): Promise<[ContractId, TxId]>;
   contractInstanceOf(contractId: ContractId): Promise<boolean>;
 }
 

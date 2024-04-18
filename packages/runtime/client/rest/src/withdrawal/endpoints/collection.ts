@@ -45,48 +45,39 @@ export type GETHeadersByRange = (
   request?: GetWithdrawalsRequest
 ) => TE.TaskEither<Error | DecodingError, GetWithdrawalsResponse>;
 
-const roleToParameter = (roleToken: AssetId) =>
-  `${roleToken.policyId}.${roleToken.assetName}`;
+const roleToParameter = (roleToken: AssetId) => `${roleToken.policyId}.${roleToken.assetName}`;
 
 /**
  * @see {@link https://docs.marlowe.iohk.io/api/get-withdrawals}
  */
-export const getHeadersByRangeViaAxios: (
-  axiosInstance: AxiosInstance
-) => GETHeadersByRange = (axiosInstance) => (request) =>
-  pipe(
-    HTTP.GetWithDataAndHeaders(axiosInstance)(
-      `/withdrawals${
-        request && request.partyRoles
-          ? stringify(
-              { partyRole: request.partyRoles.map(roleToParameter) },
-              { indices: false }
-            )
-          : ""
-      }`,
-      request && request.range ? { headers: { Range: request.range } } : {}
-    ),
-    TE.map(([headers, data]) => ({
-      data: data,
-      page: {
-        current: headers["content-range"],
-        next: headers["next-range"],
-        total: Number(headers["total-count"]).valueOf(),
-      },
-    })),
-    TE.chainW((data) =>
-      TE.fromEither(
-        E.mapLeft(formatValidationErrors)(GETByRangeRawResponse.decode(data))
-      )
-    ),
-    TE.map((rawResponse) => ({
-      withdrawals: pipe(
-        rawResponse.data.results,
-        A.map((result) => result.resource)
+export const getHeadersByRangeViaAxios: (axiosInstance: AxiosInstance) => GETHeadersByRange =
+  (axiosInstance) => (request) =>
+    pipe(
+      HTTP.GetWithDataAndHeaders(axiosInstance)(
+        `/withdrawals${
+          request && request.partyRoles
+            ? stringify({ partyRole: request.partyRoles.map(roleToParameter) }, { indices: false })
+            : ""
+        }`,
+        request && request.range ? { headers: { Range: request.range } } : {}
       ),
-      page: rawResponse.page,
-    }))
-  );
+      TE.map(([headers, data]) => ({
+        data: data,
+        page: {
+          current: headers["content-range"],
+          next: headers["next-range"],
+          total: Number(headers["total-count"]).valueOf(),
+        },
+      })),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GETByRangeRawResponse.decode(data)))),
+      TE.map((rawResponse) => ({
+        withdrawals: pipe(
+          rawResponse.data.results,
+          A.map((result) => result.resource)
+        ),
+        page: rawResponse.page,
+      }))
+    );
 
 type GETByRangeRawResponse = t.TypeOf<typeof GETByRangeRawResponse>;
 const GETByRangeRawResponse = t.type({
@@ -159,21 +150,11 @@ export const postViaAxios: (axiosInstance: AxiosInstance) => POST =
             Accept: "application/vendor.iog.marlowe-runtime.withdraw-tx-json",
             "Content-Type": "application/json",
             "X-Change-Address": addressesAndCollaterals.changeAddress,
-            "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) =>
-              a.join(",")
-            ),
-            "X-Collateral-UTxO": pipe(
-              addressesAndCollaterals.collateralUTxOs,
-              A.map(unTxOutRef),
-              (a) => a.join(",")
-            ),
+            "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) => a.join(",")),
+            "X-Collateral-UTxO": pipe(addressesAndCollaterals.collateralUTxOs, A.map(unTxOutRef), (a) => a.join(",")),
           },
         }
       ),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(PostResponse.decode(data))
-        )
-      ),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(PostResponse.decode(data)))),
       TE.map((payload) => payload.resource)
     );

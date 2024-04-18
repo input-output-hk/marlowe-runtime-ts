@@ -17,11 +17,7 @@ export const getContractClosure =
       contractSourceId,
     });
     const objectEntries = await Promise.all(
-      ids.results.map((id) =>
-        restClient
-          .getContractSourceById({ contractSourceId: id })
-          .then((c) => [id, c] as const)
-      )
+      ids.results.map((id) => restClient.getContractSourceById({ contractSourceId: id }).then((c) => [id, c] as const))
     );
     return {
       main: contractSourceId,

@@ -13,9 +13,7 @@ loadContractInput.addEventListener("click", H.tryCatchEvent(loadContract));
 const setDecryptionKeyInput = document.getElementById("set-decryption-key");
 setDecryptionKeyInput.addEventListener(
   "click",
-  H.tryCatchEvent(() =>
-    setPrivateKey(document.getElementById("decryption-key").value)
-  )
+  H.tryCatchEvent(() => setPrivateKey(document.getElementById("decryption-key").value))
 );
 
 async function loadContract() {
@@ -26,10 +24,7 @@ async function loadContract() {
     contractId,
   });
   if (paginatedTxs.transactions.length !== 1) {
-    log(
-      "Expected 1 transaction for contract, got " +
-        paginatedTxs.transactions.length
-    );
+    log("Expected 1 transaction for contract, got " + paginatedTxs.transactions.length);
     logJSON("transactions", paginatedTxs);
     return;
   }

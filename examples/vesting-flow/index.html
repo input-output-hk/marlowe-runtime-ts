@@ -15,12 +15,7 @@
       <h2>1. Setup Environment</h2>
 
       <label for="runtimeUrl">URL to a Marlowe Runtime instance:</label>
-      <input
-        id="runtimeUrl"
-        type="text"
-        autocomplete="on"
-        placeholder="http://localhost:32952"
-      />
+      <input id="runtimeUrl" type="text" autocomplete="on" placeholder="http://localhost:32952" />
       <br />
       <label for="wallet">Select wallet:</label>
       <select id="wallet" name="wallet">
@@ -30,19 +25,11 @@
       <div>
         <h3>1.1 Create Vesting contract</h3>
         <label for="contract">JSON Contract:</label>
-        <textarea
-          id="contract"
-          type="text"
-          style="width: 100%; height: 20em"
-        ></textarea>
+        <textarea id="contract" type="text" style="width: 100%; height: 20em"></textarea>
       </div>
       <br />
       <input id="generate-contract" type="button" value="Generate Contract" />
-      <input
-        id="create-contract"
-        type="button"
-        value="Generate | Create Marlowe Contract on Cardano"
-      />
+      <input id="create-contract" type="button" value="Generate | Create Marlowe Contract on Cardano" />
 
       <div>
         <h3>1.2 Apply Inputs</h3>
@@ -58,12 +45,7 @@
     </div>
   </body>
   <script type="module">
-    import {
-      clearConsole,
-      log,
-      getRuntimeUrl,
-      setupLocalStorageRuntimeUrl,
-    } from "../js/poc-helpers.js";
+    import { clearConsole, log, getRuntimeUrl, setupLocalStorageRuntimeUrl } from "../js/poc-helpers.js";
     import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/browser";
     import { Vesting } from "@marlowe.io/language-examples";
     import { MarloweJSON } from "@marlowe.io/adapter/codec";
@@ -100,13 +82,7 @@
       const contractInput = document.getElementById("contract");
       contractInput.value = MarloweJSON.stringify(vestingContract, null, 4);
 
-      log(
-        `Contract Defined : <pre>${MarloweJSON.stringify(
-          vestingRequest,
-          null,
-          4
-        )}</pre>`
-      );
+      log(`Contract Defined : <pre>${MarloweJSON.stringify(vestingRequest, null, 4)}</pre>`);
       return [vestingRequest, vestingContract];
     }
 
@@ -114,18 +90,11 @@
       clearConsole();
       const [request, vestingContract] = generateVestingContract();
 
-      const [contractId, txIdCreated] =
-        await runtimeLifeCycle.contracts.createContract({
-          contract: vestingContract,
-          tags: { [dappId]: { scheme: request.scheme } },
-        });
-      log(
-        `Contract Defined : <pre>${MarloweJSON.stringify(
-          request,
-          null,
-          2
-        )}</pre>`
-      );
+      const [contractId, txIdCreated] = await runtimeLifeCycle.contracts.createContract({
+        contract: vestingContract,
+        tags: { [dappId]: { scheme: request.scheme } },
+      });
+      log(`Contract Defined : <pre>${MarloweJSON.stringify(request, null, 2)}</pre>`);
       log(`Contract submitted on Cardano with Id : ${contractId}`);
       log(`Waiting Confirmation : ${txIdCreated}`);
       await runtimeLifeCycle.wallet.waitConfirmation(txIdCreated);
@@ -134,14 +103,12 @@
     }
 
     async function listContracts() {
-      const contractIds = (
-        await restClient.getContracts({ tags: [dappId] })
-      ).contracts.map((contract) => contract.contractId);
+      const contractIds = (await restClient.getContracts({ tags: [dappId] })).contracts.map(
+        (contract) => contract.contractId
+      );
       const contractIdsAndDetails = await Promise.all(
         contractIds.map((contractId) =>
-          restClient
-            .getContractById({ contractId })
-            .then((details) => [contractId, details])
+          restClient.getContractById({ contractId }).then((details) => [contractId, details])
         )
       );
       const contractIdsAndDetailsAndInputHistory = await Promise.all(
@@ -158,31 +125,19 @@
                 )
               )
             )
-            .then((transactions) =>
-              transactions.map((transaction) => transaction.inputs).flat()
-            )
+            .then((transactions) => transactions.map((transaction) => transaction.inputs).flat())
             .then((inputHistory) => [contractId, details, inputHistory])
         )
       );
       const contractIdsAnVestingState = await Promise.all(
-        contractIdsAndDetailsAndInputHistory.map(
-          ([contractId, details, inputHistory]) =>
-            Vesting.getVestingState(
-              details.tags[dappId].scheme,
-              details.state,
-              inputHistory,
-              (environment) =>
-                runtimeLifeCycle.contracts.getApplicableInputs(
-                  contractId,
-                  environment
-                )
-            ).then((state) => [contractId, state])
+        contractIdsAndDetailsAndInputHistory.map(([contractId, details, inputHistory]) =>
+          Vesting.getVestingState(details.tags[dappId].scheme, details.state, inputHistory, (environment) =>
+            runtimeLifeCycle.contracts.getApplicableInputs(contractId, environment)
+          ).then((state) => [contractId, state])
         )
       );
 
-      document.getElementById(
-        "contracts-status"
-      ).innerHTML = `<pre>${MarloweJSON.stringify(
+      document.getElementById("contracts-status").innerHTML = `<pre>${MarloweJSON.stringify(
         contractIdsAnVestingState,
         null,
         4
@@ -206,10 +161,9 @@
       log(`<pre>${contractIdSelected} is in state ${vestingState.name}</pre>`);
       switch (vestingState.name) {
         case "WaitingDepositByProvider": {
-          const txId = await runtimeLifeCycle.contracts.applyInputs(
-            contractIdSelected,
-            { inputs: vestingState.depositInput }
-          );
+          const txId = await runtimeLifeCycle.contracts.applyInputs(contractIdSelected, {
+            inputs: vestingState.depositInput,
+          });
           log(`Deposit submitted on Cardano with tx Id : ${txId}`);
           log(`Waiting Confirmation : ${txId}`);
           await runtimeLifeCycle.wallet.waitConfirmation(txId);
@@ -218,10 +172,9 @@
           break;
         }
         case "NoDepositBeforeDeadline": {
-          const txId = await runtimeLifeCycle.contracts.applyInputs(
-            contractIdSelected,
-            { inputs: vestingState.payMinUtxoBackInput }
-          );
+          const txId = await runtimeLifeCycle.contracts.applyInputs(contractIdSelected, {
+            inputs: vestingState.payMinUtxoBackInput,
+          });
           log(`payMinUtxoBack submitted on Cardano with tx Id : ${txId}`);
           log(`Waiting Confirmation : ${txId}`);
           await runtimeLifeCycle.wallet.waitConfirmation(txId);
@@ -231,10 +184,9 @@
         }
         case "WithinVestingPeriod": {
           if (vestingState.withdrawInput) {
-            const txId = await runtimeLifeCycle.contracts.applyInputs(
-              contractIdSelected,
-              { inputs: vestingState.withdrawInput }
-            );
+            const txId = await runtimeLifeCycle.contracts.applyInputs(contractIdSelected, {
+              inputs: vestingState.withdrawInput,
+            });
             log(`Withdraw submitted on Cardano with tx Id : ${txId}`);
             log(`Waiting Confirmation : ${txId}`);
             await runtimeLifeCycle.wallet.waitConfirmation(txId);
@@ -242,10 +194,9 @@
             await listContracts();
             break;
           } else if (vestingState.cancelInput) {
-            const txId = await runtimeLifeCycle.contracts.applyInputs(
-              contractIdSelected,
-              { inputs: vestingState.cancelInput }
-            );
+            const txId = await runtimeLifeCycle.contracts.applyInputs(contractIdSelected, {
+              inputs: vestingState.cancelInput,
+            });
             log(`Cancel submitted on Cardano with tx Id : ${txId}`);
             log(`Waiting Confirmation : ${txId}`);
             await runtimeLifeCycle.wallet.waitConfirmation(txId);
@@ -255,10 +206,9 @@
           }
         }
         case "VestingEnded": {
-          const txId = await runtimeLifeCycle.contracts.applyInputs(
-            contractIdSelected,
-            { inputs: vestingState.withdrawInput }
-          );
+          const txId = await runtimeLifeCycle.contracts.applyInputs(contractIdSelected, {
+            inputs: vestingState.withdrawInput,
+          });
           log(`Withdraw submitted on Cardano with tx Id : ${txId}`);
           log(`Waiting Confirmation : ${txId}`);
           await runtimeLifeCycle.wallet.waitConfirmation(txId);
@@ -270,15 +220,9 @@
     }
 
     // Listeners
-    document
-      .getElementById("generate-contract")
-      .addEventListener("click", generateVestingContract);
-    document
-      .getElementById("create-contract")
-      .addEventListener("click", generateAndCreateVestingContract);
-    document
-      .getElementById("apply-input")
-      .addEventListener("click", applyInput);
+    document.getElementById("generate-contract").addEventListener("click", generateVestingContract);
+    document.getElementById("create-contract").addEventListener("click", generateAndCreateVestingContract);
+    document.getElementById("apply-input").addEventListener("click", applyInput);
     setupLocalStorageRuntimeUrl();
   </script>
 </html>

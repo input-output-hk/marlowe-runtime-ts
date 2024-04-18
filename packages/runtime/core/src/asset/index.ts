@@ -23,8 +23,7 @@ export const assetId =
     assetName: assetName,
   });
 
-export const isLovelace = (assetId: AssetId): boolean =>
-  assetId.assetName === "" && assetId.policyId === policyId("");
+export const isLovelace = (assetId: AssetId): boolean => assetId.assetName === "" && assetId.policyId === policyId("");
 
 // NOTE: this is exported as interface to prevent typedoc from expanding its attributes when
 //       generating documentation.
@@ -36,8 +35,7 @@ export const token =
   (quantity: AssetQuantity) =>
   (assetId: AssetId): Token => ({ quantity: quantity, assetId: assetId });
 
-export const lovelaces = (quantity: AssetQuantity): Token =>
-  token(quantity)(assetId(policyId(""))(""));
+export const lovelaces = (quantity: AssetQuantity): Token => token(quantity)(assetId(policyId(""))(""));
 
 export type Tokens = t.TypeOf<typeof Tokens>;
 export const Tokens = t.array(Token);
@@ -45,12 +43,9 @@ export const Tokens = t.array(Token);
 export type Assets = t.TypeOf<typeof Assets>;
 export const Assets = t.type({ lovelaces: AssetQuantityGuard, tokens: Tokens });
 
-export const assetIdToString: (assetId: AssetId) => string = (assetId) =>
-  `${assetId.policyId}|${assetId.assetName}`;
+export const assetIdToString: (assetId: AssetId) => string = (assetId) => `${assetId.policyId}|${assetId.assetName}`;
 
-export const runtimeTokenToMarloweTokenValue: (
-  runtimeToken: Token
-) => Marlowe.TokenValue = (runtimeToken) => ({
+export const runtimeTokenToMarloweTokenValue: (runtimeToken: Token) => Marlowe.TokenValue = (runtimeToken) => ({
   amount: runtimeToken.quantity,
   token: {
     currency_symbol: runtimeToken.assetId.policyId,
@@ -59,10 +54,7 @@ export const runtimeTokenToMarloweTokenValue: (
 });
 
 export type TokensMap = t.TypeOf<typeof TokensMapGuard>;
-export const TokensMapGuard = t.record(
-  PolicyIdGuard,
-  t.record(G.TokenName, AssetQuantityGuard)
-);
+export const TokensMapGuard = t.record(PolicyIdGuard, t.record(G.TokenName, AssetQuantityGuard));
 
 export type AssetsMap = t.TypeOf<typeof AssetsMapGuard>;
 export const AssetsMapGuard = t.type({
@@ -78,8 +70,6 @@ export const unMapAsset: (assets: AssetsMap) => Assets = (restAssets) => ({
 export const unMapTokens: (tokens: TokensMap) => Tokens = (restTokens) =>
   Object.entries(restTokens)
     .map(([aPolicyId, x]) =>
-      Object.entries(x).map(([assetName, quantity]) =>
-        token(quantity)(assetId(policyId(aPolicyId))(assetName))
-      )
+      Object.entries(x).map(([assetName, quantity]) => token(quantity)(assetId(policyId(aPolicyId))(assetName)))
     )
     .flat();

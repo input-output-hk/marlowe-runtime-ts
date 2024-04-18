@@ -22,15 +22,10 @@ The `@marlowe.io/wallet` package is [released as an ESM module](https://github.c
   <body>
     <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
     <script type="module">
-      import {
-        mkBrowserWallet,
-        getInstalledWalletExtensions,
-      } from "@marlowe.io/wallet";
+      import { mkBrowserWallet, getInstalledWalletExtensions } from "@marlowe.io/wallet";
 
       const installedWalletExtensions = getInstalledWalletExtensions();
-      console.log(
-        `Available Browser Wallet Extensions: ${installedWalletExtensions}`
-      );
+      console.log(`Available Browser Wallet Extensions: ${installedWalletExtensions}`);
       const wallet = await mkBrowserWallet(installedWalletExtensions[0]);
     </script>
   </body>

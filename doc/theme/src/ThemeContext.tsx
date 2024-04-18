@@ -1,11 +1,4 @@
-import {
-  DefaultTheme,
-  DefaultThemeRenderContext,
-  JSX,
-  Options,
-  PageEvent,
-  Reflection,
-} from "typedoc";
+import { DefaultTheme, DefaultThemeRenderContext, JSX, Options, PageEvent, Reflection } from "typedoc";
 import * as templates from "./templates";
 
 function bind<F, L extends any[], R>(fn: (f: F, ...a: L) => R, first: F) {
@@ -13,11 +6,7 @@ function bind<F, L extends any[], R>(fn: (f: F, ...a: L) => R, first: F) {
 }
 
 export class ThemeContext extends DefaultThemeRenderContext {
-  constructor(
-    theme: DefaultTheme,
-    page: PageEvent<Reflection>,
-    options: Options
-  ) {
+  constructor(theme: DefaultTheme, page: PageEvent<Reflection>, options: Options) {
     super(theme, page, options);
     this.init();
   }

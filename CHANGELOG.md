@@ -1,6 +1,7 @@
-
 # 0.3.0-beta - 18 Jan 2024
+
 The Marlowe team is happy to announce the 0.3.0 release with the following Milestones completed:
+
 - Add Node.js/Deno support
 - Completed 1-1 feature parity between the TS-SDK and Runtime 0.0.6
 - Added an open role example
@@ -23,7 +24,6 @@ A more detailed description of the changes can be found next
 - CI (PLT-8890): Stop automatic docs deployment from main and update release instructions ([#2f266ff](https://github.com/input-output-hk/marlowe-ts-sdk/commit/2f266ffe303bf1f16f6df0dc83e2e6716c272590))
 
 - Fix (PLT-9008): Fix documentation warnings and add a CI check to avoid them in the future. ([PR-139](https://github.com/input-output-hk/marlowe-ts-sdk/pull/139))
-
 
 ## Examples
 
@@ -62,7 +62,7 @@ A more detailed description of the changes can be found next
       - or `json {withdrawals: {..}, page : {..} }`
 - **BREAKING CHANGE** Refactor: Create contract sources now uses a single parameter ContractBundle, instead of two separate bundle and main entrypoint parameters. ([PR-136](https://github.com/input-output-hk/marlowe-ts-sdk/pull/136))
 - **BREAKING CHANGE** Feat: Modified the endpoint `healthcheck` to return `RuntimeStatus`(version deployed, Network Id of the Node and tips) instead of a `boolean`. ([PR-158](https://github.com/input-output-hk/marlowe-ts-sdk/pull/158))
-- **BREAKING CHANGE** Fix: Pagination responses not always return a current header.  ([PR-136](https://github.com/input-output-hk/marlowe-ts-sdk/pull/136))
+- **BREAKING CHANGE** Fix: Pagination responses not always return a current header. ([PR-136](https://github.com/input-output-hk/marlowe-ts-sdk/pull/136))
 
 - Feat (PLT-7704): Extend the rest client with procedure `getPayouts`. ([PR-124](https://github.com/input-output-hk/marlowe-ts-sdk/pull/124))
 - Feat (PLT-7705): Extend the rest client with procedure `getPayoutById`. ([PR-124](https://github.com/input-output-hk/marlowe-ts-sdk/pull/124))
@@ -72,7 +72,6 @@ A more detailed description of the changes can be found next
 - Feat (PLT-8427): Extend the rest client with procedure `getNextStepsForContract`. ([PR-128](https://github.com/input-output-hk/marlowe-ts-sdk/pull/128))
 - Feat: Added `@marlowe.io/runtime-rest-client/guards` in a similar way as `@marlowe.io/labguage-core-v1/guards` ([PR-142](https://github.com/input-output-hk/marlowe-ts-sdk/pull/142))
 - Fix: Revived integration tests ([PR-142](https://github.com/input-output-hk/marlowe-ts-sdk/pull/142))
-
 
 ## @marlowe.io/runtime-core
 

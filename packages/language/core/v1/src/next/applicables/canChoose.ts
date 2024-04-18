@@ -21,9 +21,7 @@ export const CanChoose = t.type({
 /**
  * @deprecated Deprecated in favour of {@link @marlowe.io/runtime-lifecycle!api.ApplicableActionsAPI}
  */
-export const toInput: (
-  canChoose: CanChoose
-) => (chosenNum: ChosenNum) => IChoice = (canChoose) => (chosenNum) => ({
+export const toInput: (canChoose: CanChoose) => (chosenNum: ChosenNum) => IChoice = (canChoose) => (chosenNum) => ({
   for_choice_id: canChoose.for_choice,
   input_that_chooses_num: chosenNum,
 });

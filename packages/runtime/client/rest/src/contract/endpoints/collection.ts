@@ -37,16 +37,8 @@ import {
   ContractIdGuard,
 } from "@marlowe.io/runtime-core";
 import { ContractHeader, ContractHeaderGuard } from "../header.js";
-import {
-  RolesConfiguration,
-  RolesConfigurationGuard,
-} from "../rolesConfigurations.js";
-import {
-  ItemRange,
-  ItemRangeGuard,
-  Page,
-  PageGuard,
-} from "../../pagination.js";
+import { RolesConfiguration, RolesConfigurationGuard } from "../rolesConfigurations.js";
+import { ItemRange, ItemRangeGuard, Page, PageGuard } from "../../pagination.js";
 
 /**
  * Request options for the {@link index.RestClient#getContracts | Get contracts } endpoint
@@ -92,15 +84,12 @@ export type GETHeadersByRange = (
   partyRoles: AssetId[];
 }) => TE.TaskEither<Error | DecodingError, GetContractsResponse>;
 
-const roleToParameter = (roleToken: AssetId) =>
-  `${roleToken.policyId}.${roleToken.assetName}`;
+const roleToParameter = (roleToken: AssetId) => `${roleToken.policyId}.${roleToken.assetName}`;
 
 /**
  * @see {@link https://docs.marlowe.iohk.io/api/get-contracts}
  */
-export const getHeadersByRangeViaAxios: (
-  axiosInstance: AxiosInstance
-) => GETHeadersByRange =
+export const getHeadersByRangeViaAxios: (axiosInstance: AxiosInstance) => GETHeadersByRange =
   (axiosInstance) =>
   (range) =>
   ({ tags, partyAddresses, partyRoles }) =>
@@ -118,8 +107,7 @@ export const getHeadersByRangeViaAxios: (
           ),
         configs: range ? { headers: { Range: range } } : {},
       },
-      ({ url, configs }) =>
-        HTTP.GetWithDataAndHeaders(axiosInstance)(url, configs),
+      ({ url, configs }) => HTTP.GetWithDataAndHeaders(axiosInstance)(url, configs),
       TE.map(([headers, data]) => ({
         data: data,
         page: {
@@ -128,13 +116,7 @@ export const getHeadersByRangeViaAxios: (
           total: Number(headers["total-count"]).valueOf(),
         },
       })),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(
-            GETByRangeRawResponseGuard.decode(data)
-          )
-        )
-      ),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(GETByRangeRawResponseGuard.decode(data)))),
       TE.map((rawResponse) => ({
         contracts: pipe(
           rawResponse.data.results,
@@ -193,10 +175,7 @@ export type ContractOrSourceId = Contract | SourceId;
  * Guard for ContractOrSourceId type
  * @category Endpoint : Build Create Contract Tx
  */
-export const ContractOrSourceIdGuard: t.Type<ContractOrSourceId> = t.union([
-  G.Contract,
-  SourceIdGuard,
-]);
+export const ContractOrSourceIdGuard: t.Type<ContractOrSourceId> = t.union([G.Contract, SourceIdGuard]);
 
 /**
  * Request for the {@link index.RestClient#buildCreateContractTx | Build Create Contract Tx } endpoint using a source Id (merkleized contract)
@@ -228,10 +207,7 @@ export const BuildCreateContractTxRequestOptionsGuard = assertGuardEqual(
 
 export const BuildCreateContractTxRequestWithContractGuard = assertGuardEqual(
   proxy<BuildCreateContractTxRequestWithContract>(),
-  t.intersection([
-    t.type({ contract: G.Contract }),
-    BuildCreateContractTxRequestOptionsGuard,
-  ])
+  t.intersection([t.type({ contract: G.Contract }), BuildCreateContractTxRequestOptionsGuard])
 );
 
 /**
@@ -248,10 +224,7 @@ export type BuildCreateContractTxRequestWithSourceId = {
 
 export const BuildCreateContractTxRequestWithSourceIdGuard = assertGuardEqual(
   proxy<BuildCreateContractTxRequestWithSourceId>(),
-  t.intersection([
-    t.type({ sourceId: SourceIdGuard }),
-    BuildCreateContractTxRequestOptionsGuard,
-  ])
+  t.intersection([t.type({ sourceId: SourceIdGuard }), BuildCreateContractTxRequestOptionsGuard])
 );
 
 /**
@@ -299,10 +272,7 @@ export type BuildCreateContractTxRequest =
 
 export const BuildCreateContractTxRequestGuard = assertGuardEqual(
   proxy<BuildCreateContractTxRequest>(),
-  t.union([
-    BuildCreateContractTxRequestWithContractGuard,
-    BuildCreateContractTxRequestWithSourceIdGuard,
-  ])
+  t.union([BuildCreateContractTxRequestWithContractGuard, BuildCreateContractTxRequestWithSourceIdGuard])
 );
 
 /**
@@ -597,11 +567,8 @@ export const PostResponse = t.type({
 /**
  * @see {@link https://docs.marlowe.iohk.io/api/create-contracts}
  */
-export const postViaAxios: (
-  axiosInstance: AxiosInstance
-) => BuildCreateContractTxEndpoint =
-  (axiosInstance) =>
-  (postContractsRequest, addressesAndCollaterals, stakeAddress) =>
+export const postViaAxios: (axiosInstance: AxiosInstance) => BuildCreateContractTxEndpoint =
+  (axiosInstance) => (postContractsRequest, addressesAndCollaterals, stakeAddress) =>
     pipe(
       HTTP.Post(axiosInstance)("/contracts", postContractsRequest, {
         headers: {
@@ -611,20 +578,10 @@ export const postViaAxios: (
             "X-Stake-Address": unStakeAddressBech32(stakeAddress),
           }),
           "X-Change-Address": addressesAndCollaterals.changeAddress,
-          "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) =>
-            a.join(",")
-          ),
-          "X-Collateral-UTxO": pipe(
-            addressesAndCollaterals.collateralUTxOs,
-            A.map(unTxOutRef),
-            (a) => a.join(",")
-          ),
+          "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) => a.join(",")),
+          "X-Collateral-UTxO": pipe(addressesAndCollaterals.collateralUTxOs, A.map(unTxOutRef), (a) => a.join(",")),
         },
       }),
-      TE.chainW((data) =>
-        TE.fromEither(
-          E.mapLeft(formatValidationErrors)(PostResponse.decode(data))
-        )
-      ),
+      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(PostResponse.decode(data)))),
       TE.map((payload) => payload.resource)
     );

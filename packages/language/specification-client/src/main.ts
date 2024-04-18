@@ -7,12 +7,7 @@ import * as P from "@marlowe.io/language-core-v1/playground-v1";
 import jsonBigInt from "json-bigint";
 import { createJsonStream } from "./jsonStream.js";
 import { Environment, MarloweState, Value } from "@marlowe.io/language-core-v1";
-import {
-  evalValue,
-  evalObservation,
-  computeTransaction,
-  playTrace,
-} from "@marlowe.io/language-core-v1/semantics";
+import { evalValue, evalObservation, computeTransaction, playTrace } from "@marlowe.io/language-core-v1/semantics";
 // // We need to patch the JSON.stringify in order for BigInt serialization to work.
 const { stringify, parse } = jsonBigInt({
   useNativeBigInt: true,
@@ -78,19 +73,8 @@ function token(currency_symbol: string, token_name: string) {
   return { currency_symbol, token_name };
 }
 function generateRandomValue(typeId: string, seed: number) {
-  const tokens = [
-    token("", ""),
-    token("abc", "abc"),
-    token("def", "def"),
-    token("abc", "def"),
-    token("def", "abc"),
-  ];
-  const parties = [
-    P.Address("abc"),
-    P.Role("abc"),
-    P.Address("def"),
-    P.Role("def"),
-  ];
+  const tokens = [token("", ""), token("abc", "abc"), token("def", "def"), token("abc", "def"), token("def", "abc")];
+  const parties = [P.Address("abc"), P.Role("abc"), P.Address("def"), P.Role("def")];
 
   if (typeId == "Core.Token") {
     return requestResponse({ value: tokens[seed % tokens.length] });
@@ -157,19 +141,13 @@ function main() {
         return testEvalValue(req.environment, req.state, req.value);
       }
       if (EvalObservationRequest.is(req)) {
-        return requestResponse(
-          evalObservation(req.environment, req.state, req.observation)
-        );
+        return requestResponse(evalObservation(req.environment, req.state, req.observation));
       }
       if (ComputeTransactionRequest.is(req)) {
-        return requestResponse(
-          computeTransaction(req.transactionInput, req.state, req.coreContract)
-        );
+        return requestResponse(computeTransaction(req.transactionInput, req.state, req.coreContract));
       }
       if (PlayTraceRequest.is(req)) {
-        return requestResponse(
-          playTrace(req.initialTime, req.coreContract, req.transactionInputs)
-        );
+        return requestResponse(playTrace(req.initialTime, req.coreContract, req.transactionInputs));
       }
       return console.log("RequestNotImplemented");
     },

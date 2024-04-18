@@ -8,10 +8,7 @@ import { ChoiceId, ChoiceIdGuard } from "./choices.js";
 import { partyCmp } from "./participants.js";
 
 export type Account = t.TypeOf<typeof Account>;
-export const Account = t.tuple([
-  t.tuple([AccountIdGuard, TokenGuard]),
-  t.bigint,
-]);
+export const Account = t.tuple([t.tuple([AccountIdGuard, TokenGuard]), t.bigint]);
 
 /**
  * The Marlowe model allows for a contract to store assets. All participants of the contract implicitly
@@ -29,19 +26,13 @@ export type Accounts = AssocMap<[AccountId, Token], bigint>;
  * {@link !io-ts-usage | Dynamic type guard} for the {@link Accounts | accounts type}.
  * @category State
  */
-export const AccountsGuard: t.Type<Accounts> = AssocMapGuard(
-  t.tuple([AccountIdGuard, TokenGuard]),
-  t.bigint
-);
+export const AccountsGuard: t.Type<Accounts> = AssocMapGuard(t.tuple([AccountIdGuard, TokenGuard]), t.bigint);
 
 /**
  * Sorting function for Accounts
  * @hidden
  */
-export function accountsCmp(
-  a: [AccountId, Token],
-  b: [AccountId, Token]
-): Sort {
+export function accountsCmp(a: [AccountId, Token], b: [AccountId, Token]): Sort {
   const accIdCmp = partyCmp(a[0], b[0]);
   if (accIdCmp !== "EqualTo") {
     return accIdCmp;

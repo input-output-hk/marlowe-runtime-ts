@@ -59,9 +59,7 @@ export interface Bound {
  * {@link !io-ts-usage | Dynamic type guard} for the {@link @marlowe.io/language-core-v1!index.Bound | bound type}.
  * @category Choice
  */
-export const BoundGuard: t.Type<Bound> = t.recursion("Bound", () =>
-  t.type({ from: t.bigint, to: t.bigint })
-);
+export const BoundGuard: t.Type<Bound> = t.recursion("Bound", () => t.type({ from: t.bigint, to: t.bigint }));
 
 /**
  * Represents a value that was chosen by a party in a {@link @marlowe.io/language-core-v1!index.IChoice | choice input}

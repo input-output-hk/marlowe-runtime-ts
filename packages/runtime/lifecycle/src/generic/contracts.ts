@@ -23,11 +23,7 @@ import {
   BlockHeader,
 } from "@marlowe.io/runtime-core";
 
-import {
-  FPTSRestAPI,
-  RestClient,
-  ItemRange,
-} from "@marlowe.io/runtime-rest-client";
+import { FPTSRestAPI, RestClient, ItemRange } from "@marlowe.io/runtime-rest-client";
 import { DecodingError } from "@marlowe.io/adapter/codec";
 
 import { Next, noNext } from "@marlowe.io/language-core-v1/next";
@@ -67,10 +63,7 @@ const getInputHistory =
         })
       )
     );
-    const sortOptionalBlock = (
-      a: Option<BlockHeader>,
-      b: Option<BlockHeader>
-    ) => {
+    const sortOptionalBlock = (a: Option<BlockHeader>, b: Option<BlockHeader>) => {
       if (a._tag === "None" || b._tag === "None") {
         // TODO: to avoid this error we should provide a higer level function that gets the transactions as the different
         //       status and with the appropiate values for each state.
@@ -111,9 +104,7 @@ const getInputHistory =
 
 const createContract =
   ({ wallet, restClient }: ContractsDI) =>
-  async (
-    createContractRequest: CreateContractRequest
-  ): Promise<[ContractId, TxId]> => {
+  async (createContractRequest: CreateContractRequest): Promise<[ContractId, TxId]> => {
     const addressesAndCollaterals = await getAddressesAndCollaterals(wallet);
 
     const baseRequest: BuildCreateContractTxRequestOptions = {
@@ -129,8 +120,7 @@ const createContract =
 
       tags: createContractRequest.tags,
       metadata: createContractRequest.metadata,
-      minimumLovelaceUTxODeposit:
-        createContractRequest.minimumLovelaceUTxODeposit,
+      minimumLovelaceUTxODeposit: createContractRequest.minimumLovelaceUTxODeposit,
     };
 
     let restClientRequest: BuildCreateContractTxRequest;
@@ -149,13 +139,10 @@ const createContract =
         sourceId: contractSources.contractSourceId,
       };
     }
-    const buildCreateContractTxResponse =
-      await restClient.buildCreateContractTx(restClientRequest);
+    const buildCreateContractTxResponse = await restClient.buildCreateContractTx(restClientRequest);
     const contractId = buildCreateContractTxResponse.contractId;
 
-    const hexTransactionWitnessSet = await wallet.signTx(
-      buildCreateContractTxResponse.tx.cborHex
-    );
+    const hexTransactionWitnessSet = await wallet.signTx(buildCreateContractTxResponse.tx.cborHex);
 
     await restClient.submitContract({
       contractId,
@@ -166,78 +153,47 @@ const createContract =
 
 const applyInputsTx =
   ({ wallet, deprecatedRestAPI }: ContractsDI) =>
-  async (
-    contractId: ContractId,
-    applyInputsRequest: ApplyInputsRequest
-  ): Promise<TxId> => {
-    return unsafeTaskEither(
-      applyInputsTxFpTs(deprecatedRestAPI)(wallet)(contractId)(
-        applyInputsRequest
-      )
-    );
+  async (contractId: ContractId, applyInputsRequest: ApplyInputsRequest): Promise<TxId> => {
+    return unsafeTaskEither(applyInputsTxFpTs(deprecatedRestAPI)(wallet)(contractId)(applyInputsRequest));
   };
 
 const getApplicableInputs =
   ({ wallet, deprecatedRestAPI }: ContractsDI) =>
   async (contractId: ContractId, environement: Environment): Promise<Next> => {
-    const contractDetails = await unsafeTaskEither(
-      deprecatedRestAPI.contracts.contract.get(contractId)
-    );
+    const contractDetails = await unsafeTaskEither(deprecatedRestAPI.contracts.contract.get(contractId));
     if (!contractDetails.state) {
       return noNext;
     } else {
-      const parties = await getParties(wallet)(
-        contractDetails.roleTokenMintingPolicyId
-      );
-      return await unsafeTaskEither(
-        deprecatedRestAPI.contracts.contract.next(contractId)(environement)(
-          parties
-        )
-      );
+      const parties = await getParties(wallet)(contractDetails.roleTokenMintingPolicyId);
+      return await unsafeTaskEither(deprecatedRestAPI.contracts.contract.next(contractId)(environement)(parties));
     }
   };
 
 const getContractIds =
   ({ deprecatedRestAPI, wallet }: ContractsDI) =>
   async (): Promise<ContractId[]> => {
-    const partyAddresses = [
-      await wallet.getChangeAddress(),
-      ...(await wallet.getUsedAddresses()),
-    ];
+    const partyAddresses = [await wallet.getChangeAddress(), ...(await wallet.getUsedAddresses())];
     const kwargs = { tags: [], partyAddresses, partyRoles: [] };
-    const loop = async (
-      acc: ContractId[],
-      range?: ItemRange
-    ): Promise<ContractId[]> => {
-      const result =
-        await deprecatedRestAPI.contracts.getHeadersByRange(range)(kwargs)();
+    const loop = async (acc: ContractId[], range?: ItemRange): Promise<ContractId[]> => {
+      const result = await deprecatedRestAPI.contracts.getHeadersByRange(range)(kwargs)();
       if (result._tag === "Left") throw result.left;
       const response = result.right;
-      const contractIds = [
-        ...acc,
-        ...response.contracts.map(({ contractId }) => contractId),
-      ];
-      return response.page.next
-        ? loop(contractIds, response.page.next)
-        : contractIds;
+      const contractIds = [...acc, ...response.contracts.map(({ contractId }) => contractId)];
+      return response.page.next ? loop(contractIds, response.page.next) : contractIds;
     };
     return loop([]);
   };
 
-const getParties: (
-  walletApi: WalletAPI
-) => (roleTokenMintingPolicyId: PolicyId) => Promise<Party[]> =
+const getParties: (walletApi: WalletAPI) => (roleTokenMintingPolicyId: PolicyId) => Promise<Party[]> =
   (walletAPI) => async (roleMintingPolicyId) => {
     const changeAddress: Party = await walletAPI
       .getChangeAddress()
       .then((addressBech32) => ({ address: addressBech32 }));
-    const usedAddresses: Party[] = await walletAPI
-      .getUsedAddresses()
-      .then((addressesBech32) =>
-        addressesBech32.map((addressBech32) => ({
-          address: addressBech32,
-        }))
-      );
+    const usedAddresses: Party[] = await walletAPI.getUsedAddresses().then((addressesBech32) =>
+      addressesBech32.map((addressBech32) => ({
+        address: addressBech32,
+      }))
+    );
     const roles: Party[] = (await walletAPI.getTokens())
       .filter((token) => token.assetId.policyId == roleMintingPolicyId)
       .map((token) => ({ role_token: token.assetId.policyId }));
@@ -250,9 +206,7 @@ export const applyInputsTxFpTs: (
   wallet: WalletAPI
 ) => (
   contractId: ContractId
-) => (
-  applyInputsRequest: ApplyInputsRequest
-) => TE.TaskEither<Error | DecodingError, TxId> =
+) => (applyInputsRequest: ApplyInputsRequest) => TE.TaskEither<Error | DecodingError, TxId> =
   (client) => (wallet) => (contractId) => (applyInputsRequest) =>
     pipe(
       tryCatchDefault(() => getAddressesAndCollaterals(wallet)),
@@ -263,9 +217,7 @@ export const applyInputsTxFpTs: (
             inputs: applyInputsRequest.inputs,
             version: "v1",
             tags: applyInputsRequest.tags ? applyInputsRequest.tags : {},
-            metadata: applyInputsRequest.metadata
-              ? applyInputsRequest.metadata
-              : {},
+            metadata: applyInputsRequest.metadata ? applyInputsRequest.metadata : {},
             invalidBefore: applyInputsRequest.invalidBefore,
             invalidHereafter: applyInputsRequest.invalidHereafter,
           },
@@ -274,9 +226,7 @@ export const applyInputsTxFpTs: (
       ),
       TE.chainW((transactionTextEnvelope: TransactionTextEnvelope) =>
         pipe(
-          tryCatchDefault(() =>
-            wallet.signTx(transactionTextEnvelope.tx.cborHex)
-          ),
+          tryCatchDefault(() => wallet.signTx(transactionTextEnvelope.tx.cborHex)),
           TE.chain((hexTransactionWitnessSet: HexTransactionWitnessSet) =>
             client.contracts.contract.transactions.transaction.put(
               contractId,
@@ -295,13 +245,9 @@ export const applyInputsFpTs: (
   wallet: WalletAPI
 ) => (
   contractId: ContractId
-) => (
-  applyInputsRequest: ApplyInputsRequest
-) => TE.TaskEither<Error | DecodingError, TxId> =
+) => (applyInputsRequest: ApplyInputsRequest) => TE.TaskEither<Error | DecodingError, TxId> =
   (client) => (wallet) => (contractId) => (applyInputsRequest) =>
     pipe(
       applyInputsTxFpTs(client)(wallet)(contractId)(applyInputsRequest),
-      TE.chainW((txId) =>
-        tryCatchDefault(() => wallet.waitConfirmation(txId).then((_) => txId))
-      )
+      TE.chainW((txId) => tryCatchDefault(() => wallet.waitConfirmation(txId).then((_) => txId)))
     );

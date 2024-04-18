@@ -1,10 +1,4 @@
-import {
-  Address,
-  Bound,
-  Contract,
-  Token,
-  Timeout,
-} from "@marlowe.io/language-core-v1";
+import { Address, Bound, Contract, Token, Timeout } from "@marlowe.io/language-core-v1";
 import * as G from "@marlowe.io/language-core-v1/guards";
 
 export type SurveyOptions = {
@@ -75,26 +69,17 @@ type Expectation = (value: unknown) => boolean;
  * This function verifies that contract is a valid survey contract and extracts information about
  * it.
  */
-export function verifySurvey(
-  questions: Question[],
-  contract: unknown
-): VerificationResult {
+export function verifySurvey(questions: Question[], contract: unknown): VerificationResult {
   const result = { match: true, logs: [] } as VerificationResult;
 
   const log = (msg: string, value?: unknown) => {
     result.logs.push([msg, value]);
   };
 
-  const expectQuestion = (
-    next: Expectation,
-    question: Question
-  ): Expectation => {
+  const expectQuestion = (next: Expectation, question: Question): Expectation => {
     return (contract: unknown) => {
       if (!G.When.is(contract)) {
-        log(
-          "Expected object to be a When construct, but this was found",
-          contract
-        );
+        log("Expected object to be a When construct, but this was found", contract);
         return false;
       }
 
@@ -108,17 +93,11 @@ export function verifySurvey(
         return false;
       }
       if (!G.Close.is(contract.timeout_continuation)) {
-        log(
-          "Expected timeout continuation to be close, but this was found",
-          contract.timeout_continuation
-        );
+        log("Expected timeout continuation to be close, but this was found", contract.timeout_continuation);
         return false;
       }
       if (contract.when.length !== 1) {
-        log(
-          "Expected when to have a single case, but this was found",
-          contract.when
-        );
+        log("Expected when to have a single case, but this was found", contract.when);
         return false;
       }
       const questionCase = contract.when[0];
@@ -127,10 +106,7 @@ export function verifySurvey(
         return false;
       }
       if (!G.Choice.is(questionCase.case)) {
-        log(
-          "Expected the question case to be a Choice construct, but this was found",
-          questionCase.case
-        );
+        log("Expected the question case to be a Choice construct, but this was found", questionCase.case);
         return false;
       }
 
@@ -144,10 +120,7 @@ export function verifySurvey(
 
       if (typeof result.surveyParticipant === "undefined") {
         result.surveyParticipant = questionCase.case.for_choice.choice_owner;
-      } else if (
-        result.surveyParticipant.address !==
-        questionCase.case.for_choice.choice_owner.address
-      ) {
+      } else if (result.surveyParticipant.address !== questionCase.case.for_choice.choice_owner.address) {
         log("Expected all questions to have the same survey participant", {
           previousSurveyParticipant: result.surveyParticipant,
           currentSurveyParticipant: questionCase.case.for_choice.choice_owner,
@@ -156,25 +129,17 @@ export function verifySurvey(
       }
       if (questionCase.case.for_choice.choice_name !== question.choiceName) {
         log(
-          "Expected the choice name to be " +
-            question.choiceName +
-            ", but this was found",
+          "Expected the choice name to be " + question.choiceName + ", but this was found",
           questionCase.case.for_choice.choice_name
         );
         return false;
       }
       if (questionCase.case.choose_between.length !== 1) {
-        log(
-          "Expected the choice to have a single bound, but this was found",
-          questionCase.case.choose_between
-        );
+        log("Expected the choice to have a single bound, but this was found", questionCase.case.choose_between);
         return false;
       }
       const bound = questionCase.case.choose_between[0];
-      if (
-        bound.from !== question.bounds.from ||
-        bound.to !== question.bounds.to
-      ) {
+      if (bound.from !== question.bounds.from || bound.to !== question.bounds.to) {
         log(`Invalid bounds for question ${question.choiceName}`, {
           expected: question.bounds,
           actual: bound,
@@ -187,25 +152,16 @@ export function verifySurvey(
   };
   const expectReward: Expectation = (contract: unknown) => {
     if (!G.When.is(contract)) {
-      log(
-        "Expected object to be a When construct, but this was found",
-        contract
-      );
+      log("Expected object to be a When construct, but this was found", contract);
       return false;
     }
     result.rewardTimeout = contract.timeout;
     if (!G.Close.is(contract.timeout_continuation)) {
-      log(
-        "Expected reward timeout continuation to be close, but this was found",
-        contract.timeout_continuation
-      );
+      log("Expected reward timeout continuation to be close, but this was found", contract.timeout_continuation);
       return false;
     }
     if (contract.when.length !== 1) {
-      log(
-        "Expected reward When to have a single case, but this was found",
-        contract.when
-      );
+      log("Expected reward When to have a single case, but this was found", contract.when);
       return false;
     }
     const rewardCase = contract.when[0];
@@ -214,58 +170,38 @@ export function verifySurvey(
       return false;
     }
     if (!G.Deposit.is(rewardCase.case)) {
-      log(
-        "Expected the reward case to be a Deposit construct, but this was found",
-        rewardCase.case
-      );
+      log("Expected the reward case to be a Deposit construct, but this was found", rewardCase.case);
       return false;
     }
 
     result.rewardToken = rewardCase.case.of_token;
 
     if (rewardCase.case.deposits !== 1n) {
-      log(
-        "Expected the reward case to have a single deposit, but this was found",
-        rewardCase.case.deposits
-      );
+      log("Expected the reward case to have a single deposit, but this was found", rewardCase.case.deposits);
       return false;
     }
 
     if (!G.Address.is(rewardCase.case.party)) {
-      log(
-        "Expected the custodian to be a fixed address, but this was found",
-        rewardCase.case.party
-      );
+      log("Expected the custodian to be a fixed address, but this was found", rewardCase.case.party);
       return false;
     } else {
       result.custodian = rewardCase.case.party;
     }
 
     if (!G.Address.is(rewardCase.case.into_account)) {
-      log(
-        "Expected the reward recipient to be a fixed address, but this was found",
-        rewardCase.case.into_account
-      );
+      log("Expected the reward recipient to be a fixed address, but this was found", rewardCase.case.into_account);
       return false;
     }
-    if (
-      rewardCase.case.into_account.address !== result.surveyParticipant?.address
-    ) {
-      log(
-        "Expected the reward recipient to be the survey participant, but this was found",
-        {
-          previousSurveyParticipant: result.surveyParticipant,
-          currentSurveyParticipant: rewardCase.case.into_account,
-        }
-      );
+    if (rewardCase.case.into_account.address !== result.surveyParticipant?.address) {
+      log("Expected the reward recipient to be the survey participant, but this was found", {
+        previousSurveyParticipant: result.surveyParticipant,
+        currentSurveyParticipant: rewardCase.case.into_account,
+      });
 
       return false;
     }
     if (!G.Close.is(rewardCase.then)) {
-      log(
-        "Expected reward continuation to be close, but this was found",
-        rewardCase.then
-      );
+      log("Expected reward continuation to be close, but this was found", rewardCase.then);
       return false;
     }
     return true;

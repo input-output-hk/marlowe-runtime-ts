@@ -26,10 +26,7 @@ export function createJsonStream({
   let inJson = false;
 
   function resizeBuffer(minSize: number) {
-    jsonBuffer = Buffer.concat([
-      jsonBuffer,
-      Buffer.alloc(Math.max(minSize, sliceSize)),
-    ]);
+    jsonBuffer = Buffer.concat([jsonBuffer, Buffer.alloc(Math.max(minSize, sliceSize))]);
   }
 
   stream.on("close", () => onFinish());

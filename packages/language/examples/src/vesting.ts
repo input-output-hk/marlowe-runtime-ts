@@ -46,12 +46,7 @@ import {
   IChoice,
 } from "@marlowe.io/language-core-v1";
 
-import {
-  Choice,
-  Deposit,
-  Next,
-  emptyApplicables,
-} from "@marlowe.io/language-core-v1/next";
+import { Choice, Deposit, Next, emptyApplicables } from "@marlowe.io/language-core-v1/next";
 import * as O from "fp-ts/lib/Option.js";
 import { pipe } from "fp-ts/lib/function.js";
 import * as G from "@marlowe.io/language-core-v1/guards";
@@ -65,8 +60,7 @@ export const mkContract = function (request: VestingRequest): Contract {
   const {
     scheme: { numberOfPeriods },
   } = request;
-  if (numberOfPeriods < 1)
-    throw "The number of periods needs to be greater or equal to 1";
+  if (numberOfPeriods < 1) throw "The number of periods needs to be greater or equal to 1";
 
   return initialProviderDeposit(request, claimerDepositDistribution(request));
 };
@@ -305,8 +299,7 @@ export const getVestingState = async (
       inputHistory
         .filter((input) => G.IChoice.is(input))
         .map((input) => input as IChoice)
-        .filter((choice) => choice.for_choice_id.choice_name === "cancel")
-        .length;
+        .filter((choice) => choice.for_choice_id.choice_name === "cancel").length;
 
     const amountClaimed = inputHistory
       .filter((input) => G.IChoice.is(input))
@@ -321,8 +314,7 @@ export const getVestingState = async (
         scheme: scheme,
         closeCondition: {
           name: "CancelledCloseCondition",
-          percentageClaimed:
-            (amountClaimed * 100n) / scheme.expectedInitialDeposit.amount,
+          percentageClaimed: (amountClaimed * 100n) / scheme.expectedInitialDeposit.amount,
         },
       };
     }
@@ -346,21 +338,16 @@ export const getVestingState = async (
   }
 
   const startTimeout: Timeout = datetoTimeout(new Date(scheme.start));
-  const periodInMilliseconds: bigint = getPeriodInMilliseconds(
-    scheme.frequency
-  );
+  const periodInMilliseconds: bigint = getPeriodInMilliseconds(scheme.frequency);
   // Provider needs to deposit before the first vesting period
   const initialDepositDeadline: Timeout = startTimeout + periodInMilliseconds;
   const now = datetoTimeout(new Date());
   const currentPeriod: bigint = (now - startTimeout) / periodInMilliseconds;
   const periodInterval: [Date, Date] = [
     timeoutToDate(startTimeout + periodInMilliseconds * currentPeriod + 1n),
-    timeoutToDate(
-      startTimeout + periodInMilliseconds * (currentPeriod + 1n) - 1n
-    ),
+    timeoutToDate(startTimeout + periodInMilliseconds * (currentPeriod + 1n) - 1n),
   ];
-  const vestingAmountPerPeriod =
-    scheme.expectedInitialDeposit.amount / BigInt(scheme.numberOfPeriods);
+  const vestingAmountPerPeriod = scheme.expectedInitialDeposit.amount / BigInt(scheme.numberOfPeriods);
   const vested = currentPeriod * vestingAmountPerPeriod;
 
   const claimed = state.choices
@@ -418,9 +405,7 @@ export const getVestingState = async (
     state?.accounts[0][1] <= scheme.expectedInitialDeposit.amount
   ) {
     const depositInput =
-      next.applicable_inputs.deposits.length == 1
-        ? [Deposit.toInput(next.applicable_inputs.deposits[0])]
-        : undefined;
+      next.applicable_inputs.deposits.length == 1 ? [Deposit.toInput(next.applicable_inputs.deposits[0])] : undefined;
     return {
       name: "WaitingDepositByProvider",
       scheme: scheme,
@@ -450,11 +435,7 @@ export const getVestingState = async (
       currentPeriod: currentPeriod,
       periodInterval: periodInterval,
       quantities,
-      withdrawInput: [
-        Choice.toInput(next.applicable_inputs.choices[0])(
-          quantities.withdrawable
-        ),
-      ],
+      withdrawInput: [Choice.toInput(next.applicable_inputs.choices[0])(quantities.withdrawable)],
     };
   if (next.applicable_inputs.choices.length == 2)
     return {
@@ -464,11 +445,7 @@ export const getVestingState = async (
       periodInterval: periodInterval,
       quantities: quantities,
       cancelInput: [Choice.toInput(next.applicable_inputs.choices[1])(1n)],
-      withdrawInput: [
-        Choice.toInput(next.applicable_inputs.choices[0])(
-          quantities.withdrawable
-        ),
-      ],
+      withdrawInput: [Choice.toInput(next.applicable_inputs.choices[0])(quantities.withdrawable)],
     };
   return { name: "UnknownState", scheme: scheme, state: state, next: next };
 };
@@ -494,16 +471,12 @@ const getPeriodInMilliseconds = function (frequency: Frequency): bigint {
   }
 };
 
-const initialProviderDeposit = function (
-  request: VestingRequest,
-  continuation: Contract
-): Contract {
+const initialProviderDeposit = function (request: VestingRequest, continuation: Contract): Contract {
   const {
     provider,
     scheme: { start, frequency, numberOfPeriods, expectedInitialDeposit },
   } = request;
-  if (numberOfPeriods < 1)
-    throw "The number of periods needs to be greater or equal to 1";
+  if (numberOfPeriods < 1) throw "The number of periods needs to be greater or equal to 1";
 
   const startTimeout: Timeout = datetoTimeout(start);
   const periodInMilliseconds: bigint = getPeriodInMilliseconds(frequency);
@@ -526,35 +499,27 @@ const initialProviderDeposit = function (
   };
 };
 
-const claimerDepositDistribution = function (
-  request: VestingRequest
-): Contract {
+const claimerDepositDistribution = function (request: VestingRequest): Contract {
   return recursiveClaimerDepositDistribution(request, 1n);
 };
 
 /**  NOTE: Currently this logic presents the withdrawal and cancel for the last period, even though it doesn't make sense
  *        because there is nothing to cancel, and even if the claimer does a partial withdrawal, they receive the balance in their account.
  */
-export const recursiveClaimerDepositDistribution = function (
-  request: VestingRequest,
-  periodIndex: bigint
-): Contract {
+export const recursiveClaimerDepositDistribution = function (request: VestingRequest, periodIndex: bigint): Contract {
   const {
     claimer,
     provider,
     scheme: { start, frequency, numberOfPeriods, expectedInitialDeposit },
   } = request;
 
-  const vestingAmountPerPeriod =
-    expectedInitialDeposit.amount / BigInt(numberOfPeriods);
+  const vestingAmountPerPeriod = expectedInitialDeposit.amount / BigInt(numberOfPeriods);
   const startTimeout: Timeout = datetoTimeout(start);
   // Provider needs to deposit before the first vesting period
   const periodInMilliseconds = getPeriodInMilliseconds(frequency);
 
   const continuation: Contract =
-    periodIndex === numberOfPeriods
-      ? close
-      : recursiveClaimerDepositDistribution(request, periodIndex + 1n);
+    periodIndex === numberOfPeriods ? close : recursiveClaimerDepositDistribution(request, periodIndex + 1n);
 
   const vestingDate = startTimeout + periodIndex * periodInMilliseconds;
   const nextVestingDate = vestingDate + periodInMilliseconds;
@@ -619,10 +584,7 @@ export const recursiveClaimerDepositDistribution = function (
         account: claimer,
       },
       then: {
-        when:
-          periodIndex === numberOfPeriods
-            ? [claimerWithdrawCase]
-            : [claimerWithdrawCase, providerCancelCase],
+        when: periodIndex === numberOfPeriods ? [claimerWithdrawCase] : [claimerWithdrawCase, providerCancelCase],
         timeout: nextVestingDate,
         timeout_continuation: continuation,
       },

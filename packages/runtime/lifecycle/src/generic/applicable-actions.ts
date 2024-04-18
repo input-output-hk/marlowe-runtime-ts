@@ -32,14 +32,7 @@ import {
   reduceContractUntilQuiescent,
   TransactionSuccess,
 } from "@marlowe.io/language-core-v1/semantics";
-import {
-  AddressBech32,
-  ContractId,
-  Metadata,
-  PolicyId,
-  Tags,
-  TxId,
-} from "@marlowe.io/runtime-core";
+import { AddressBech32, ContractId, Metadata, PolicyId, Tags, TxId } from "@marlowe.io/runtime-core";
 import { RestClient, Tip } from "@marlowe.io/runtime-rest-client";
 import { WalletAPI } from "@marlowe.io/wallet";
 import * as Big from "@marlowe.io/adapter/bigint";
@@ -64,10 +57,7 @@ export interface ApplicableActionsAPI {
    * function should receive the contractDetails and just return the actions.
    * To do this, we should refactor the {@link ContractsAPI} first to use the {@link ContractDetails} type
    */
-  getApplicableActions(
-    contractId: ContractId,
-    environment?: Environment
-  ): Promise<GetApplicableActionsResponse>;
+  getApplicableActions(contractId: ContractId, environment?: Environment): Promise<GetApplicableActionsResponse>;
 
   /**
    * Converts an {@link ApplicableAction} into an {@link ApplicableInput}.
@@ -77,39 +67,26 @@ export interface ApplicableActionsAPI {
    * {@link @marlowe.io/language-core-v1!index.Deposit} actions, or to Advance a timed out
    * contract, none of which require further information.
    */
-  getInput(
-    contractDetails: ActiveContract,
-    action: CanNotify | CanDeposit | CanAdvance
-  ): Promise<ApplicableInput>;
+  getInput(contractDetails: ActiveContract, action: CanNotify | CanDeposit | CanAdvance): Promise<ApplicableInput>;
   /**
    * Converts an {@link ApplicableAction} into an {@link ApplicableInput}.
    *
    * This function has two {@link https://www.tutorialsteacher.com/typescript/function-overloading | overloads}. This
    * one can be used with the Choose action, which requires the chosen number.
    */
-  getInput(
-    contractDetails: ActiveContract,
-    action: CanChoose,
-    chosenNum: ChosenNum
-  ): Promise<ApplicableInput>;
+  getInput(contractDetails: ActiveContract, action: CanChoose, chosenNum: ChosenNum): Promise<ApplicableInput>;
 
   /**
    * Applies an input to a contract. This is a wrapper around the {@link ContractsAPI.applyInputs | Contracts's API applyInputs} function.
    */
-  applyInput(
-    contractId: ContractId,
-    request: ApplyApplicableInputRequest
-  ): Promise<TxId>;
+  applyInput(contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId>;
   /**
    * Simulates the result of applying an {@link ApplicableInput}. The input should be obtained by
    * {@link getApplicableActions | computing the applicable actions} and then {@link getInput | converting them into an input}.
    * @returns If the input was obtained by the described flow, it is guaranteed to return a {@link TransactionSuccess} with
    *          the payments, state, warnings and new continuation.
    */
-  simulateInput(
-    contractDetails: ActiveContract,
-    input: ApplicableInput
-  ): TransactionSuccess;
+  simulateInput(contractDetails: ActiveContract, input: ApplicableInput): TransactionSuccess;
 
   /**
    * Creates a filter function for the {@link ApplicableAction | applicable actions} of the wallet owner.
@@ -156,16 +133,13 @@ export function mkApplicableActionsAPI(
   const di = mkGetApplicableActionsDI(restClient);
 
   async function mkFilter(): Promise<ApplicableActionsWithDetailsFilter>;
-  async function mkFilter(
-    contractDetails: ActiveContract
-  ): Promise<ApplicableActionsFilter>;
+  async function mkFilter(contractDetails: ActiveContract): Promise<ApplicableActionsFilter>;
   async function mkFilter(
     contractDetails?: ActiveContract
   ): Promise<ApplicableActionsFilter | ApplicableActionsWithDetailsFilter> {
     const curriedFilter = await mkApplicableActionsFilter(wallet);
     if (contractDetails) {
-      return (action: ApplicableAction) =>
-        curriedFilter(action, contractDetails);
+      return (action: ApplicableAction) => curriedFilter(action, contractDetails);
     } else {
       return curriedFilter;
     }
@@ -181,17 +155,12 @@ export function mkApplicableActionsAPI(
 }
 
 function applyInput(contractDI: ContractsAPI) {
-  return async function (
-    contractId: ContractId,
-    request: ApplyApplicableInputRequest
-  ): Promise<TxId> {
+  return async function (contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId> {
     return contractDI.applyInputs(contractId, {
       inputs: request.input.inputs,
       tags: request.tags,
       metadata: request.metadata,
-      invalidBefore: posixTimeToIso8601(
-        request.input.environment.timeInterval.from
-      ),
+      invalidBefore: posixTimeToIso8601(request.input.environment.timeInterval.from),
       // NOTE: This is commented out because the end time of the interval might be
       //       way into the future and the time to slot conversion is undefined if the
       //       end time passes a certain threshold.
@@ -341,9 +310,7 @@ export function getApplicableInput(di: GetContinuationDI) {
       merkleizedContinuationHash?: BuiltinByteString
     ): Promise<Input> {
       if (merkleizedContinuationHash) {
-        const aCaseContinuation = await di.getContractContinuation(
-          merkleizedContinuationHash
-        );
+        const aCaseContinuation = await di.getContractContinuation(merkleizedContinuationHash);
         const merkleizedHashAndContinuation = {
           continuation_hash: merkleizedContinuationHash,
           merkleized_continuation: aCaseContinuation,
@@ -377,11 +344,7 @@ export function getApplicableInput(di: GetContinuationDI) {
             input_from_party: deposit.party,
             // TODO: Check and add a test wether this should be the state as given by the contractDetails endpoint
             //       or the result of reducing it.
-            that_deposits: evalValue(
-              environment,
-              contractDetails.currentState,
-              deposit.deposits
-            ),
+            that_deposits: evalValue(environment, contractDetails.currentState, deposit.deposits),
             of_token: deposit.of_token,
             into_account: deposit.into_account,
           },
@@ -392,10 +355,7 @@ export function getApplicableInput(di: GetContinuationDI) {
           environment,
         };
       case "Notify":
-        const notifyInput = await decorateInput(
-          "input_notify",
-          action.merkleizedContinuationHash
-        );
+        const notifyInput = await decorateInput("input_notify", action.merkleizedContinuationHash);
         return {
           inputs: [notifyInput],
           environment,
@@ -468,10 +428,7 @@ type ChainTipDI = {
  * Computes a "safe" environment for the contract.
  * @hidden
  */
-async function computeEnvironment(
-  { getRuntimeTip }: ChainTipDI,
-  currentContract: Contract
-): Promise<Environment> {
+async function computeEnvironment({ getRuntimeTip }: ChainTipDI, currentContract: Contract): Promise<Environment> {
   const oneDayFrom = (time: Timeout) => time + 24n * 60n * 60n * 1000n; // in milliseconds
   // For the lower, bound we use the tip of the runtime chain.
   // If we used new Date(), the runtime can complain that the lower bound is too high
@@ -487,8 +444,7 @@ async function computeEnvironment(
   //                 so the runtime cannot predict what is the exact slot.
   //                 The safe way to solve this is to get the network parameters from the runtime
   //                 and instead of doing oneDayFrom, do the max safe conversion.
-  const upperBound =
-    getNextTimeout(currentContract, lowerBound) ?? oneDayFrom(lowerBound);
+  const upperBound = getNextTimeout(currentContract, lowerBound) ?? oneDayFrom(lowerBound);
 
   return { timeInterval: { from: lowerBound, to: upperBound - 1n } };
 }
@@ -496,9 +452,7 @@ async function computeEnvironment(
 /**
  * @hidden
  */
-export const mkGetApplicableActionsDI = (
-  restClient: RestClient
-): GetApplicableActionsDI => {
+export const mkGetApplicableActionsDI = (restClient: RestClient): GetApplicableActionsDI => {
   return {
     getContractContinuation: (contractSourceId: ContractSourceId) => {
       // TODO: Add caching
@@ -506,10 +460,7 @@ export const mkGetApplicableActionsDI = (
     },
     getContractDetails: async (contractId: ContractId) => {
       const contractDetails = await restClient.getContractById({ contractId });
-      if (
-        typeof contractDetails.state === "undefined" ||
-        typeof contractDetails.currentContract === "undefined"
-      ) {
+      if (typeof contractDetails.state === "undefined" || typeof contractDetails.currentContract === "undefined") {
         return { type: "closed" };
       } else {
         return {
@@ -528,34 +479,25 @@ export const mkGetApplicableActionsDI = (
   };
 };
 
-type GetApplicableActionsDI = GetContinuationDI &
-  GetContractDetailsDI &
-  ChainTipDI;
+type GetApplicableActionsDI = GetContinuationDI & GetContractDetailsDI & ChainTipDI;
 
 /**
  * @hidden
  */
 export function getApplicableActions(di: GetApplicableActionsDI) {
-  return async function (
-    contractId: ContractId,
-    environment?: Environment
-  ): Promise<GetApplicableActionsResponse> {
+  return async function (contractId: ContractId, environment?: Environment): Promise<GetApplicableActionsResponse> {
     const contractDetails = await di.getContractDetails(contractId);
     // If the contract is closed there are no applicable actions
-    if (contractDetails.type === "closed")
-      return { contractDetails, actions: [] };
+    if (contractDetails.type === "closed") return { contractDetails, actions: [] };
 
-    const env =
-      environment ??
-      (await computeEnvironment(di, contractDetails.currentContract));
+    const env = environment ?? (await computeEnvironment(di, contractDetails.currentContract));
 
     const initialReduce = reduceContractUntilQuiescent(
       env,
       contractDetails.currentState,
       contractDetails.currentContract
     );
-    if (initialReduce == "TEAmbiguousTimeIntervalError")
-      throw new Error("AmbiguousTimeIntervalError");
+    if (initialReduce == "TEAmbiguousTimeIntervalError") throw new Error("AmbiguousTimeIntervalError");
 
     let applicableActions: ApplicableAction[] = initialReduce.reduced
       ? [
@@ -634,10 +576,7 @@ export type ApplicableActionsFilter = (action: ApplicableAction) => boolean;
  * @see How to create the filter using {@link ApplicableActionsAPI.mkFilter | mkFilter}
  * @category ApplicableActionsAPI
  */
-export type ApplicableActionsWithDetailsFilter = (
-  action: ApplicableAction,
-  contractDetails: ActiveContract
-) => boolean;
+export type ApplicableActionsWithDetailsFilter = (action: ApplicableAction, contractDetails: ActiveContract) => boolean;
 
 /**
  * @hidden
@@ -674,9 +613,7 @@ type ApplicableActionAccumulator = {
   notifies: CanNotify | undefined;
 };
 
-const toApplicableActions = (
-  accumulator: ApplicableActionAccumulator
-): ApplicableAction[] => {
+const toApplicableActions = (accumulator: ApplicableActionAccumulator): ApplicableAction[] => {
   const deposits = Object.values(accumulator.deposits);
   const choices = Object.values(accumulator.choices);
   const notifies = accumulator.notifies ? [accumulator.notifies] : [];
@@ -700,17 +637,11 @@ const partyKey = (party: Party) => {
 const tokenKey = (token: Token) => {
   return `${token.currency_symbol}-${token.token_name}`;
 };
-const accumulatorFromDeposit = (
-  env: Environment,
-  state: MarloweState,
-  action: CanDeposit
-) => {
+const accumulatorFromDeposit = (env: Environment, state: MarloweState, action: CanDeposit) => {
   const { party, into_account, of_token, deposits } = action.deposit;
   const value = evalValue(env, state, deposits);
 
-  const depositKey = `${partyKey(party)}-${partyKey(into_account)}-${tokenKey(
-    of_token
-  )}-${value}`;
+  const depositKey = `${partyKey(party)}-${partyKey(into_account)}-${tokenKey(of_token)}-${value}`;
   return {
     deposits: { [depositKey]: action },
     choices: {},
@@ -720,9 +651,7 @@ const accumulatorFromDeposit = (
 
 const accumulatorFromChoice = (action: CanChoose) => {
   const { for_choice } = action.choice;
-  const choiceKey = `${partyKey(for_choice.choice_owner)}-${
-    for_choice.choice_name
-  }`;
+  const choiceKey = `${partyKey(for_choice.choice_owner)}-${for_choice.choice_name}`;
   return {
     deposits: {},
     choices: { [choiceKey]: action },
@@ -741,9 +670,7 @@ const accumulatorFromNotify = (action: CanNotify) => {
 function mergeBounds(bounds: Bound[]): Bound[] {
   const mergedBounds: Bound[] = [];
 
-  const sortedBounds = [...bounds].sort((a, b) =>
-    a.from > b.from ? 1 : a.from < b.from ? -1 : 0
-  );
+  const sortedBounds = [...bounds].sort((a, b) => (a.from > b.from ? 1 : a.from < b.from ? -1 : 0));
 
   let currentBound: Bound | null = null;
 
@@ -769,9 +696,7 @@ function mergeBounds(bounds: Bound[]): Bound[] {
 
 const flattenChoices = {
   concat: (fst: CanChoose, snd: CanChoose): CanChoose => {
-    const mergedBounds = mergeBounds(
-      fst.choice.choose_between.concat(snd.choice.choose_between)
-    );
+    const mergedBounds = mergeBounds(fst.choice.choose_between.concat(snd.choice.choose_between));
     return {
       actionType: "Choice",
       environment: fst.environment,
@@ -802,11 +727,7 @@ type GetContinuationDI = {
   getContractContinuation: (sourceId: ContractSourceId) => Promise<Contract>;
 };
 
-function getApplicableActionFromCase(
-  env: Environment,
-  state: MarloweState,
-  aCase: Case
-): ApplicableActionAccumulator {
+function getApplicableActionFromCase(env: Environment, state: MarloweState, aCase: Case): ApplicableActionAccumulator {
   if (isDepositAction(aCase.case)) {
     const deposit = aCase.case;
     return accumulatorFromDeposit(env, state, {

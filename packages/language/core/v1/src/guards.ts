@@ -22,11 +22,7 @@ export {
   ChoiceGuard as Choice,
 } from "./actions.js";
 
-export {
-  ChoiceNameGuard as ChoiceName,
-  ChoiceIdGuard as ChoiceId,
-  BoundGuard as Bound,
-} from "./choices.js";
+export { ChoiceNameGuard as ChoiceName, ChoiceIdGuard as ChoiceId, BoundGuard as Bound } from "./choices.js";
 
 export {
   CloseGuard as Close,
@@ -42,10 +38,7 @@ export {
   TimeoutGuard as Timeout,
 } from "./contract.js";
 
-export {
-  EnvironmentGuard as Environment,
-  TimeIntervalGuard as TimeInterval,
-} from "./environment.js";
+export { EnvironmentGuard as Environment, TimeIntervalGuard as TimeInterval } from "./environment.js";
 
 export {
   InputGuard as Input,
@@ -72,10 +65,7 @@ export {
   AccountIdGuard as AccountId,
 } from "./payee.js";
 
-export {
-  MarloweStateGuard as MarloweState,
-  AccountsGuard as Accounts,
-} from "./state.js";
+export { MarloweStateGuard as MarloweState, AccountsGuard as Accounts } from "./state.js";
 
 export { TokenGuard as Token, TokenNameGuard as TokenName } from "./token.js";
 

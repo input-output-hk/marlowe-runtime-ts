@@ -5,12 +5,7 @@ import { Lucid, Blockfrost } from "lucid-cardano";
 
 import { RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
 import { Assets } from "@marlowe.io/runtime-core";
-import {
-  TestConfiguration,
-  logInfo,
-  logWalletInfo,
-  mkLucidWalletTest,
-} from "@marlowe.io/testing-kit";
+import { TestConfiguration, logInfo, logWalletInfo, mkLucidWalletTest } from "@marlowe.io/testing-kit";
 import { ProvisionRequest, WalletTestAPI } from "../wallet/api.js";
 
 /**
@@ -59,10 +54,7 @@ export const mkTestEnvironment =
     logInfo("Test Environment : Initiating");
 
     const bankLucid = await Lucid.new(
-      new Blockfrost(
-        testConfiguration.lucid.blockfrostUrl,
-        testConfiguration.lucid.blockfrostProjectId
-      ),
+      new Blockfrost(testConfiguration.lucid.blockfrostUrl, testConfiguration.lucid.blockfrostProjectId),
       testConfiguration.network
     );
 
@@ -78,9 +70,7 @@ export const mkTestEnvironment =
     }
     logInfo("Bank is provisionned enough");
     const participants = await bank.provision(provisionRequest);
-    await bank.waitRuntimeSyncingTillCurrentWalletTip(
-      mkRestClient(testConfiguration.runtimeURL)
-    );
+    await bank.waitRuntimeSyncingTillCurrentWalletTip(mkRestClient(testConfiguration.runtimeURL));
 
     logInfo("Test Environment : Ready");
     return {
