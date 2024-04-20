@@ -10,7 +10,7 @@ import {
   Retract,
   Swap,
   getActiveState,
-  getAvailableActions,
+  getApplicableActions,
   getClosedState,
   waitingForAnswer,
   waitingForSwapConfirmation,
@@ -71,7 +71,7 @@ describe("Atomic Swap", () => {
         inputFlow.map((input) => ({ interval: aTxInterval, input: input })),
         state
       );
-      expect(activeState.typeName).toBe("WaitingSellerOffer");
+      expect(activeState.type).toBe("WaitingSellerOffer");
     });
     it("when no seller offer have been provided in time - NoSellerOfferInTime", () => {
       // Set up
@@ -105,7 +105,7 @@ describe("Atomic Swap", () => {
         inputFlow.map((input) => ({ interval: aTxInterval, input: input })),
         state
       );
-      expect(activeState.typeName).toBe("NoSellerOfferInTime");
+      expect(activeState.type).toBe("NoSellerOfferInTime");
     });
     it("when waiting a for an answer - WaitingForAnswer", () => {
       // Set up
@@ -124,7 +124,7 @@ describe("Atomic Swap", () => {
           deadline: aDeadlineInTheFuture,
         },
       };
-      const inputFlow: Input[] = [(getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
+      const inputFlow: Input[] = [(getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
 
       // Execute
 
@@ -150,7 +150,7 @@ describe("Atomic Swap", () => {
         inputFlow.map((input) => ({ interval: aTxInterval, input: input })),
         state
       );
-      expect(activeState.typeName).toBe("WaitingForAnswer");
+      expect(activeState.type).toBe("WaitingForAnswer");
     });
     it("when waiting a for a swap confirmation (Open Role requirement to prevent double-satisfaction attacks) - WaitingForSwapConfirmation", () => {
       // Set up
@@ -170,8 +170,8 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow: Input[] = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
-        (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
+        (getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
+        (getApplicableActions(scheme, waitingForAnswer)[0] as Swap).input,
       ];
 
       // Execute
@@ -211,7 +211,7 @@ describe("Atomic Swap", () => {
         inputFlow.map((input) => ({ interval: aTxInterval, input: input })),
         state
       );
-      expect(activeState.typeName).toBe("WaitingForSwapConfirmation");
+      expect(activeState.type).toBe("WaitingForSwapConfirmation");
     });
   });
   describe("is closed (with 5 closed reasons)", () => {
@@ -233,9 +233,9 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
-        (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
-        (getAvailableActions(scheme, waitingForSwapConfirmation)[0] as ConfirmSwap).input,
+        (getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
+        (getApplicableActions(scheme, waitingForAnswer)[0] as Swap).input,
+        (getApplicableActions(scheme, waitingForSwapConfirmation)[0] as ConfirmSwap).input,
       ];
 
       // Execute
@@ -286,7 +286,7 @@ describe("Atomic Swap", () => {
         scheme,
         inputFlow.map((input) => ({ interval: aTxInterval, input: input }))
       );
-      expect(state.reason.typeName).toBe("Swapped");
+      expect(state.reason.type).toBe("Swapped");
     });
     it("when tokens have been swapped but nobody has confirmed the swap on time (Open Role requirement to prevent double-satisfaction attacks) - SwappedButNotNotifiedOnTime", () => {
       // Set up
@@ -306,8 +306,8 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
-        (getAvailableActions(scheme, waitingForAnswer)[0] as Swap).input,
+        (getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
+        (getApplicableActions(scheme, waitingForAnswer)[0] as Swap).input,
       ];
 
       // Execute
@@ -359,7 +359,7 @@ describe("Atomic Swap", () => {
         scheme,
         inputFlow.map((input) => ({ interval: aTxInterval, input: input }))
       );
-      expect(state.reason.typeName).toBe("SwappedButNotNotifiedOnTime");
+      expect(state.reason.type).toBe("SwappedButNotNotifiedOnTime");
     });
     it("when no buyer has answered to the offer on time - NotAnsweredOnTime", () => {
       // Set up
@@ -378,7 +378,7 @@ describe("Atomic Swap", () => {
           deadline: aDeadlineInTheFuture,
         },
       };
-      const inputFlow = [(getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
+      const inputFlow = [(getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input];
 
       // Execute
 
@@ -410,7 +410,7 @@ describe("Atomic Swap", () => {
         scheme,
         inputFlow.map((input) => ({ interval: aTxInterval, input: input }))
       );
-      expect(state.reason.typeName).toBe("NotAnsweredOnTime");
+      expect(state.reason.type).toBe("NotAnsweredOnTime");
     });
     it("when the seller has retracted - SellerRetracted", () => {
       // Set up
@@ -430,8 +430,8 @@ describe("Atomic Swap", () => {
         },
       };
       const inputFlow = [
-        (getAvailableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
-        (getAvailableActions(scheme, waitingForAnswer)[1] as Retract).input,
+        (getApplicableActions(scheme, waitingSellerOffer)[0] as ProvisionOffer).input,
+        (getApplicableActions(scheme, waitingForAnswer)[1] as Retract).input,
       ];
 
       // Execute
@@ -464,7 +464,7 @@ describe("Atomic Swap", () => {
         scheme,
         inputFlow.map((input) => ({ interval: aTxInterval, input: input }))
       );
-      expect(state.reason.typeName).toBe("SellerRetracted");
+      expect(state.reason.type).toBe("SellerRetracted");
     });
     it("when the seller has not provisioned the contract on time and advance is applied - NoOfferProvisionnedOnTime", () => {
       // Set up
@@ -507,7 +507,7 @@ describe("Atomic Swap", () => {
         scheme,
         advance.map((input) => ({ interval: aTxInterval, input: input }))
       );
-      expect(state.reason.typeName).toBe("NoOfferProvisionnedOnTime");
+      expect(state.reason.type).toBe("NoOfferProvisionnedOnTime");
     });
   });
 });

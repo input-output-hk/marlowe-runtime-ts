@@ -17,12 +17,10 @@ describe("Runtime Contract Lifecycle ", () => {
       try {
         const { bank, mkLifecycle } = await readTestConfiguration().then(mkTestEnvironment({}));
         const runtimeLifecycle = mkLifecycle(bank);
-        const [contractId, txIdContractCreated] = await runtimeLifecycle.contracts.createContract({
-          contract: close,
-          minimumLovelaceUTxODeposit: 3_000_000,
-        });
-        await bank.waitConfirmation(txIdContractCreated);
-        logInfo(`contractID created : ${contractId}`);
+        const contract = await runtimeLifecycle.newContractAPI.create({ contract: close });
+        await contract.waitForConfirmation();
+        logInfo(`contract created : ${contract.id}`);
+        expect(await contract.isClosed()).toBeTruthy();
       } catch (e) {
         const error = e as AxiosError;
         logError(JSON.stringify(error.response?.data));
@@ -41,20 +39,16 @@ describe("Runtime Contract Lifecycle ", () => {
           const runtime = mkLifecycle(bank);
 
           const notifyTimeout = pipe(addDays(Date.now(), 1), datetoTimeout);
-          const [contractId, txIdContractCreated] = await runtime.contracts.createContract({
-            contract: oneNotifyTrue(notifyTimeout),
-            minimumLovelaceUTxODeposit: 3_000_000,
-          });
-          await bank.waitConfirmation(txIdContractCreated);
-          logInfo(
-            `contractID status : ${contractId} -> ${(await runtime.restClient.getContractById({ contractId })).status}`
-          );
+          const contractInstance = await runtime.newContractAPI.create({ contract: oneNotifyTrue(notifyTimeout) });
+          await contractInstance.waitForConfirmation();
+          logInfo(`contract created : ${contractInstance.id}`);
+          expect(await contractInstance.isActive()).toBeTruthy();
+
           await bank.waitRuntimeSyncingTillCurrentWalletTip(runtime.restClient);
-          const txIdInputsApplied = await runtime.contracts.applyInputs(contractId, {
-            inputs: [inputNotify],
-          });
-          const result = await bank.waitConfirmation(txIdInputsApplied);
-          expect(result).toBe(true);
+          await contractInstance.applyInputs({ inputs: [inputNotify] });
+          await contractInstance.waitForConfirmation();
+
+          expect(await contractInstance.isClosed()).toBeTruthy();
         } catch (e) {
           const error = e as AxiosError;
           logError(error.message);

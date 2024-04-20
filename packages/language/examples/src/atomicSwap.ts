@@ -99,26 +99,26 @@ export type State = ActiveState | Closed;
 export type ActiveState = WaitingSellerOffer | NoSellerOfferInTime | WaitingForAnswer | WaitingForSwapConfirmation;
 
 export type WaitingSellerOffer = {
-  typeName: "WaitingSellerOffer";
+  type: "WaitingSellerOffer";
 };
 
 export const waitingSellerOffer: WaitingSellerOffer = {
-  typeName: "WaitingSellerOffer",
+  type: "WaitingSellerOffer",
 };
 
 export type NoSellerOfferInTime = {
-  typeName: "NoSellerOfferInTime";
+  type: "NoSellerOfferInTime";
 };
 export const noSellerOfferInTime: NoSellerOfferInTime = {
-  typeName: "NoSellerOfferInTime",
+  type: "NoSellerOfferInTime",
 };
 
 export type WaitingForAnswer = {
-  typeName: "WaitingForAnswer";
+  type: "WaitingForAnswer";
 };
 
 export const waitingForAnswer: WaitingForAnswer = {
-  typeName: "WaitingForAnswer",
+  type: "WaitingForAnswer",
 };
 
 /*
@@ -134,18 +134,18 @@ export const waitingForAnswer: WaitingForAnswer = {
  * </p>
  */
 export type WaitingForSwapConfirmation = {
-  typeName: "WaitingForSwapConfirmation";
+  type: "WaitingForSwapConfirmation";
 };
 
 export const waitingForSwapConfirmation: WaitingForSwapConfirmation = {
-  typeName: "WaitingForSwapConfirmation",
+  type: "WaitingForSwapConfirmation",
 };
 
 /**
  * when the contract is closed.
  */
 export type Closed = {
-  typeName: "Closed";
+  type: "Closed";
   reason: CloseReason;
 };
 
@@ -153,7 +153,7 @@ export type Closed = {
 /**
  * Action List available for the contract lifecycle.
  */
-export type Action =
+export type ApplicableAction =
   /* When Contract Created (timed out > NoOfferProvisionnedOnTime) */
   | ProvisionOffer // > OfferProvisionned
   /* When NoOfferProvisionnedOnTime (timed out > no timeout (need to be reduced to be closed))*/
@@ -167,30 +167,30 @@ export type Action =
 export type ActionParticipant = "buyer" | "seller" | "anybody";
 
 export type RetrieveMinimumLovelaceAdded = {
-  typeName: "RetrieveMinimumLovelaceAdded";
+  type: "RetrieveMinimumLovelaceAdded";
   owner: ActionParticipant;
 };
 
 export type ProvisionOffer = {
-  typeName: "ProvisionOffer";
+  type: "ProvisionOffer";
   owner: ActionParticipant;
   input: IDeposit;
 };
 
 export type Swap = {
-  typeName: "Swap";
+  type: "Swap";
   owner: ActionParticipant;
   input: IDeposit;
 };
 
 export type ConfirmSwap = {
-  typeName: "ConfirmSwap";
+  type: "ConfirmSwap";
   owner: ActionParticipant;
   input: INotify;
 };
 
 export type Retract = {
-  typeName: "Retract";
+  type: "Retract";
   owner: ActionParticipant;
   input: IChoice;
 };
@@ -206,14 +206,14 @@ export type CloseReason =
   | SwappedButNotNotifiedOnTime;
 
 export type NoOfferProvisionnedOnTime = {
-  typeName: "NoOfferProvisionnedOnTime";
+  type: "NoOfferProvisionnedOnTime";
 };
-export type SellerRetracted = { typeName: "SellerRetracted" };
-export type NotAnsweredOnTime = { typeName: "NotAnsweredOnTime" };
+export type SellerRetracted = { type: "SellerRetracted" };
+export type NotAnsweredOnTime = { type: "NotAnsweredOnTime" };
 export type SwappedButNotNotifiedOnTime = {
-  typeName: "SwappedButNotNotifiedOnTime";
+  type: "SwappedButNotNotifiedOnTime";
 };
-export type Swapped = { typeName: "Swapped" };
+export type Swapped = { type: "Swapped" };
 
 /* #endregion */
 
@@ -241,12 +241,12 @@ export class UnexpectedClosedSwapContractState extends Error {
   }
 }
 
-export const getAvailableActions = (scheme: Scheme, state: ActiveState): Action[] => {
-  switch (state.typeName) {
+export const getApplicableActions = (scheme: Scheme, state: ActiveState): ApplicableAction[] => {
+  switch (state.type) {
     case "WaitingSellerOffer":
       return [
         {
-          typeName: "ProvisionOffer",
+          type: "ProvisionOffer",
           owner: "seller",
           input: {
             input_from_party: scheme.offer.seller,
@@ -259,14 +259,14 @@ export const getAvailableActions = (scheme: Scheme, state: ActiveState): Action[
     case "NoSellerOfferInTime":
       return [
         {
-          typeName: "RetrieveMinimumLovelaceAdded",
+          type: "RetrieveMinimumLovelaceAdded",
           owner: "anybody",
         },
       ];
     case "WaitingForAnswer":
       return [
         {
-          typeName: "Swap",
+          type: "Swap",
           owner: "buyer",
           input: {
             input_from_party: scheme.ask.buyer,
@@ -276,7 +276,7 @@ export const getAvailableActions = (scheme: Scheme, state: ActiveState): Action[
           },
         },
         {
-          typeName: "Retract",
+          type: "Retract",
           owner: "seller",
           input: {
             for_choice_id: {
@@ -290,7 +290,7 @@ export const getAvailableActions = (scheme: Scheme, state: ActiveState): Action[
     case "WaitingForSwapConfirmation":
       return [
         {
-          typeName: "ConfirmSwap",
+          type: "ConfirmSwap",
           owner: "anybody",
           input: "input_notify",
         },
@@ -307,13 +307,13 @@ export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): C
     // Offer Provision Deadline has passed and there is one reduced applied to close the contract
     case 0:
       return {
-        typeName: "Closed",
-        reason: { typeName: "NoOfferProvisionnedOnTime" },
+        type: "Closed",
+        reason: { type: "NoOfferProvisionnedOnTime" },
       };
     case 1:
       return {
-        typeName: "Closed",
-        reason: { typeName: "NotAnsweredOnTime" },
+        type: "Closed",
+        reason: { type: "NotAnsweredOnTime" },
       };
     case 2: {
       const isRetracted =
@@ -321,14 +321,14 @@ export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): C
       const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
       if (isRetracted && nbDeposits === 1) {
         return {
-          typeName: "Closed",
-          reason: { typeName: "SellerRetracted" },
+          type: "Closed",
+          reason: { type: "SellerRetracted" },
         };
       }
       if (nbDeposits === 2) {
         return {
-          typeName: "Closed",
-          reason: { typeName: "SwappedButNotNotifiedOnTime" },
+          type: "Closed",
+          reason: { type: "SwappedButNotNotifiedOnTime" },
         };
       }
       break;
@@ -338,8 +338,8 @@ export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): C
       const nbNotify = inputHistory.filter((singleInputTx) => G.INotify.is(singleInputTx.input)).length;
       if (nbDeposits === 2 && nbNotify === 1) {
         return {
-          typeName: "Closed",
-          reason: { typeName: "Swapped" },
+          type: "Closed",
+          reason: { type: "Swapped" },
         };
       }
     }
@@ -355,16 +355,16 @@ export const getActiveState = (
 ): ActiveState => {
   switch (inputHistory.length) {
     case 0:
-      return now < scheme.offer.deadline ? { typeName: "WaitingSellerOffer" } : { typeName: "NoSellerOfferInTime" };
+      return now < scheme.offer.deadline ? { type: "WaitingSellerOffer" } : { type: "NoSellerOfferInTime" };
     case 1:
       if (now < scheme.ask.deadline) {
-        return { typeName: "WaitingForAnswer" };
+        return { type: "WaitingForAnswer" };
       }
       break;
     case 2: {
       const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
       if (nbDeposits === 2 && now < scheme.swapConfirmation.deadline) {
-        return { typeName: "WaitingForSwapConfirmation" };
+        return { type: "WaitingForSwapConfirmation" };
       }
       break;
     }

@@ -32,14 +32,7 @@ import {
   reduceContractUntilQuiescent,
   TransactionSuccess,
 } from "@marlowe.io/language-core-v1/semantics";
-import {
-  AddressBech32,
-  ContractId,
-  Metadata,
-  PolicyId,
-  Tags,
-  TxId,
-} from "@marlowe.io/runtime-core";
+import { AddressBech32, ContractId, Metadata, PolicyId, Tags, TxId } from "@marlowe.io/runtime-core";
 import { RestDI } from "@marlowe.io/runtime-rest-client";
 import { WalletAPI, WalletDI } from "@marlowe.io/wallet";
 import * as Big from "@marlowe.io/adapter/bigint";
@@ -60,10 +53,7 @@ export interface ApplicableActionsAPI {
    *                    as an upper bound.
    * @returns An object with an array of {@link ApplicableAction | applicable actions} and the {@link ContractDetails | contract details}
    */
-  getApplicableActions(
-    contractDetails: ContractDetails,
-    environment?: Environment
-  ): Promise<ApplicableAction[]>;
+  getApplicableActions(contractDetails: ContractDetails, environment?: Environment): Promise<ApplicableAction[]>;
 
   /**
    * Converts an {@link ApplicableAction} into an {@link ApplicableInput}.
@@ -83,7 +73,8 @@ export interface ApplicableActionsAPI {
   getInput(contractDetails: ActiveContract, action: CanChoose, chosenNum: ChosenNum): Promise<ApplicableInput>;
 
   /**
-   * Applies an input to a contract. This is a wrapper around the {@link ContractsAPI.applyInputs | Contracts's API applyInputs} function.
+   * Applies an {@link ApplicableInput} to a contract.
+   * @returns The transaction id of the applied input.
    */
   applyInput(contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId>;
   /**
@@ -131,9 +122,7 @@ export interface ApplyApplicableInputRequest {
 /**
  * @hidden
  */
-export function mkApplicableActionsAPI(
-  di: RestDI & WalletDI & GetContinuationDI & ChainTipDI
-): ApplicableActionsAPI {
+export function mkApplicableActionsAPI(di: RestDI & WalletDI & GetContinuationDI & ChainTipDI): ApplicableActionsAPI {
   async function mkFilter(): Promise<ApplicableActionsWithDetailsFilter>;
   async function mkFilter(contractDetails: ActiveContract): Promise<ApplicableActionsFilter>;
   async function mkFilter(
@@ -156,16 +145,10 @@ export function mkApplicableActionsAPI(
   };
 }
 
-export type ApplyInputDI = (
-  contractId: ContractId,
-  request: ApplyInputsRequest
-) => Promise<TxId>;
+export type ApplyInputDI = (contractId: ContractId, request: ApplyInputsRequest) => Promise<TxId>;
 
 function applyInput(doApply: ApplyInputDI) {
-  return async function (
-    contractId: ContractId,
-    request: ApplyApplicableInputRequest
-  ): Promise<TxId> {
+  return async function (contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId> {
     return doApply(contractId, {
       inputs: request.input.inputs,
       tags: request.tags,
@@ -210,7 +193,7 @@ export interface CanNotify {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Notify";
+  type: "Notify";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -229,7 +212,7 @@ export interface CanDeposit {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Deposit";
+  type: "Deposit";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -252,7 +235,7 @@ export interface CanChoose {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Choice";
+  type: "Choice";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -275,7 +258,7 @@ export interface CanChoose {
  * @category ApplicableActionsAPI
  */
 export interface CanAdvance {
-  actionType: "Advance";
+  type: "Advance";
   environment: Environment;
 }
 
@@ -334,7 +317,7 @@ export function getApplicableInput(di: GetContinuationDI) {
     }
     const environment = action.environment;
 
-    switch (action.actionType) {
+    switch (action.type) {
       case "Advance":
         return {
           inputs: [],
@@ -412,7 +395,7 @@ export function simulateApplicableInput(
 }
 
 function getApplicant(action: ApplicableAction): ActionApplicant {
-  switch (action.actionType) {
+  switch (action.type) {
     case "Notify":
     case "Advance":
       return "anybody";
@@ -461,10 +444,7 @@ type GetApplicableActionsDI = GetContinuationDI & ChainTipDI;
  * @hidden
  */
 export function getApplicableActions(di: GetApplicableActionsDI) {
-  return async function (
-    contractDetails: ContractDetails,
-    environment?: Environment
-  ): Promise<ApplicableAction[]> {
+  return async function (contractDetails: ContractDetails, environment?: Environment): Promise<ApplicableAction[]> {
     // If the contract is closed there are no applicable actions
     if (contractDetails.type === "closed") return [];
 
@@ -480,7 +460,7 @@ export function getApplicableActions(di: GetApplicableActionsDI) {
     let applicableActions: ApplicableAction[] = initialReduce.reduced
       ? [
           {
-            actionType: "Advance",
+            type: "Advance",
             environment: env,
           },
         ]
@@ -673,7 +653,7 @@ const flattenChoices = {
   concat: (fst: CanChoose, snd: CanChoose): CanChoose => {
     const mergedBounds = mergeBounds(fst.choice.choose_between.concat(snd.choice.choose_between));
     return {
-      actionType: "Choice",
+      type: "Choice",
       environment: fst.environment,
       choice: {
         for_choice: fst.choice.for_choice,
@@ -709,7 +689,7 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
   if (isDepositAction(aCase.case)) {
     const deposit = aCase.case;
     return accumulatorFromDeposit(env, state, {
-      actionType: "Deposit",
+      type: "Deposit",
       deposit,
       environment: env,
     });
@@ -717,7 +697,7 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
     const choice = aCase.case;
 
     return accumulatorFromChoice({
-      actionType: "Choice",
+      type: "Choice",
       choice,
       environment: env,
     });
@@ -728,7 +708,7 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
     }
 
     return accumulatorFromNotify({
-      actionType: "Notify",
+      type: "Notify",
       environment: env,
     });
   }

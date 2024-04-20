@@ -1,18 +1,8 @@
 import { Option } from "fp-ts/lib/Option.js";
-import {
-  Contract,
-  Environment,
-  Input,
-  Party,
-  RoleName,
-} from "@marlowe.io/language-core-v1";
+import { Contract, Environment, Input, Party, RoleName } from "@marlowe.io/language-core-v1";
 import { unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
 
-import {
-  getAddressesAndCollaterals,
-  WalletAPI,
-  WalletDI,
-} from "@marlowe.io/wallet/api";
+import { getAddressesAndCollaterals, WalletAPI, WalletDI } from "@marlowe.io/wallet/api";
 import {
   PolicyId,
   ContractId,
@@ -25,13 +15,7 @@ import {
   Tags,
 } from "@marlowe.io/runtime-core";
 
-import {
-  FPTSRestAPI,
-  RestClient,
-  RestDI,
-  ItemRange,
-  DeprecatedRestDI,
-} from "@marlowe.io/runtime-rest-client";
+import { FPTSRestAPI, RestClient, RestDI, ItemRange, DeprecatedRestDI } from "@marlowe.io/runtime-rest-client";
 
 import { Next, noNext } from "@marlowe.io/language-core-v1/next";
 import {
@@ -57,15 +41,12 @@ export type ContractsDI = WalletDI & RestDI;
  * Both options share the same {@link CreateContractRequestBase | request parameters}.
  * @category ContractsAPI
  */
-export type CreateContractRequest =
-  | CreateContractRequestFromContract
-  | CreateContractRequestFromBundle;
+export type CreateContractRequest = CreateContractRequestFromContract | CreateContractRequestFromBundle;
 
 /**
  * @category ContractsAPI
  */
-export interface CreateContractRequestFromContract
-  extends CreateContractRequestBase {
+export interface CreateContractRequestFromContract extends CreateContractRequestBase {
   /**
    * The Marlowe Contract to create
    */
@@ -75,8 +56,7 @@ export interface CreateContractRequestFromContract
 /**
  * @category ContractsAPI
  */
-export interface CreateContractRequestFromBundle
-  extends CreateContractRequestBase {
+export interface CreateContractRequestFromBundle extends CreateContractRequestBase {
   /**
    * The Marlowe Object bundle to create
    */
@@ -257,6 +237,7 @@ export interface CreateContractRequestBase {
 }
 
 /**
+ * Request parameters used by {@link api.ContractsAPI#applyInputs | applyInputs}.
  * @category ContractsAPI
  */
 export type ApplyInputsRequest = {
@@ -278,9 +259,7 @@ export interface ContractsAPI {
    * @returns ContractId (Marlowe id) and TxId (Cardano id) of the submitted Tx
    * @throws DecodingError
    */
-  createContract(
-    createContractRequest: CreateContractRequest
-  ): Promise<[ContractId, TxId]>;
+  createContract(createContractRequest: CreateContractRequest): Promise<[ContractId, TxId]>;
 
   /**
    * Submit to the Cardano Ledger, the Transaction(Tx) that will apply inputs to a given created contract.
@@ -288,18 +267,12 @@ export interface ContractsAPI {
    * @param applyInputsRequest inputs to apply
    * @throws DecodingError
    */
-  applyInputs(
-    contractId: ContractId,
-    applyInputsRequest: ApplyInputsRequest
-  ): Promise<TxId>;
+  applyInputs(contractId: ContractId, applyInputsRequest: ApplyInputsRequest): Promise<TxId>;
 
   /**
    * @deprecated Deprecated in favour of {@link @marlowe.io/runtime-lifecycle!api.ApplicableActionsAPI}
    */
-  getApplicableInputs(
-    contractId: ContractId,
-    environement: Environment
-  ): Promise<Next>;
+  getApplicableInputs(contractId: ContractId, environement: Environment): Promise<Next>;
 
   /**
    * @description
@@ -343,10 +316,7 @@ export const getInputHistory =
         })
       )
     );
-    const sortOptionalBlock = (
-      a: Option<BlockHeader>,
-      b: Option<BlockHeader>
-    ) => {
+    const sortOptionalBlock = (a: Option<BlockHeader>, b: Option<BlockHeader>) => {
       if (a._tag === "None" || b._tag === "None") {
         // TODO: to avoid this error we should provide a higer level function that gets the transactions as the different
         //       status and with the appropiate values for each state.
@@ -387,9 +357,7 @@ export const getInputHistory =
 
 export const createContract =
   ({ wallet, restClient }: ContractsDI) =>
-  async (
-    createContractRequest: CreateContractRequest
-  ): Promise<[ContractId, TxId]> => {
+  async (createContractRequest: CreateContractRequest): Promise<[ContractId, TxId]> => {
     const addressesAndCollaterals = await getAddressesAndCollaterals(wallet);
 
     const baseRequest: BuildCreateContractTxRequestOptions = {
@@ -405,8 +373,7 @@ export const createContract =
 
       tags: createContractRequest.tags,
       metadata: createContractRequest.metadata,
-      minimumLovelaceUTxODeposit:
-        createContractRequest.minimumLovelaceUTxODeposit,
+      minimumLovelaceUTxODeposit: createContractRequest.minimumLovelaceUTxODeposit,
     };
 
     let restClientRequest: BuildCreateContractTxRequest;
@@ -425,13 +392,10 @@ export const createContract =
         sourceId: contractSources.contractSourceId,
       };
     }
-    const buildCreateContractTxResponse =
-      await restClient.buildCreateContractTx(restClientRequest);
+    const buildCreateContractTxResponse = await restClient.buildCreateContractTx(restClientRequest);
     const contractId = buildCreateContractTxResponse.contractId;
 
-    const hexTransactionWitnessSet = await wallet.signTx(
-      buildCreateContractTxResponse.tx.cborHex
-    );
+    const hexTransactionWitnessSet = await wallet.signTx(buildCreateContractTxResponse.tx.cborHex);
 
     await restClient.submitContract({
       contractId,
@@ -443,64 +407,40 @@ export const createContract =
 const getApplicableInputs =
   ({ wallet, deprecatedRestAPI }: ContractsDI & DeprecatedRestDI) =>
   async (contractId: ContractId, environement: Environment): Promise<Next> => {
-    const contractDetails = await unsafeTaskEither(
-      deprecatedRestAPI.contracts.contract.get(contractId)
-    );
+    const contractDetails = await unsafeTaskEither(deprecatedRestAPI.contracts.contract.get(contractId));
     if (!contractDetails.state) {
       return noNext;
     } else {
-      const parties = await getParties(wallet)(
-        contractDetails.roleTokenMintingPolicyId
-      );
-      return await unsafeTaskEither(
-        deprecatedRestAPI.contracts.contract.next(contractId)(environement)(
-          parties
-        )
-      );
+      const parties = await getParties(wallet)(contractDetails.roleTokenMintingPolicyId);
+      return await unsafeTaskEither(deprecatedRestAPI.contracts.contract.next(contractId)(environement)(parties));
     }
   };
 
 const getContractIds =
   ({ deprecatedRestAPI, wallet }: ContractsDI & DeprecatedRestDI) =>
   async (): Promise<ContractId[]> => {
-    const partyAddresses = [
-      await wallet.getChangeAddress(),
-      ...(await wallet.getUsedAddresses()),
-    ];
+    const partyAddresses = [await wallet.getChangeAddress(), ...(await wallet.getUsedAddresses())];
     const kwargs = { tags: [], partyAddresses, partyRoles: [] };
-    const loop = async (
-      acc: ContractId[],
-      range?: ItemRange
-    ): Promise<ContractId[]> => {
-      const result =
-        await deprecatedRestAPI.contracts.getHeadersByRange(range)(kwargs)();
+    const loop = async (acc: ContractId[], range?: ItemRange): Promise<ContractId[]> => {
+      const result = await deprecatedRestAPI.contracts.getHeadersByRange(range)(kwargs)();
       if (result._tag === "Left") throw result.left;
       const response = result.right;
-      const contractIds = [
-        ...acc,
-        ...response.contracts.map(({ contractId }) => contractId),
-      ];
-      return response.page.next
-        ? loop(contractIds, response.page.next)
-        : contractIds;
+      const contractIds = [...acc, ...response.contracts.map(({ contractId }) => contractId)];
+      return response.page.next ? loop(contractIds, response.page.next) : contractIds;
     };
     return loop([]);
   };
 
-const getParties: (
-  walletApi: WalletAPI
-) => (roleTokenMintingPolicyId: PolicyId) => Promise<Party[]> =
+const getParties: (walletApi: WalletAPI) => (roleTokenMintingPolicyId: PolicyId) => Promise<Party[]> =
   (walletAPI) => async (roleMintingPolicyId) => {
     const changeAddress: Party = await walletAPI
       .getChangeAddress()
       .then((addressBech32) => ({ address: addressBech32 }));
-    const usedAddresses: Party[] = await walletAPI
-      .getUsedAddresses()
-      .then((addressesBech32) =>
-        addressesBech32.map((addressBech32) => ({
-          address: addressBech32,
-        }))
-      );
+    const usedAddresses: Party[] = await walletAPI.getUsedAddresses().then((addressesBech32) =>
+      addressesBech32.map((addressBech32) => ({
+        address: addressBech32,
+      }))
+    );
     const roles: Party[] = (await walletAPI.getTokens())
       .filter((token) => token.assetId.policyId == roleMintingPolicyId)
       .map((token) => ({ role_token: token.assetId.policyId }));
@@ -509,10 +449,7 @@ const getParties: (
 
 export const applyInputs =
   ({ wallet, restClient }: ContractsDI) =>
-  async (
-    contractId: ContractId,
-    applyInputsRequest: ApplyInputsRequest
-  ): Promise<TxId> => {
+  async (contractId: ContractId, applyInputsRequest: ApplyInputsRequest): Promise<TxId> => {
     const addressesAndCollaterals = await getAddressesAndCollaterals(wallet);
     const envelope = await restClient.applyInputsToContract({
       contractId,

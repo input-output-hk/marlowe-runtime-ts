@@ -88,12 +88,12 @@ async function main(action: "buy" | "sell", otherAddress: string, amount: number
   console.log("Mediator: " + Mediator);
   console.log("Amount: " + amount);
 
-  const contractInstance = await runtime.newContractAPI.createContract({
+  const contractInstance = await runtime.newContractAPI.create({
     contract: escrow,
     roles: { Buyer, Seller, Mediator },
   });
 
-  console.log("Contract ID: " + contractInstance.contractId);
+  console.log("Contract ID: " + contractInstance.id);
 
   console.log("Waiting for confirmation...");
   await contractInstance.waitForConfirmation();

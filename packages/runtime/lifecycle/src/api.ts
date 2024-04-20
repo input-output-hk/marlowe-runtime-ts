@@ -1,16 +1,6 @@
 import { WalletAPI, WalletDI } from "@marlowe.io/wallet/api";
-import {
-  AssetId,
-  ContractId,
-  PayoutAvailable,
-  PayoutId,
-  PayoutWithdrawn,
-} from "@marlowe.io/runtime-core";
-import {
-  DeprecatedRestDI,
-  RestClient,
-  RestDI,
-} from "@marlowe.io/runtime-rest-client";
+import { AssetId, ContractId, PayoutAvailable, PayoutId, PayoutWithdrawn } from "@marlowe.io/runtime-core";
+import { DeprecatedRestDI, RestClient, RestDI } from "@marlowe.io/runtime-rest-client";
 
 import {
   ApplicableActionsAPI,
@@ -24,12 +14,7 @@ import {
   CanDeposit,
   CanNotify,
 } from "./generic/applicable-actions.js";
-import {
-  ActiveContract,
-  ClosedContract,
-  ContractDetails,
-  ContractInstanceAPI,
-} from "./generic/new-contract-api.js";
+import { ActiveContract, ClosedContract, ContractDetails, ContractInstanceAPI } from "./generic/new-contract-api.js";
 import {
   ApplyInputsRequest,
   ContractsAPI,
@@ -41,7 +26,7 @@ import {
 import {
   ContractsAPI as NewContractsAPI,
   ApplicableActionsAPI as NewApplicableActionsAPI,
-  ComputeApplicableActionsRequest,
+  EvaluateApplicableActionsRequest,
 } from "./generic/new-contract-api.js";
 import * as NewContract from "./generic/new-contract-api.js";
 
@@ -66,7 +51,7 @@ export {
   CreateContractRequest,
   NewContractsAPI,
   NewApplicableActionsAPI,
-  ComputeApplicableActionsRequest,
+  EvaluateApplicableActionsRequest as ComputeApplicableActionsRequest,
   CreateContractRequestFromContract,
   CreateContractRequestFromBundle,
 };

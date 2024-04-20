@@ -181,10 +181,7 @@ async function createContractMenu(lifecycle: RuntimeLifecycle, rewardAddress?: S
 
   console.log(`Contract created with id ${contractId}`);
 
-  await waitIndicator(
-    lifecycle.wallet,
-    contractIdToTxId(contractInstance.contractId)
-  );
+  await waitIndicator(lifecycle.wallet, contractIdToTxId(contractInstance.id));
 
   return contractMenu(lifecycle.wallet, contractInstance, scheme, sourceMap);
 }
@@ -216,19 +213,10 @@ async function loadContractMenu(lifecycle: RuntimeLifecycle) {
   console.log(`  * Pay from: ${validationResult.scheme.payer}`);
   console.log(`  * Pay to: ${validationResult.scheme.payee}`);
   console.log(`  * Amount: ${validationResult.scheme.amount} lovelaces`);
-  console.log(
-    `  * Deposit deadline: ${validationResult.scheme.depositDeadline}`
-  );
-  console.log(
-    `  * Release deadline: ${validationResult.scheme.releaseDeadline}`
-  );
-  const contractInstance = await lifecycle.newContractAPI.loadContract(cid);
-  return contractMenu(
-    lifecycle.wallet,
-    contractInstance,
-    validationResult.scheme,
-    validationResult.sourceMap
-  );
+  console.log(`  * Deposit deadline: ${validationResult.scheme.depositDeadline}`);
+  console.log(`  * Release deadline: ${validationResult.scheme.releaseDeadline}`);
+  const contractInstance = await lifecycle.newContractAPI.load(cid);
+  return contractMenu(lifecycle.wallet, contractInstance, validationResult.scheme, validationResult.sourceMap);
 }
 
 /**
@@ -243,16 +231,12 @@ async function contractMenu(
   // Get and print the contract logical state.
 
   const inputHistory = await contractInstance.getInputHistory();
-  const contractState = getState(
-    datetoTimeout(new Date()),
-    inputHistory,
-    sourceMap
-  );
+  const contractState = getState(datetoTimeout(new Date()), inputHistory, sourceMap);
   if (contractState.type === "Closed") return;
 
   printState(contractState, scheme);
   // See what actions are applicable to the current contract state
-  const applicableActions = await contractInstance.computeApplicableActions();
+  const applicableActions = await contractInstance.evaluateApplicableActions();
 
   const choices: Array<{
     name: string;
