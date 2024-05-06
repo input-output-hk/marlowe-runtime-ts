@@ -7,7 +7,13 @@ import * as P from "@marlowe.io/language-core-v1/playground-v1";
 import jsonBigInt from "json-bigint";
 import { createJsonStream } from "./jsonStream.js";
 import { Environment, MarloweState, Value } from "@marlowe.io/language-core-v1";
-import { evalValue, evalObservation, computeTransaction, playTrace } from "@marlowe.io/language-core-v1/semantics";
+import {
+  evalValue,
+  evalObservation,
+  computeTransaction,
+  playTrace,
+  emptyState,
+} from "@marlowe.io/language-core-v1/semantics";
 // // We need to patch the JSON.stringify in order for BigInt serialization to work.
 const { stringify, parse } = jsonBigInt({
   useNativeBigInt: true,
@@ -147,7 +153,7 @@ function main() {
         return requestResponse(computeTransaction(req.transactionInput, req.state, req.coreContract));
       }
       if (PlayTraceRequest.is(req)) {
-        return requestResponse(playTrace(req.initialTime, req.coreContract, req.transactionInputs));
+        return requestResponse(playTrace(emptyState(req.initialTime), req.coreContract, req.transactionInputs));
       }
       return console.log("RequestNotImplemented");
     },

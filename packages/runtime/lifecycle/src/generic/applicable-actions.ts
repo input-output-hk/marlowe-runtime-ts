@@ -86,6 +86,12 @@ export interface ApplicableActionsAPI {
   simulateInput(contractDetails: ActiveContract, input: ApplicableInput): TransactionSuccess;
 
   /**
+   * Computes the environment for a contract. The environment is computed using the runtime tip as a lower bound and the next timeout
+   * as an upper bound.
+   */
+  computeEnvironment: (contract: Contract) => Promise<Environment>;
+
+  /**
    * Creates a filter function for the {@link ApplicableAction | applicable actions} of the wallet owner.
    * The wallet is configured when we instantiate the {@link RuntimeLifecycle}. This function returns a new
    * filter function when called multiple times. This is useful to update the filter to check for new Role tokens
@@ -140,6 +146,7 @@ export function mkApplicableActionsAPI(di: RestDI & WalletDI & GetContinuationDI
     getInput: getApplicableInput(di),
     simulateInput: simulateApplicableInput,
     getApplicableActions: getApplicableActions(di),
+    computeEnvironment: (contract) => computeEnvironment(di, contract),
     applyInput: applyInput(applyInputs(di)),
     mkFilter,
   };
@@ -158,7 +165,7 @@ function applyInput(doApply: ApplyInputDI) {
       //       way into the future and the time to slot conversion is undefined if the
       //       end time passes a certain threshold.
       //       We currently don't have the network parameters to do the conversion ourselves
-      //       so we leave to the runtime to calculate an adecuate max slot.
+      //       so we leave to the runtime to calculate an adequate max slot.
       //       This might cause some issues if the contract relies on the TimeIntervalEnd value
       //       as the result of simulating and applying the input might differ.
       // invalidHereafter: posixTimeToIso8601(

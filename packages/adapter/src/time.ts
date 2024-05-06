@@ -30,9 +30,6 @@ export const waitForPredicatePromise = async (
     // Predicate is already true, no need to wait
     return;
   }
-  // Use a promise to wait for the specified interval
-  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
   // Wait for the specified interval
   await sleep(seconds);
 

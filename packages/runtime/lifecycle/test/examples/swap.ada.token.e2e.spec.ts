@@ -4,7 +4,7 @@ import { addDays } from "date-fns";
 import { datetoTimeout } from "@marlowe.io/language-core-v1";
 
 import console from "console";
-import { runtimeTokenToMarloweTokenValue } from "@marlowe.io/runtime-core";
+import { mkaccountDeposits, runtimeTokenToMarloweTokenValue } from "@marlowe.io/runtime-core";
 import { MINUTES } from "@marlowe.io/adapter/time";
 import { AtomicSwap } from "@marlowe.io/language-examples";
 import {
@@ -18,9 +18,18 @@ import {
 } from "@marlowe.io/testing-kit";
 import { AxiosError } from "axios";
 import { MarloweJSON } from "@marlowe.io/adapter/codec";
-import { CanDeposit, onlyByContractIds } from "@marlowe.io/runtime-lifecycle/api";
+import {
+  CanDeposit,
+  CanNotify,
+  ContractInstanceAPI,
+  CreateContractRequest,
+  CreateContractRequestFromContract,
+  RuntimeLifecycle,
+  onlyByContractIds,
+} from "@marlowe.io/runtime-lifecycle/api";
 
 import { mintRole } from "@marlowe.io/runtime-rest-client/contract";
+import { computeTransaction, emptyState, reduceContractUntilQuiescent } from "@marlowe.io/language-core-v1/semantics";
 
 global.console = console;
 
@@ -80,32 +89,25 @@ describe("swap", () => {
         const sellerContractInstance = await sellerLifecycle.newContractAPI.create({
           contract: swapContract,
           roles: { [scheme.ask.buyer.role_token]: mintRole("OpenRole") },
+          accountDeposits: mkaccountDeposits([[scheme.offer.seller, seller.assetsProvisioned]]),
         });
+
         sellerContractInstance.waitForConfirmation();
         await seller.wallet.waitRuntimeSyncingTillCurrentWalletTip(sellerLifecycle.restClient);
         expect(await sellerContractInstance.isActive()).toBeTruthy();
 
         logInfo(`contract created : ${sellerContractInstance.id}`);
 
-        logInfo(`Seller > Provision Offer`);
-
-        let applicableActions = await sellerContractInstance.evaluateApplicableActions();
-
-        expect(applicableActions.myActions.map((a) => a.type)).toBe(["Deposit"]);
-        const provisionOffer = await applicableActions.toInput(applicableActions.myActions[0] as CanDeposit);
-
-        await sellerContractInstance.applyInput({ input: provisionOffer });
-
-        await sellerContractInstance.waitForConfirmation();
-        await seller.wallet.waitRuntimeSyncingTillCurrentWalletTip(sellerLifecycle.restClient);
-
         logInfo(`Buyer > Swap`);
 
         const buyerContractInstance = await buyerLifecycle.newContractAPI.load(sellerContractInstance.id);
-        applicableActions = await buyerContractInstance.evaluateApplicableActions();
-        expect(applicableActions.myActions.map((a) => a.type)).toBe(["Deposit"]);
+        let applicableActions = await buyerContractInstance.evaluateApplicableActions();
+        // N.B : the applicable actions' API is not able yet to handle Open Roles in the contract properly
+        // so myactions will be empty in that case and we need to use actions instead and manually select
+        // the action Desposit we want to apply.
+        expect(applicableActions.actions.map((a) => a.type)).toStrictEqual(["Deposit", "Choice"]);
 
-        const swap = await applicableActions.toInput(applicableActions.myActions[0] as CanDeposit);
+        const swap = await applicableActions.toInput(applicableActions.actions[0] as CanDeposit);
 
         await buyerContractInstance.applyInput({ input: swap });
 
@@ -116,9 +118,10 @@ describe("swap", () => {
 
         const anyoneContractInstance = await anyoneLifecycle.newContractAPI.load(sellerContractInstance.id);
         applicableActions = await buyerContractInstance.evaluateApplicableActions();
-        expect(applicableActions.myActions.map((a) => a.type)).toBe(["Notify"]);
+        expect(applicableActions.myActions.map((a) => a.type)).toStrictEqual(["Notify"]);
+        const swapConfirmation = await applicableActions.toInput(applicableActions.myActions[0] as CanNotify);
 
-        await anyoneContractInstance.applyInput({ input: swap });
+        await anyoneContractInstance.applyInput({ input: swapConfirmation });
 
         await anyoneContractInstance.waitForConfirmation();
         await buyer.wallet.waitRuntimeSyncingTillCurrentWalletTip(sellerLifecycle.restClient);
@@ -128,7 +131,7 @@ describe("swap", () => {
         logInfo(`Buyer > Retrieve Payout`);
 
         const buyerPayouts = await buyerLifecycle.payouts.available(onlyByContractIds([buyerContractInstance.id]));
-        expect(buyerPayouts.length).toBe(1);
+        expect(buyerPayouts.length).toStrictEqual(1);
         await buyerLifecycle.payouts.withdraw([buyerPayouts[0].payoutId]);
 
         logInfo(`Swapped Completed`);

@@ -38,8 +38,6 @@ const importMap = {
       "https://cdn.jsdelivr.net/npm/@marlowe.io/language-core-v1@0.4.0-beta-rc1/dist/bundled/esm/version.js",
     "@marlowe.io/language-examples":
       "https://cdn.jsdelivr.net/npm/@marlowe.io/language-examples@0.4.0-beta-rc1/dist/bundled/esm/language-examples.js",
-    "@marlowe.io/language-examples/atomic-swap":
-      "https://cdn.jsdelivr.net/npm/@marlowe.io/language-examples@0.4.0-beta-rc1/dist/bundled/esm/atomic-swap.js",
     "@marlowe.io/language-specification-client":
       "https://cdn.jsdelivr.net/npm/@marlowe.io/language-specification-client@0.4.0-beta-rc1/dist/bundled/esm/language-specification-client.js",
     "@marlowe.io/token-metadata-client":

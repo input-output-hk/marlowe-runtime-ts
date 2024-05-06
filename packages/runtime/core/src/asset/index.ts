@@ -3,6 +3,7 @@ import { PolicyId, PolicyIdGuard, policyId } from "../policyId.js";
 
 import * as Marlowe from "@marlowe.io/language-core-v1";
 import * as G from "@marlowe.io/language-core-v1/guards";
+import { assertGuardEqual, proxy, convertNullableToUndefined } from "@marlowe.io/adapter/io-ts";
 
 export type AssetName = t.TypeOf<typeof AssetName>;
 export const AssetName = t.string;
@@ -37,11 +38,25 @@ export const token =
 
 export const lovelaces = (quantity: AssetQuantity): Token => token(quantity)(assetId(policyId(""))(""));
 
-export type Tokens = t.TypeOf<typeof Tokens>;
-export const Tokens = t.array(Token);
+export type Tokens = Token[];
+export const TokensGuard = assertGuardEqual(proxy<Tokens>(), t.array(Token));
 
-export type Assets = t.TypeOf<typeof Assets>;
-export const Assets = t.type({ lovelaces: AssetQuantityGuard, tokens: Tokens });
+export type Assets = {
+  lovelaces?: AssetQuantity;
+  tokens: Tokens;
+};
+
+export const AssetsGuard = assertGuardEqual(
+  proxy<Assets>(),
+  t.intersection([
+    t.type({
+      tokens: TokensGuard,
+    }),
+    t.partial({
+      lovelaces: convertNullableToUndefined(AssetQuantityGuard),
+    }),
+  ])
+);
 
 export const assetIdToString: (assetId: AssetId) => string = (assetId) => `${assetId.policyId}|${assetId.assetName}`;
 
@@ -66,6 +81,23 @@ export const unMapAsset: (assets: AssetsMap) => Assets = (restAssets) => ({
   lovelaces: restAssets.lovelace,
   tokens: unMapTokens(restAssets.tokens),
 });
+
+export const mapAsset: (assets: Assets) => AssetsMap = (assets) => ({
+  lovelace: assets.lovelaces ?? 0n,
+  tokens: mapTokens(assets.tokens),
+});
+
+export const mapTokens: (tokens: Tokens) => TokensMap = (tokens) =>
+  tokens.reduce((acc, token) => {
+    const policyId = token.assetId.policyId;
+    const assetName = token.assetId.assetName;
+    const quantity = token.quantity;
+    if (acc[policyId] === undefined) {
+      acc[policyId] = {};
+    }
+    acc[policyId][assetName] = quantity;
+    return acc;
+  }, {} as TokensMap);
 
 export const unMapTokens: (tokens: TokensMap) => Tokens = (restTokens) =>
   Object.entries(restTokens)

@@ -11,7 +11,7 @@ import { Lucid } from "lucid-cardano";
 import { WalletAPI, mkLucidWallet } from "@marlowe.io/wallet";
 
 import { RestClient } from "@marlowe.io/runtime-rest-client";
-import { logInfo, logWarning } from "../../logging.js";
+import { logDebug, logInfo, logWarning } from "../../logging.js";
 
 export * as Provision from "./provisionning.js";
 import * as Provision from "./provisionning.js";
@@ -55,11 +55,13 @@ const waitRuntimeSyncingTillCurrentWalletTip =
   (di: WalletTestDI) =>
   async (client: RestClient): Promise<void> => {
     const { lucid } = di;
+    logInfo("Waiting for Runtime to sync with the Wallet");
     const currentLucidSlot = BigInt(lucid.currentSlot());
-    logInfo(`Setting up a synchronization point with Runtime at SlotNo ${currentLucidSlot}`);
+    logInfo(`Setting up a synchronization point with Runtime at slot  ${currentLucidSlot}`);
     await waitForPredicatePromise(isRuntimeChainMoreAdvancedThan(client, currentLucidSlot));
-    process.stdout.write("\n");
-    return sleep(15);
+    logInfo(`Runtime and Wallet passsed both ${currentLucidSlot} slot.`);
+    // This sleep will be removed when we have a better tip for runtime...
+    return sleep(20);
   };
 
 /**
@@ -70,11 +72,13 @@ const waitRuntimeSyncingTillCurrentWalletTip =
  */
 export const isRuntimeChainMoreAdvancedThan = (client: RestClient, aSlotNo: bigint) => () =>
   client.healthcheck().then((status) => {
+    logDebug(`Runtime Chain Tip SlotNo : ${status.tips.runtimeChain.blockHeader.slotNo}`);
+    logDebug(`Wallet Chain Tip SlotNo  : ${aSlotNo}`);
     if (status.tips.runtimeChain.blockHeader.slotNo >= aSlotNo) {
       return true;
     } else {
       const delta = aSlotNo - status.tips.runtimeChain.blockHeader.slotNo;
-      process.stdout.write(`Waiting Runtime to reach that point (${delta} slots behind (~${delta}s)) `);
+      logDebug(`Waiting Runtime to reach that point (${delta} slots behind (~${delta}s)) `);
       return false;
     }
   });

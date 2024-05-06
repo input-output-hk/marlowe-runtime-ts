@@ -2,7 +2,7 @@ import { MarloweJSON } from "@marlowe.io/adapter/codec";
 import { WalletTestAPI } from "./wallet/api.js";
 
 export const logDebug = (message: string) =>
-  process.env.LOG_DEBUG_LEVEL !== undefined && JSON.parse(process.env.LOG_DEBUG_LEVEL) === true
+  process.env.LOG_DEBUG_LEVEL !== undefined && process.env.LOG_DEBUG_LEVEL === "1"
     ? console.log(`## ||| [${message}]`)
     : {};
 

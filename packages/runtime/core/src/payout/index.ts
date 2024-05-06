@@ -6,7 +6,7 @@ import { pipe } from "fp-ts/lib/function.js";
 import { head } from "fp-ts/lib/ReadonlyNonEmptyArray.js";
 import { txId, TxId } from "../tx/id.js";
 import { ContractIdGuard } from "../contract/id.js";
-import { AssetId, Assets } from "../asset/index.js";
+import { AssetId, Assets, AssetsGuard } from "../asset/index.js";
 
 // QUESTION: @N.H: What is the difference between PayoutId and WithdrawalId?
 export type PayoutId = Newtype<{ readonly ContractId: unique symbol }, string>;
@@ -31,7 +31,7 @@ export const PayoutAvailable = t.type({
   payoutId: PayoutId,
   contractId: ContractIdGuard,
   role: AssetId,
-  assets: Assets,
+  assets: AssetsGuard,
 });
 
 export type PayoutWithdrawn = t.TypeOf<typeof PayoutWithdrawn>;
@@ -40,5 +40,5 @@ export const PayoutWithdrawn = t.type({
   payoutId: PayoutId,
   contractId: ContractIdGuard,
   role: AssetId,
-  assets: Assets,
+  assets: AssetsGuard,
 });

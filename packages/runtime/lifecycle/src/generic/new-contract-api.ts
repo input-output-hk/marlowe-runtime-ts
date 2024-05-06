@@ -1,11 +1,5 @@
 import { ContractId, PolicyId, TxId, contractIdToTxId } from "@marlowe.io/runtime-core";
-import {
-  ApplyInputsRequest,
-  CreateContractRequest,
-  createContract,
-  applyInputs,
-  getInputHistory,
-} from "./contracts.js";
+import { CreateContractRequest, createContract, getInputHistory } from "./contracts.js";
 import { SingleInputTx, TransactionSuccess } from "@marlowe.io/language-core-v1/semantics";
 import { ChosenNum, Contract, Environment, MarloweState } from "@marlowe.io/language-core-v1";
 import { RestDI } from "@marlowe.io/runtime-rest-client";
@@ -22,7 +16,6 @@ import {
   GetContinuationDI,
 } from "./applicable-actions.js";
 import * as Applicable from "./applicable-actions.js";
-import { empty } from "fp-ts/lib/ReadonlyRecord.js";
 
 /**
  *
@@ -225,12 +218,18 @@ function mkContractInstanceAPI(di: ContractsDI & GetContinuationDI & ChainTipDI,
   return {
     id,
     waitForConfirmation: async () => {
-      // Todo : This is a temporary solution. We need to implement a better way to get the last transaction.
-      const txs = await di.restClient.getTransactionsForContract({ contractId: id }).then((res) => res.transactions);
-      if (txs.length === 0) {
+      try {
+        // Todo : This is a temporary solution. We need to implement a better way to get the last transaction.
+        // Improve Error handling
+        const txs = await di.restClient.getTransactionsForContract({ contractId: id }).then((res) => res.transactions);
+        if (txs.length === 0) {
+          return di.wallet.waitConfirmation(contractCreationTxId);
+        } else {
+          return di.wallet.waitConfirmation(txs[txs.length - 1].transactionId);
+        }
+      } catch (e) {
+        // triggered when the contract is not found yet
         return di.wallet.waitConfirmation(contractCreationTxId);
-      } else {
-        return di.wallet.waitConfirmation(txs[txs.length - 1].transactionId);
       }
     },
     getDetails: async () => {

@@ -10,7 +10,7 @@
  * are timeboxed. Sellers are known at the contract creation (fixed Address) and Buyers are unknown
  * (This showcases a feature of marlowe that is called Open Roles.).
  * There are 3 main stages :
- * - The Offer : The Sellers deposit their tokens.
+ * - The Offer : The Sellers create the contract and deposit their tokens at the same time via the initial account deposits feature.
  * - The Ask : The Buyers deposit their tokens
  * - The Swap Confirmation : an extra Notify input is added after the swap to avoid double-satisfaction attack (see link attached).
  *                          (Any third participant could perform this action)
@@ -54,19 +54,18 @@
  * @packageDocumentation
  */
 
+import { POSIXTime } from "@marlowe.io/adapter/time";
 import {
   Address,
   Contract,
   IChoice,
   IDeposit,
   INotify,
-  Input,
   MarloweState,
   Role,
   Timeout,
   TokenValue,
   close,
-  datetoTimeout,
 } from "@marlowe.io/language-core-v1";
 import * as G from "@marlowe.io/language-core-v1/guards";
 import { SingleInputTx } from "@marlowe.io/language-core-v1/semantics";
@@ -96,22 +95,7 @@ export type Scheme = {
 /* #region State */
 export type State = ActiveState | Closed;
 
-export type ActiveState = WaitingSellerOffer | NoSellerOfferInTime | WaitingForAnswer | WaitingForSwapConfirmation;
-
-export type WaitingSellerOffer = {
-  type: "WaitingSellerOffer";
-};
-
-export const waitingSellerOffer: WaitingSellerOffer = {
-  type: "WaitingSellerOffer",
-};
-
-export type NoSellerOfferInTime = {
-  type: "NoSellerOfferInTime";
-};
-export const noSellerOfferInTime: NoSellerOfferInTime = {
-  type: "NoSellerOfferInTime",
-};
+export type ActiveState = WaitingForAnswer | WaitingForSwapConfirmation;
 
 export type WaitingForAnswer = {
   type: "WaitingForAnswer";
@@ -154,10 +138,6 @@ export type Closed = {
  * Action List available for the contract lifecycle.
  */
 export type ApplicableAction =
-  /* When Contract Created (timed out > NoOfferProvisionnedOnTime) */
-  | ProvisionOffer // > OfferProvisionned
-  /* When NoOfferProvisionnedOnTime (timed out > no timeout (need to be reduced to be closed))*/
-  | RetrieveMinimumLovelaceAdded // > closed
   /* When OfferProvisionned (timed out > NotConfirmedOnTime) */
   | Retract // > closed
   | Swap // > Swapped
@@ -165,17 +145,6 @@ export type ApplicableAction =
   | ConfirmSwap; // > closed
 
 export type ActionParticipant = "buyer" | "seller" | "anybody";
-
-export type RetrieveMinimumLovelaceAdded = {
-  type: "RetrieveMinimumLovelaceAdded";
-  owner: ActionParticipant;
-};
-
-export type ProvisionOffer = {
-  type: "ProvisionOffer";
-  owner: ActionParticipant;
-  input: IDeposit;
-};
 
 export type Swap = {
   type: "Swap";
@@ -198,16 +167,8 @@ export type Retract = {
 /* #endregion */
 
 /* #region Close Reason */
-export type CloseReason =
-  | NoOfferProvisionnedOnTime
-  | SellerRetracted
-  | NotAnsweredOnTime
-  | Swapped
-  | SwappedButNotNotifiedOnTime;
+export type CloseReason = SellerRetracted | NotAnsweredOnTime | Swapped | SwappedButNotNotifiedOnTime;
 
-export type NoOfferProvisionnedOnTime = {
-  type: "NoOfferProvisionnedOnTime";
-};
 export type SellerRetracted = { type: "SellerRetracted" };
 export type NotAnsweredOnTime = { type: "NotAnsweredOnTime" };
 export type SwappedButNotNotifiedOnTime = {
@@ -243,26 +204,6 @@ export class UnexpectedClosedSwapContractState extends Error {
 
 export const getApplicableActions = (scheme: Scheme, state: ActiveState): ApplicableAction[] => {
   switch (state.type) {
-    case "WaitingSellerOffer":
-      return [
-        {
-          type: "ProvisionOffer",
-          owner: "seller",
-          input: {
-            input_from_party: scheme.offer.seller,
-            that_deposits: scheme.offer.asset.amount,
-            of_token: scheme.offer.asset.token,
-            into_account: scheme.offer.seller,
-          },
-        },
-      ];
-    case "NoSellerOfferInTime":
-      return [
-        {
-          type: "RetrieveMinimumLovelaceAdded",
-          owner: "anybody",
-        },
-      ];
     case "WaitingForAnswer":
       return [
         {
@@ -308,24 +249,19 @@ export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): C
     case 0:
       return {
         type: "Closed",
-        reason: { type: "NoOfferProvisionnedOnTime" },
-      };
-    case 1:
-      return {
-        type: "Closed",
         reason: { type: "NotAnsweredOnTime" },
       };
-    case 2: {
+    case 1: {
       const isRetracted =
-        G.IChoice.is(inputHistory[1].input) && inputHistory[1].input.for_choice_id.choice_name == "retract";
+        G.IChoice.is(inputHistory[0].input) && inputHistory[0].input.for_choice_id.choice_name == "retract";
       const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
-      if (isRetracted && nbDeposits === 1) {
+      if (isRetracted) {
         return {
           type: "Closed",
           reason: { type: "SellerRetracted" },
         };
       }
-      if (nbDeposits === 2) {
+      if (nbDeposits === 1) {
         return {
           type: "Closed",
           reason: { type: "SwappedButNotNotifiedOnTime" },
@@ -333,10 +269,10 @@ export const getClosedState = (scheme: Scheme, inputHistory: SingleInputTx[]): C
       }
       break;
     }
-    case 3: {
+    case 2: {
       const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
       const nbNotify = inputHistory.filter((singleInputTx) => G.INotify.is(singleInputTx.input)).length;
-      if (nbDeposits === 2 && nbNotify === 1) {
+      if (nbDeposits === 1 && nbNotify === 1) {
         return {
           type: "Closed",
           reason: { type: "Swapped" },
@@ -355,15 +291,13 @@ export const getActiveState = (
 ): ActiveState => {
   switch (inputHistory.length) {
     case 0:
-      return now < scheme.offer.deadline ? { type: "WaitingSellerOffer" } : { type: "NoSellerOfferInTime" };
-    case 1:
       if (now < scheme.ask.deadline) {
         return { type: "WaitingForAnswer" };
       }
       break;
-    case 2: {
+    case 1: {
       const nbDeposits = inputHistory.filter((singleInputTx) => G.IDeposit.is(singleInputTx.input)).length;
-      if (nbDeposits === 2 && now < scheme.swapConfirmation.deadline) {
+      if (nbDeposits === 1 && now < scheme.swapConfirmation.deadline) {
         return { type: "WaitingForSwapConfirmation" };
       }
       break;
@@ -373,22 +307,26 @@ export const getActiveState = (
   throw new UnexpectedActiveSwapContractState(scheme, inputHistory, state);
 };
 
-export function mkContract(scheme: Scheme): Contract {
-  const mkOffer = (ask: Contract): Contract => {
-    const depositOffer = {
-      party: scheme.offer.seller,
-      deposits: scheme.offer.asset.amount,
-      of_token: scheme.offer.asset.token,
-      into_account: scheme.offer.seller,
-    };
-
-    return {
-      when: [{ case: depositOffer, then: ask }],
-      timeout: scheme.offer.deadline,
-      timeout_continuation: close,
-    };
+/**
+ * Generate the initial state of the contract from a given scheme and start date.
+ * @param startDate : the start date of the contract creation
+ * @param scheme : the scheme of the contract
+ * @returns
+ */
+export const mkInitialMarloweState = (startDate: POSIXTime, scheme: Scheme): MarloweState => {
+  return {
+    accounts: [[[scheme.offer.seller, scheme.offer.asset.token], scheme.offer.asset.amount]],
+    boundValues: [],
+    choices: [],
+    minTime: startDate,
   };
+};
 
+/**
+ * Generate the contract from the scheme.
+ * N.B : The offer asset is provisioned at the contract creation via initial account deposits.
+ */
+export function mkContract(scheme: Scheme): Contract {
   const mkAsk = (confirmSwap: Contract): Contract => {
     const depositAsk = {
       party: scheme.ask.buyer,
@@ -450,5 +388,5 @@ export function mkContract(scheme: Scheme): Contract {
     };
   };
 
-  return mkOffer(mkAsk(mkSwapConfirmation()));
+  return mkAsk(mkSwapConfirmation());
 }

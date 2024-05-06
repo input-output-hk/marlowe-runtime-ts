@@ -35,6 +35,8 @@ import {
   AddressBech32Guard,
   ContractId,
   ContractIdGuard,
+  accountDeposits,
+  accountDepositsGuard,
 } from "@marlowe.io/runtime-core";
 import { ContractHeader, ContractHeaderGuard } from "../header.js";
 import { RolesConfiguration, RolesConfigurationGuard } from "../rolesConfigurations.js";
@@ -191,7 +193,7 @@ export type BuildCreateContractTxRequestWithContract = {
 export const BuildCreateContractTxRequestOptionsGuard = assertGuardEqual(
   proxy<BuildCreateContractTxRequestOptions>(),
   t.intersection([
-    t.type({ changeAddress: AddressBech32Guard, version: MarloweVersion }),
+    t.type({ changeAddress: AddressBech32Guard, version: MarloweVersion, accounts: accountDepositsGuard }),
     t.partial({
       roles: RolesConfigurationGuard,
       threadRoleName: G.RoleName,
@@ -493,6 +495,12 @@ export interface BuildCreateContractTxRequestOptions {
   roles?: RolesConfiguration;
 
   /**
+   * describe an initial deposit of assets for the accounts in the contract. The key is the address or role name and the value is the assets.
+   * These assets will be deposited in the accounts at the creation of the contract, and will come from the contract creator's wallet.
+   */
+  accounts: accountDeposits;
+
+  /**
    * The Marlowe validator version to use.
    */
   version: MarloweVersion;
@@ -517,6 +525,7 @@ export const PostContractsRequest = t.intersection([
     contract: ContractOrSourceIdGuard,
     tags: TagsGuard,
     metadata: MetadataGuard,
+    accounts: accountDepositsGuard,
   }),
   t.partial({ roles: RolesConfigurationGuard }),
   t.partial({ threadTokenName: G.RoleName }),

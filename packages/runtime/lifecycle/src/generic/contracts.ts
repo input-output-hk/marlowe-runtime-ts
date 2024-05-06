@@ -13,6 +13,7 @@ import {
   StakeAddressBech32,
   Metadata,
   Tags,
+  accountDeposits,
 } from "@marlowe.io/runtime-core";
 
 import { FPTSRestAPI, RestClient, RestDI, ItemRange, DeprecatedRestDI } from "@marlowe.io/runtime-rest-client";
@@ -83,6 +84,19 @@ export interface CreateContractRequestBase {
    */
   threadRoleName?: RoleName;
 
+  /**
+   * Initial Accounts State for the contract creation.
+   * <h4>Properties</h4>
+   * <p>
+   * The initial accounts state is a mapping of addresses or role tokens to their initial assets.
+   * The creator of the contract can define the initial assets for each participant.
+   * Assets will be withdrawn from the creator's wallet and deposited into the participant's accounts when the contract is created.
+   * </p>
+   * @see
+   *  - {@link @marlowe.io/runtime-core!accountDeposits}
+   */
+
+  accountDeposits?: accountDeposits;
   /**
    * Role Token Configuration for the new contract passed in the `contract` field.
    *
@@ -362,7 +376,7 @@ export const createContract =
 
     const baseRequest: BuildCreateContractTxRequestOptions = {
       version: "v1",
-
+      accounts: createContractRequest.accountDeposits ?? {},
       changeAddress: addressesAndCollaterals.changeAddress,
       usedAddresses: addressesAndCollaterals.usedAddresses,
       collateralUTxOs: addressesAndCollaterals.collateralUTxOs,
@@ -463,6 +477,7 @@ export const applyInputs =
       metadata: applyInputsRequest.metadata,
       tags: applyInputsRequest.tags,
     });
+
     const signed = await wallet.signTx(envelope.tx.cborHex);
     await restClient.submitContractTransaction({
       contractId,

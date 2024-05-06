@@ -6,6 +6,7 @@ export * from "./tx/index.js";
 export * from "./metadata.js";
 export * from "./tag.js";
 export * from "./contract/id.js";
+export * from "./contract/accountDeposits.js";
 export * from "./sourceId.js";
 export * from "./asset/index.js";
 export * from "./payout/index.js";

@@ -240,14 +240,14 @@ async function contractMenu(
 
   const choices: Array<{
     name: string;
-    value: CanDeposit | CanAdvance | { actionType: "check-state" } | { actionType: "return" };
+    value: CanDeposit | CanAdvance | { type: "check-state" } | { type: "return" };
   }> = [
     {
       name: "Re-check contract state",
-      value: { actionType: "check-state" },
+      value: { type: "check-state" },
     },
     ...applicableActions.myActions.map((action) => {
-      switch (action.actionType) {
+      switch (action.type) {
         case "Advance":
           return {
             name: "Close contract",
@@ -269,7 +269,7 @@ async function contractMenu(
     }),
     {
       name: "Return to main menu",
-      value: { actionType: "return" },
+      value: { type: "return" },
     },
   ];
 
@@ -277,7 +277,7 @@ async function contractMenu(
     message: "Contract menu",
     choices,
   });
-  switch (selectedAction.actionType) {
+  switch (selectedAction.type) {
     case "check-state":
       return contractMenu(wallet, contractInstance, scheme, sourceMap);
     case "return":
