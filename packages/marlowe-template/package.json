@@ -1,6 +1,6 @@
 {
   "name": "@marlowe.io/marlowe-template",
-  "version": "0.4.0-beta-rc1",
+  "version": "0.4.0-beta",
   "description": "Contract parameters serialized as metadata",
   "repository": "https://github.com/input-output-hk/marlowe-ts-sdk",
   "publishConfig": {
@@ -30,7 +30,7 @@
     }
   },
   "dependencies": {
-    "@marlowe.io/runtime-core": "0.4.0-beta-rc1",
-    "@marlowe.io/language-core-v1": "0.4.0-beta-rc1"
+    "@marlowe.io/runtime-core": "0.4.0-beta",
+    "@marlowe.io/language-core-v1": "0.4.0-beta"
   }
 }

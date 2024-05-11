@@ -1,3 +1,85 @@
+
+# 0.4.0-beta - 11th May 2024
+
+## General
+
+- Feat: Created a new experimental package `@marlowe.io/marlowe-template` that helps to share the parameters used in the creation of a Marlowe contract. ([PR-184](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184))
+
+- Feat: **Initial Account Deposits Feature Integration (Runtime v1.0.0):**
+
+  - **Purpose:** This update introduces the capability for users to make initial deposits into their accounts upon creation. This feature aims to streamline the account setup process and enhance user experience.
+  - **Benefits:** This feature squashes the Contract Creation and Initial Input Deposits into 1 transaction instead of multiple ones.
+
+- Feat: **Introduction of a New Contract API in the Runtime Lifecycle API:**
+  - **Purpose:** The addition of a new Contract API is designed to provide developers with more flexibility and control (contract instance concept) over smart contract management within the runtime environment.
+  - **Benefits:** Developers can now leverage enhanced functionalities for deploying, updating, and interacting with smart contracts. This API simplifies complex contract operations and supports more robust smart contract development.
+
+## @marlowe.io/wallet
+
+- Feat: Added a `@marlowe.io/wallet/peer-connect` module to enable mobile support by adapting to the [cardano-peer-connect](https://github.com/fabianbormann/cardano-peer-connect) library. ([PR-179](https://github.com/input-output-hk/marlowe-ts-sdk/pull/179))
+
+## @marlowe.io/language-examples
+
+- Feat: `Atomic swap v2` : Simplified version using the new runtime `v1.0.0` feature (`initial account deposits`)
+  - see end-to-end tests for examples (e.g : `swap.ada.token.e2e.spec.ts`)
+
+## @marlowe.io/runtime-rest-client
+
+- `mkRestClient` provides optional `strict` parameter for performing dynamic type checking in `RestClient` methods. ([PR-180](https://github.com/input-output-hk/marlowe-ts-sdk/pull/180))
+- **BREAKING CHANGE** The following `RestClient` methods uses keyword argument object instead of positional arguments. ([PR-180](https://github.com/input-output-hk/marlowe-ts-sdk/pull/180))
+  - `createContractSources`
+  - `getContractById`
+  - `submitContract`
+  - `getTransactionsForContract`
+  - `submitContractTransaction`
+  - `getContractTransactionById`
+  - `getWithdrawalById`
+  - `submitWithdrawal`
+
+- Feat: `initial account deposits` (runtime v1.0.0) for Contract Creation (`BuildCreateContractTxRequest` via `buildCreateContractTx`):([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/188))
+
+## @marlowe.io/runtime-core
+
+- Feat: Added AddressBech32 validation using the lucid library ([PR-184](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184))
+- Fix: Added proper type guards to Metadata ([PR-184](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184))
+
+- Fix: Branding of ContractId and TxId ([PR-185](https://github.com/input-output-hk/marlowe-ts-sdk/pull/185))
+
+- Feat: `initial account deposits` (runtime v1.0.0) for Contract Creation ([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/188)):
+  - Added `export type AccountDeposits = { [key in AddressOrRole]: AssetsMap };` and associated utility functions.
+
+## @marlowe.io/runtime-lifecycle
+
+- Feat (PLT-9089): Added support for contract bundles in the `lifecycle.contracts.createContract` function. ([PR-167](https://github.com/input-output-hk/marlowe-ts-sdk/pull/167))
+
+- `mkRuntimeLifecycle` provides optional `strict` parameter for performing dynamic type checking in `RestClient` methods. ([PR-180](https://github.com/input-output-hk/marlowe-ts-sdk/pull/180))
+
+- Fix: Temporal fix for converting the cardano time interval to the Marlowe time interval in getInputHistory ([PR-181](https://github.com/input-output-hk/marlowe-ts-sdk/pull/181))
+
+- Feat: Added a new experimental API for computing, simulating and applying the next applicable Actions/Inputs. ([PR-187](https://github.com/input-output-hk/marlowe-ts-sdk/pull/187))
+- Doc: Improved package main documentation ([PR-187](https://github.com/input-output-hk/marlowe-ts-sdk/pull/187))
+
+- Feat: New Contract API `packages/runtime/lifecycle/src/generic/new-contract-api.ts` ([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/188)):
+  - Generic `waitConfirmation()` : same for contract creation and apply inputs
+  - Seamless Integration of Applicable Actions API
+  - simplfied interface (`create` and `load` with a concept of `ContractInstance` object)
+  - see end-to-end tests for examples (e.g : `swap.ada.token.e2e.spec.ts`)
+- Feat: `initial account deposits` feature (runtime v1.0.0) for Contract Creation ([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/188)):
+  - new parameter field `accountDeposits` in
+  - e.g.
+
+```ts
+const sellerContractInstance = await sellerLifecycle.newContractAPI.create({
+  contract: swapContract,
+  roles: { [scheme.ask.buyer.role_token]: mintRole("OpenRole") },
+  accountDeposits: mkaccountDeposits([[scheme.offer.seller, seller.assetsProvisioned]]),
+});
+```
+
+## @marlowe.io/marlowe-object
+
+- **BREAKING CHANGE** Feat: Added Annotations to the contract type. ([PR-181](https://github.com/input-output-hk/marlowe-ts-sdk/pull/181))
+- Experimental Feat: Added a sourceMap API to match the annotated marlowe-object source with the ContractClosure. ([PR-181](https://github.com/input-output-hk/marlowe-ts-sdk/pull/181))
 # 0.3.0-beta - 18 Jan 2024
 
 The Marlowe team is happy to announce the 0.3.0 release with the following Milestones completed:

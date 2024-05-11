@@ -20,7 +20,7 @@ The `@marlowe.io/wallet` package is [released as an ESM module](https://github.c
 ```html
 <html>
   <body>
-    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta/jsdelivr-npm-importmap.js"></script>
     <script type="module">
       import { mkBrowserWallet, getInstalledWalletExtensions } from "@marlowe.io/wallet";
 
