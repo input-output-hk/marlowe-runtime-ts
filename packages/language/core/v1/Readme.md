@@ -16,7 +16,7 @@ This package is [released as an ESM module](https://github.com/input-output-hk/m
 ```html
 <html>
   <body>
-    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta/jsdelivr-npm-importmap.js"></script>
     <script type="module">
       import { Contract } from "@marlowe.io/language-core-v1/guards";
       const jsonObject = JSON.parse(httpResponse);

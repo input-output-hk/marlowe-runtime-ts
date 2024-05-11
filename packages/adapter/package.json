@@ -1,6 +1,6 @@
 {
   "name": "@marlowe.io/adapter",
-  "version": "0.4.0-beta-rc1",
+  "version": "0.4.0-beta",
   "description": "Infrastruture Supporting SubDomains libraries",
   "repository": "https://github.com/input-output-hk/marlowe-ts-sdk",
   "publishConfig": {
@@ -8,8 +8,7 @@
   },
   "contributors": [
     "Nicolas Henin <nicolas.henin@iohk.io> (https://iohk.io)",
-    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)",
-    "Bjorn Kihlberg <bjorn.kihlberg@iohk.io> (https://iohk.io)"
+    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)"
   ],
   "license": "Apache-2.0",
   "scripts": {

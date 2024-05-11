@@ -1,6 +1,6 @@
 {
   "name": "marlowe-ts-sdk",
-  "version": "0.4.0-beta-rc1",
+  "version": "0.4.0-beta",
   "description": "Marlowe Runtime SDK for building and managing Marlowe Contracts",
   "engines": {
     "node": ">=14.20.1"
@@ -15,8 +15,7 @@
   },
   "contributors": [
     "Nicolas Henin <nicolas.henin@iohk.io> (https://iohk.io)",
-    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)",
-    "Bjorn Kihlberg <bjorn.kihlberg@iohk.io> (https://iohk.io)"
+    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)"
   ],
   "license": "Apache-2.0",
   "scripts": {

@@ -9,7 +9,7 @@ The Marlowe SDK is built using ESM modules but one of its dependencies (fp-ts) d
 In most packages documentation you'll find something like:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta/jsdelivr-npm-importmap.js"></script>
 <script type="module">
   import * as wallet from "@marlowe.io/wallet";
   // ...
