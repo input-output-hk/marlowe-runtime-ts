@@ -3,16 +3,18 @@
 
 ## General
 
-- Feat: Created a new experimental package `@marlowe.io/marlowe-template` that helps to share the parameters used in the creation of a Marlowe contract. ([PR-184](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184))
+- **Marlowe Template**  ([PR-184](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184)) : Created a new experimental package `@marlowe.io/marlowe-template` that helps to share the parameters used in the creation of a Marlowe contract.
 
-- Feat: **Initial Account Deposits Feature Integration (Runtime v1.0.0):**
+- **Initial Account Deposits Feature Integration (Runtime v1.0.0):**  ([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/188))
 
   - **Purpose:** This update introduces the capability for users to make initial deposits into their accounts upon creation. This feature aims to streamline the account setup process and enhance user experience.
   - **Benefits:** This feature squashes the Contract Creation and Initial Input Deposits into 1 transaction instead of multiple ones.
 
-- Feat: **Introduction of a New Contract API in the Runtime Lifecycle API:**
+- **Introduction of a New Contract API in the Runtime Lifecycle API:**  ([PR-188](https://github.com/input-output-hk/marlowe-ts-sdk/pull/184)) :
   - **Purpose:** The addition of a new Contract API is designed to provide developers with more flexibility and control (contract instance concept) over smart contract management within the runtime environment.
   - **Benefits:** Developers can now leverage enhanced functionalities for deploying, updating, and interacting with smart contracts. This API simplifies complex contract operations and supports more robust smart contract development.
+
+- **Experimental CIP-45 support**  ([PR-179](https://github.com/input-output-hk/marlowe-ts-sdk/pull/179)) : An example shows how to use the `@marlowe.io/wallet/peer-connect` module together with the [https://github.com/fabianbormann/cardano-peer-connect](cardano-peer-connect) library.
 
 ## @marlowe.io/wallet
 
