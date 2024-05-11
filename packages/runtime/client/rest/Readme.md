@@ -17,7 +17,7 @@ The caller should run a `healthcheck` to ensure the runtime service is healthy t
 ```html
 <html>
   <body>
-    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta/jsdelivr-npm-importmap.js"></script>
     <script type="module">
       import { mkRestClient } from "@marlowe.io/runtime-rest-client";
 

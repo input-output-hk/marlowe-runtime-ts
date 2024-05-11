@@ -1,6 +1,6 @@
 {
   "name": "@marlowe.io/language-examples",
-  "version": "0.4.0-beta-rc1",
+  "version": "0.4.0-beta",
   "description": "Example contracts using language-core-v1",
   "repository": "https://github.com/input-output-hk/marlowe-ts-sdk",
   "publishConfig": {
@@ -8,8 +8,7 @@
   },
   "contributors": [
     "Nicolas Henin <nicolas.henin@iohk.io> (https://iohk.io)",
-    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)",
-    "Bjorn Kihlberg <bjorn.kihlberg@iohk.io> (https://iohk.io)"
+    "Hernan Rajchert <hernan.rajchert@iohk.io> (https://iohk.io)"
   ],
   "license": "Apache-2.0",
   "scripts": {
@@ -32,8 +31,8 @@
     }
   },
   "dependencies": {
-    "@marlowe.io/language-core-v1": "0.4.0-beta-rc1",
-    "@marlowe.io/marlowe-object": "0.4.0-beta-rc1",
+    "@marlowe.io/language-core-v1": "0.4.0-beta",
+    "@marlowe.io/marlowe-object": "0.4.0-beta",
     "date-fns": "2.29.3",
     "fp-ts": "^2.16.1"
   }

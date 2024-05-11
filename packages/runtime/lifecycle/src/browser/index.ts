@@ -5,7 +5,7 @@
  * ```html
  * <html>
  *   <body>
- *     <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta-rc1/jsdelivr-npm-importmap.js"></script>
+ *     <script src="https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.4.0-beta/jsdelivr-npm-importmap.js"></script>
  *     <script type="module">
  *       import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/browser";
  *       const walletName = "nami";

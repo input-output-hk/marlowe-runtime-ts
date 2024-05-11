@@ -206,13 +206,13 @@ And in a separate project you can install the tarballs using a file url when dec
 ```json
 {
   "dependencies": {
-    "@marlowe.io/runtime-lifecycle": "file:<path-to-dist>/marlowe.io-runtime-lifecycle-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/runtime-rest-client": "file:<path-to-dist>/marlowe.io-runtime-rest-client-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/adapter": "file:<path-to-dist>/marlowe.io-adapter-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/runtime-core": "file:<path-to-dist>/marlowe.io-runtime-core-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/language-core-v1": "file:<path-to-dist>/marlowe.io-language-core-v1-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/language-examples": "file:<path-to-dist>/marlowe.io-language-examples-0.4.0-beta-rc1.tgz",
-    "@marlowe.io/wallet": "file:<path-to-dist>/marlowe.io-wallet-0.4.0-beta-rc1.tgz"
+    "@marlowe.io/runtime-lifecycle": "file:<path-to-dist>/marlowe.io-runtime-lifecycle-0.4.0-beta.tgz",
+    "@marlowe.io/runtime-rest-client": "file:<path-to-dist>/marlowe.io-runtime-rest-client-0.4.0-beta.tgz",
+    "@marlowe.io/adapter": "file:<path-to-dist>/marlowe.io-adapter-0.4.0-beta.tgz",
+    "@marlowe.io/runtime-core": "file:<path-to-dist>/marlowe.io-runtime-core-0.4.0-beta.tgz",
+    "@marlowe.io/language-core-v1": "file:<path-to-dist>/marlowe.io-language-core-v1-0.4.0-beta.tgz",
+    "@marlowe.io/language-examples": "file:<path-to-dist>/marlowe.io-language-examples-0.4.0-beta.tgz",
+    "@marlowe.io/wallet": "file:<path-to-dist>/marlowe.io-wallet-0.4.0-beta.tgz"
   }
 }
 ```

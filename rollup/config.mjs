@@ -42,7 +42,7 @@ const packagesInfo = await getAllPackageInfo();
 const projectRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 await buildImportMapScript(packagesInfo, { type: "local" }, path.join(projectRoot, "dist"));
-await buildImportMapScript(packagesInfo, { type: "jsdelivr-npm", version: "0.4.0-beta-rc1" }, projectRoot);
+await buildImportMapScript(packagesInfo, { type: "jsdelivr-npm", version: "0.4.0-beta" }, projectRoot);
 // This is for testing purposes only, search [[Publish pre-check]]
 await buildImportMapScript(
   packagesInfo,
