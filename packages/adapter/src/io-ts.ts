@@ -5,6 +5,8 @@ import { Errors } from "io-ts/lib/index.js";
 import { Refinement } from "fp-ts/lib/Refinement.js";
 import { pipe } from "fp-ts/lib/function.js";
 import * as Either from "fp-ts/lib/Either.js";
+import * as BigIntReporter from "jsonbigint-io-ts-reporters";
+
 /**
  * In the TS-SDK we duplicate the type and guard definition for each type as the
  * inferred type from io-ts does not produce a good type export when used with
@@ -88,20 +90,37 @@ export function expectType<T>(guard: t.Type<T>, aValue: unknown): T {
 }
 
 /**
- * A mechanism for validating the type of a strict in a dynamically type context.
- * @param strict Whether to perform runtime checking to provide helpful error messages. May have a slight negative performance impact.
+ * Formats validation errors into a string.
+ * @param errors - The validation errors to format.
+ * @returns A string representation of the validation errors.
  */
-export function strictDynamicTypeCheck(strict: unknown): strict is boolean {
-  return typeof strict === "boolean";
+export function formatValidationErrors(errors: Errors): string {
+  return BigIntReporter.formatValidationErrors(errors, {
+    truncateLongTypes: true,
+  }).join("\n");
 }
 
+export function dynamicAssertType<G extends t.Any>(guard: G, value: unknown, message?: string): t.TypeOf<G> {
+  const result = guard.decode(value);
+  if (Either.isLeft(result)) {
+    throw new InvalidTypeError(guard, value, result.left, message);
+  }
+  return result.right;
+}
+
+/**
+ * This error is thrown when we are dynamicly checking for the type of a value and the type is not
+ * the expected one.
+ */
 export class InvalidTypeError extends Error {
   constructor(
+    public readonly guard: t.Any,
+    public readonly value: unknown,
     public readonly errors: Errors,
-    public readonly value: any,
     message?: string
   ) {
-    super(message);
+    const msg = message ?? `Unexpected type for value:\n${formatValidationErrors(errors)}`;
+    super(msg);
   }
 }
 

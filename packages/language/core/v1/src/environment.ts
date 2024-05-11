@@ -12,7 +12,7 @@ export const mkEnvironment =
   });
 
 /**
- * TODO: Comment
+ * Time interval in which the contract is executed. It is defined by a start and end time. The time is represented as a POSIX time.
  * @see Appendix E.16 of the {@link https://github.com/input-output-hk/marlowe/releases/download/v3/Marlowe.pdf | Marlowe specification}
  * @category Environment
  */
@@ -22,7 +22,7 @@ export interface TimeInterval {
 }
 
 /**
- * TODO: Comment
+ * Guard for {@link TimeInterval}
  * @see Appendix E.16 of the {@link https://github.com/input-output-hk/marlowe/releases/download/v3/Marlowe.pdf | Marlowe specification}
  * @category Environment
  */
@@ -32,7 +32,7 @@ export const TimeIntervalGuard: t.Type<TimeInterval> = t.type({
 });
 
 /**
- * TODO: Comment
+ * Time interval in which the contract is executed.
  * @see Section 2.1.10 and appendix E.22 of the {@link https://github.com/input-output-hk/marlowe/releases/download/v3/Marlowe.pdf | Marlowe specification}
  * @category Environment
  */
@@ -41,7 +41,7 @@ export interface Environment {
 }
 
 /**
- * TODO: Comment
+ * Guard for {@link Environment}
  * @see Section 2.1.10 and appendix E.22 of the {@link https://github.com/input-output-hk/marlowe/releases/download/v3/Marlowe.pdf | Marlowe specification}
  * @category Environment
  */

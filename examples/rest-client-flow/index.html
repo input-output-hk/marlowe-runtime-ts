@@ -25,7 +25,7 @@
           This should be filled with a JSON object that starts with an array, where each element is a numbered
           parameter.
         </p>
-        <textarea id="parameter-json" type="text" style="width: 100%; height: 20em">[]</textarea>
+        <textarea id="parameter-json" type="text" style="width: 100%; height: 20em">{}</textarea>
       </div>
       <br />
       <input id="healthcheck" type="button" value="Healthcheck" class="endpoint" />
@@ -148,7 +148,7 @@
           switch (action) {
             case "getContracts":
               log(`Getting contracts from ${H.getRuntimeUrl()}`);
-              result = await restClient.getContracts(...params);
+              result = await restClient.getContracts(params);
               console.log("Contracts", result);
               const nextRange = result.nextRange?.value ?? "-";
               const prevRange = result.prevRange?.value ?? "-";
@@ -158,12 +158,12 @@
               break;
             case "submitContract":
               log(`Submitting contract on ${H.getRuntimeUrl()}`);
-              await restClient.submitContract(...getParams());
+              await restClient.submitContract(getParams());
               log(`Done`);
               break;
             default:
               log(`Calling ${action} on ${H.getRuntimeUrl()}`);
-              result = await restClient[action](...params);
+              result = await restClient[action](params);
               logJSON("Result:", result);
           }
         } catch (e) {
@@ -182,10 +182,7 @@
         try {
           params = JSON.parse(jsonParams);
         } catch (e) {
-          throw new Error("Parameters must be a valid JSON array: " + e);
-        }
-        if (!Array.isArray(params)) {
-          throw new Error("Parameters must be an array");
+          throw new Error("Parameters must be a valid JSON: " + e);
         }
         return params;
       }

@@ -11,6 +11,7 @@
  */
 import { mkLucidWallet, WalletAPI } from "@marlowe.io/wallet";
 import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle";
+import { ContractInstanceAPI } from "@marlowe.io/runtime-lifecycle/api";
 import { Lucid, Blockfrost, C } from "lucid-cardano";
 import { readConfig } from "./config.js";
 import { datetoTimeout, When } from "@marlowe.io/language-core-v1";
@@ -18,6 +19,7 @@ import {
   addressBech32,
   contractId,
   ContractId,
+  contractIdToTxId,
   stakeAddressBech32,
   StakeAddressBech32,
   TxId,
@@ -171,7 +173,7 @@ async function createContractMenu(lifecycle: RuntimeLifecycle, rewardAddress?: S
   };
   const metadata = delayPaymentTemplate.toMetadata(scheme);
   const sourceMap = await mkSourceMap(lifecycle, mkDelayPayment(scheme));
-  const [contractId, txId] = await sourceMap.createContract({
+  const contractInstance = await sourceMap.createContract({
     stakeAddress: rewardAddress,
     tags: { DELAY_PAYMENT_VERSION: "2" },
     metadata,
@@ -179,9 +181,9 @@ async function createContractMenu(lifecycle: RuntimeLifecycle, rewardAddress?: S
 
   console.log(`Contract created with id ${contractId}`);
 
-  await waitIndicator(lifecycle.wallet, txId);
+  await waitIndicator(lifecycle.wallet, contractIdToTxId(contractInstance.id));
 
-  return contractMenu(lifecycle, scheme, sourceMap, contractId);
+  return contractMenu(lifecycle.wallet, contractInstance, scheme, sourceMap);
 }
 
 /**
@@ -213,43 +215,39 @@ async function loadContractMenu(lifecycle: RuntimeLifecycle) {
   console.log(`  * Amount: ${validationResult.scheme.amount} lovelaces`);
   console.log(`  * Deposit deadline: ${validationResult.scheme.depositDeadline}`);
   console.log(`  * Release deadline: ${validationResult.scheme.releaseDeadline}`);
-
-  return contractMenu(lifecycle, validationResult.scheme, validationResult.sourceMap, cid);
+  const contractInstance = await lifecycle.newContractAPI.load(cid);
+  return contractMenu(lifecycle.wallet, contractInstance, validationResult.scheme, validationResult.sourceMap);
 }
 
 /**
  * This is an Inquirer.js flow to interact with a contract
  */
 async function contractMenu(
-  lifecycle: RuntimeLifecycle,
+  wallet: WalletAPI,
+  contractInstance: ContractInstanceAPI,
   scheme: DelayPaymentParameters,
-  sourceMap: SourceMap<DelayPaymentAnnotations>,
-  contractId: ContractId
+  sourceMap: SourceMap<DelayPaymentAnnotations>
 ): Promise<void> {
   // Get and print the contract logical state.
-  const inputHistory = await lifecycle.contracts.getInputHistory(contractId);
+
+  const inputHistory = await contractInstance.getInputHistory();
   const contractState = getState(datetoTimeout(new Date()), inputHistory, sourceMap);
+  if (contractState.type === "Closed") return;
 
   printState(contractState, scheme);
-
   // See what actions are applicable to the current contract state
-  const { contractDetails, actions } = await lifecycle.applicableActions.getApplicableActions(contractId);
-
-  if (contractDetails.type === "closed") return;
-
-  const myActionsFilter = await lifecycle.applicableActions.mkFilter(contractDetails);
-  const myActions = actions.filter(myActionsFilter);
+  const applicableActions = await contractInstance.evaluateApplicableActions();
 
   const choices: Array<{
     name: string;
-    value: CanDeposit | CanAdvance | { actionType: "check-state" } | { actionType: "return" };
+    value: CanDeposit | CanAdvance | { type: "check-state" } | { type: "return" };
   }> = [
     {
       name: "Re-check contract state",
-      value: { actionType: "check-state" },
+      value: { type: "check-state" },
     },
-    ...myActions.map((action) => {
-      switch (action.actionType) {
+    ...applicableActions.myActions.map((action) => {
+      switch (action.type) {
         case "Advance":
           return {
             name: "Close contract",
@@ -271,7 +269,7 @@ async function contractMenu(
     }),
     {
       name: "Return to main menu",
-      value: { actionType: "return" },
+      value: { type: "return" },
     },
   ];
 
@@ -279,21 +277,21 @@ async function contractMenu(
     message: "Contract menu",
     choices,
   });
-  switch (selectedAction.actionType) {
+  switch (selectedAction.type) {
     case "check-state":
-      return contractMenu(lifecycle, scheme, sourceMap, contractId);
+      return contractMenu(wallet, contractInstance, scheme, sourceMap);
     case "return":
       return;
     case "Advance":
     case "Deposit":
       console.log("Applying input");
-      const applicableInput = await lifecycle.applicableActions.getInput(contractDetails, selectedAction);
-      const txId = await lifecycle.applicableActions.applyInput(contractId, {
+      const applicableInput = await applicableActions.toInput(selectedAction);
+      const txId = await applicableActions.apply({
         input: applicableInput,
       });
       console.log(`Input applied with txId ${txId}`);
-      await waitIndicator(lifecycle.wallet, txId);
-      return contractMenu(lifecycle, scheme, sourceMap, contractId);
+      await waitIndicator(wallet, txId);
+      return contractMenu(wallet, contractInstance, scheme, sourceMap);
   }
 }
 

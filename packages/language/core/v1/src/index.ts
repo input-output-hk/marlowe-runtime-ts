@@ -83,7 +83,7 @@ export {
   MerkleizedNotify,
 } from "./inputs.js";
 
-export { role, Party, Address, Role, RoleName } from "./participants.js";
+export { role, Party, Address, Role, RoleName, partiesToStrings, partyToString } from "./participants.js";
 
 export { Payee, PayeeAccount, PayeeParty, AccountId } from "./payee.js";
 

@@ -833,7 +833,11 @@ export function emptyState(minTime: POSIXTime): MarloweState {
  * @returns The resulting state and contract, along with the accumulated warnings and payments or a {@link TransactionError}.
  * @category Evaluation
  */
-export function playTrace(initialTime: POSIXTime, contract: Contract, transactions: Transaction[]): TransactionOutput {
+export function playTrace(
+  initialState: MarloweState,
+  contract: Contract,
+  transactions: Transaction[]
+): TransactionOutput {
   function go(prev: TransactionOutput, txs: Transaction[]): TransactionOutput {
     if (txs.length === 0) return prev;
     if (!G.TransactionSuccess.is(prev)) return prev;
@@ -855,13 +859,13 @@ export function playTrace(initialTime: POSIXTime, contract: Contract, transactio
       warnings: [],
       payments: [],
       contract,
-      state: emptyState(initialTime),
+      state: initialState,
     },
     transactions
   );
 }
 
-export function playSingleInputTxTrace(initialTime: POSIXTime, contract: Contract, transactions: SingleInputTx[]) {
+export function playSingleInputTxTrace(initialState: MarloweState, contract: Contract, transactions: SingleInputTx[]) {
   const txs = transactions.map((tx) => {
     const tx_inputs = typeof tx.input === "undefined" ? [] : [tx.input];
     return {
@@ -869,5 +873,5 @@ export function playSingleInputTxTrace(initialTime: POSIXTime, contract: Contrac
       tx_inputs,
     };
   });
-  return playTrace(initialTime, contract, txs);
+  return playTrace(initialState, contract, txs);
 }

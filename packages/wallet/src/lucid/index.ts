@@ -102,7 +102,7 @@ const waitConfirmation =
     try {
       return await lucid.awaitTx(txHash);
     } catch (reason) {
-      throw new Error(`Error while awiting : ${reason}`);
+      throw new Error(`Error while awaiting : ${reason}`);
     }
   };
 /**

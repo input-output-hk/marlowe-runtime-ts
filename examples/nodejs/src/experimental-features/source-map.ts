@@ -1,7 +1,7 @@
 import * as M from "fp-ts/lib/Map.js";
 
 import { ContractBundleMap, bundleMapToList, isAnnotated, stripAnnotations } from "@marlowe.io/marlowe-object";
-import { CreateContractRequestBase, RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
+import { ContractInstanceAPI, CreateContractRequestBase, RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
 
 import { ContractClosure, getContractClosure } from "./contract-closure.js";
 import * as Core from "@marlowe.io/language-core-v1";
@@ -9,7 +9,12 @@ import * as CoreG from "@marlowe.io/language-core-v1/guards";
 import * as Obj from "@marlowe.io/marlowe-object";
 import * as ObjG from "@marlowe.io/marlowe-object/guards";
 
-import { SingleInputTx, TransactionOutput, playSingleInputTxTrace } from "@marlowe.io/language-core-v1/semantics";
+import {
+  SingleInputTx,
+  TransactionOutput,
+  emptyState,
+  playSingleInputTxTrace,
+} from "@marlowe.io/language-core-v1/semantics";
 import { RestClient } from "@marlowe.io/runtime-rest-client";
 import { ContractId, TxId } from "@marlowe.io/runtime-core";
 import { deepEqual } from "@marlowe.io/adapter/deep-equal";
@@ -154,7 +159,7 @@ export interface SourceMap<T> {
   closure: ContractClosure;
   annotateHistory(history: SingleInputTx[]): SingleInputTx[];
   playHistory(history: SingleInputTx[]): TransactionOutput;
-  createContract(options: CreateContractRequestBase): Promise<[ContractId, TxId]>;
+  createContract(options: CreateContractRequestBase): Promise<ContractInstanceAPI>;
   contractInstanceOf(contractId: ContractId): Promise<boolean>;
 }
 
@@ -173,11 +178,11 @@ export async function mkSourceMap<T>(
       const annotatedHistory = annotateHistoryFromClosure(closure)(history);
       const main = closure.contracts.get(closure.main);
       if (typeof main === "undefined") throw new Error(`Cant find main.`);
-      return playSingleInputTxTrace(0n, main, annotatedHistory);
+      return playSingleInputTxTrace(emptyState(0n), main, annotatedHistory);
     },
     createContract: (options: CreateContractRequestBase) => {
       const contract = stripAnnotations(closure.contracts.get(closure.main)!);
-      return lifecycle.contracts.createContract({
+      return lifecycle.newContractAPI.create({
         ...options,
         contract,
       });

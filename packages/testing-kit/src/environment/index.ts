@@ -5,7 +5,14 @@ import { Lucid, Blockfrost } from "lucid-cardano";
 
 import { RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
 import { Assets } from "@marlowe.io/runtime-core";
-import { TestConfiguration, logInfo, logWalletInfo, mkLucidWalletTest } from "@marlowe.io/testing-kit";
+import {
+  TestConfiguration,
+  logDebug,
+  logInfo,
+  logWalletInfo,
+  logWarning,
+  mkLucidWalletTest,
+} from "@marlowe.io/testing-kit";
 import { ProvisionRequest, WalletTestAPI } from "../wallet/api.js";
 
 /**
@@ -68,8 +75,9 @@ export const mkTestEnvironment =
     if (bankBalance <= 100_000_000n) {
       throw { message: "Bank is not sufficiently provisionned (< 100 Ada)" };
     }
-    logInfo("Bank is provisionned enough");
+    logDebug("Bank is provisionned enough to run tests");
     const participants = await bank.provision(provisionRequest);
+    logDebug("Participants provisionned");
     await bank.waitRuntimeSyncingTillCurrentWalletTip(mkRestClient(testConfiguration.runtimeURL));
 
     logInfo("Test Environment : Ready");

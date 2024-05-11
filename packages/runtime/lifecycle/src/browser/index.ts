@@ -41,7 +41,7 @@ import * as Generic from "../generic/runtime.js";
 
 import { mkFPTSRestClient, mkRestClient } from "@marlowe.io/runtime-rest-client";
 import { RuntimeLifecycle } from "../api.js";
-import { InvalidTypeError, strictDynamicTypeCheck } from "@marlowe.io/adapter/io-ts";
+import { InvalidTypeError, dynamicAssertType } from "@marlowe.io/adapter/io-ts";
 import * as t from "io-ts/lib/index.js";
 
 /**
@@ -69,25 +69,6 @@ export const BrowserRuntimeLifecycleOptionsGuard: t.Type<BrowserRuntimeLifecycle
   walletName: SupportedWalletNameGuard,
 });
 
-function mkRuntimeLifecycleArgumentDynamicTypeCheck(
-  options: unknown,
-  strict: boolean
-): options is BrowserRuntimeLifecycleOptions {
-  if (strict) {
-    const result = BrowserRuntimeLifecycleOptionsGuard.decode(options);
-    if (result._tag === "Left") {
-      throw new InvalidTypeError(result.left, `Invalid argument to mkRuntimeLifecycle(${options})`);
-    }
-  }
-  return true;
-}
-
-/**
- * Creates an instance of RuntimeLifecycle using the browser wallet.
- * @param options
- * @category RuntimeLifecycle
- */
-export async function mkRuntimeLifecycle(options: BrowserRuntimeLifecycleOptions): Promise<RuntimeLifecycle>;
 /**
  * Creates an instance of RuntimeLifecycle using the browser wallet.
  * @param options
@@ -98,12 +79,8 @@ export async function mkRuntimeLifecycle(
   options: BrowserRuntimeLifecycleOptions,
   strict = true
 ): Promise<RuntimeLifecycle> {
-  if (!strictDynamicTypeCheck(strict)) {
-    throw new InvalidTypeError([], `Invalid type for argument 'strict', expected boolean but got ${strict}`);
-  }
-  if (!mkRuntimeLifecycleArgumentDynamicTypeCheck(options, strict)) {
-    throw new InvalidTypeError([], `Invalid type for argument 'options', expected string but got ${options}`);
-  }
+  dynamicAssertType(BrowserRuntimeLifecycleOptionsGuard, options);
+  dynamicAssertType(t.boolean, strict, "Invalid type for argument 'strict', expected boolean");
 
   const { runtimeURL, walletName } = options;
   const wallet = await mkBrowserWallet(walletName);

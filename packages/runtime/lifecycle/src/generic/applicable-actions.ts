@@ -1,4 +1,4 @@
-import { ContractsAPI } from "../api.js";
+import { ApplyInputsRequest, ContractsAPI, applyInputs } from "./contracts.js";
 
 import { Monoid } from "fp-ts/lib/Monoid.js";
 import * as R from "fp-ts/lib/Record.js";
@@ -33,11 +33,12 @@ import {
   TransactionSuccess,
 } from "@marlowe.io/language-core-v1/semantics";
 import { AddressBech32, ContractId, Metadata, PolicyId, Tags, TxId } from "@marlowe.io/runtime-core";
-import { RestClient, Tip } from "@marlowe.io/runtime-rest-client";
-import { WalletAPI } from "@marlowe.io/wallet";
+import { RestDI } from "@marlowe.io/runtime-rest-client";
+import { WalletAPI, WalletDI } from "@marlowe.io/wallet";
 import * as Big from "@marlowe.io/adapter/bigint";
 import { ContractSourceId } from "@marlowe.io/marlowe-object";
 import { posixTimeToIso8601 } from "@marlowe.io/adapter/time";
+import { ActiveContract, ContractDetails } from "./new-contract-api.js";
 
 /**
  * @experimental
@@ -51,13 +52,8 @@ export interface ApplicableActionsAPI {
    *                    the environment is computed using the runtime tip as a lower bound and the next timeout
    *                    as an upper bound.
    * @returns An object with an array of {@link ApplicableAction | applicable actions} and the {@link ContractDetails | contract details}
-   * @experimental
-   * @remarks
-   * **EXPERIMENTAL:** Perhaps instead of receiving a contractId and returning the actions and contractDetails this
-   * function should receive the contractDetails and just return the actions.
-   * To do this, we should refactor the {@link ContractsAPI} first to use the {@link ContractDetails} type
    */
-  getApplicableActions(contractId: ContractId, environment?: Environment): Promise<GetApplicableActionsResponse>;
+  getApplicableActions(contractDetails: ContractDetails, environment?: Environment): Promise<ApplicableAction[]>;
 
   /**
    * Converts an {@link ApplicableAction} into an {@link ApplicableInput}.
@@ -77,7 +73,8 @@ export interface ApplicableActionsAPI {
   getInput(contractDetails: ActiveContract, action: CanChoose, chosenNum: ChosenNum): Promise<ApplicableInput>;
 
   /**
-   * Applies an input to a contract. This is a wrapper around the {@link ContractsAPI.applyInputs | Contracts's API applyInputs} function.
+   * Applies an {@link ApplicableInput} to a contract.
+   * @returns The transaction id of the applied input.
    */
   applyInput(contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId>;
   /**
@@ -87,6 +84,12 @@ export interface ApplicableActionsAPI {
    *          the payments, state, warnings and new continuation.
    */
   simulateInput(contractDetails: ActiveContract, input: ApplicableInput): TransactionSuccess;
+
+  /**
+   * Computes the environment for a contract. The environment is computed using the runtime tip as a lower bound and the next timeout
+   * as an upper bound.
+   */
+  computeEnvironment: (contract: Contract) => Promise<Environment>;
 
   /**
    * Creates a filter function for the {@link ApplicableAction | applicable actions} of the wallet owner.
@@ -125,19 +128,13 @@ export interface ApplyApplicableInputRequest {
 /**
  * @hidden
  */
-export function mkApplicableActionsAPI(
-  restClient: RestClient,
-  wallet: WalletAPI,
-  contractDI: ContractsAPI
-): ApplicableActionsAPI {
-  const di = mkGetApplicableActionsDI(restClient);
-
+export function mkApplicableActionsAPI(di: RestDI & WalletDI & GetContinuationDI & ChainTipDI): ApplicableActionsAPI {
   async function mkFilter(): Promise<ApplicableActionsWithDetailsFilter>;
   async function mkFilter(contractDetails: ActiveContract): Promise<ApplicableActionsFilter>;
   async function mkFilter(
     contractDetails?: ActiveContract
   ): Promise<ApplicableActionsFilter | ApplicableActionsWithDetailsFilter> {
-    const curriedFilter = await mkApplicableActionsFilter(wallet);
+    const curriedFilter = await mkApplicableActionsFilter(di.wallet);
     if (contractDetails) {
       return (action: ApplicableAction) => curriedFilter(action, contractDetails);
     } else {
@@ -149,14 +146,17 @@ export function mkApplicableActionsAPI(
     getInput: getApplicableInput(di),
     simulateInput: simulateApplicableInput,
     getApplicableActions: getApplicableActions(di),
-    applyInput: applyInput(contractDI),
+    computeEnvironment: (contract) => computeEnvironment(di, contract),
+    applyInput: applyInput(applyInputs(di)),
     mkFilter,
   };
 }
 
-function applyInput(contractDI: ContractsAPI) {
+export type ApplyInputDI = (contractId: ContractId, request: ApplyInputsRequest) => Promise<TxId>;
+
+function applyInput(doApply: ApplyInputDI) {
   return async function (contractId: ContractId, request: ApplyApplicableInputRequest): Promise<TxId> {
-    return contractDI.applyInputs(contractId, {
+    return doApply(contractId, {
       inputs: request.input.inputs,
       tags: request.tags,
       metadata: request.metadata,
@@ -165,7 +165,7 @@ function applyInput(contractDI: ContractsAPI) {
       //       way into the future and the time to slot conversion is undefined if the
       //       end time passes a certain threshold.
       //       We currently don't have the network parameters to do the conversion ourselves
-      //       so we leave to the runtime to calculate an adecuate max slot.
+      //       so we leave to the runtime to calculate an adequate max slot.
       //       This might cause some issues if the contract relies on the TimeIntervalEnd value
       //       as the result of simulating and applying the input might differ.
       // invalidHereafter: posixTimeToIso8601(
@@ -173,13 +173,6 @@ function applyInput(contractDI: ContractsAPI) {
       // ),
     });
   };
-}
-/**
- * @category ApplicableActionsAPI
- */
-export interface GetApplicableActionsResponse {
-  actions: ApplicableAction[];
-  contractDetails: ContractDetails;
 }
 
 type ActionApplicant = Party | "anybody";
@@ -207,7 +200,7 @@ export interface CanNotify {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Notify";
+  type: "Notify";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -226,7 +219,7 @@ export interface CanDeposit {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Deposit";
+  type: "Deposit";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -249,7 +242,7 @@ export interface CanChoose {
   /**
    * Discriminator field, used to differentiate the action type.
    */
-  actionType: "Choice";
+  type: "Choice";
   /**
    * If the When's case is merkleized, this is the hash of the merkleized continuation.
    */
@@ -272,7 +265,7 @@ export interface CanChoose {
  * @category ApplicableActionsAPI
  */
 export interface CanAdvance {
-  actionType: "Advance";
+  type: "Advance";
   environment: Environment;
 }
 
@@ -331,7 +324,7 @@ export function getApplicableInput(di: GetContinuationDI) {
     }
     const environment = action.environment;
 
-    switch (action.actionType) {
+    switch (action.type) {
       case "Advance":
         return {
           inputs: [],
@@ -409,7 +402,7 @@ export function simulateApplicableInput(
 }
 
 function getApplicant(action: ApplicableAction): ActionApplicant {
-  switch (action.actionType) {
+  switch (action.type) {
     case "Notify":
     case "Advance":
       return "anybody";
@@ -420,7 +413,10 @@ function getApplicant(action: ApplicableAction): ActionApplicant {
   }
 }
 
-type ChainTipDI = {
+/**
+ * @hidden
+ */
+export type ChainTipDI = {
   getRuntimeTip: () => Promise<Date>;
 };
 
@@ -449,46 +445,15 @@ async function computeEnvironment({ getRuntimeTip }: ChainTipDI, currentContract
   return { timeInterval: { from: lowerBound, to: upperBound - 1n } };
 }
 
-/**
- * @hidden
- */
-export const mkGetApplicableActionsDI = (restClient: RestClient): GetApplicableActionsDI => {
-  return {
-    getContractContinuation: (contractSourceId: ContractSourceId) => {
-      // TODO: Add caching
-      return restClient.getContractSourceById({ contractSourceId });
-    },
-    getContractDetails: async (contractId: ContractId) => {
-      const contractDetails = await restClient.getContractById({ contractId });
-      if (typeof contractDetails.state === "undefined" || typeof contractDetails.currentContract === "undefined") {
-        return { type: "closed" };
-      } else {
-        return {
-          type: "active",
-          contractId,
-          currentState: contractDetails.state,
-          currentContract: contractDetails.currentContract,
-          roleTokenMintingPolicyId: contractDetails.roleTokenMintingPolicyId,
-        };
-      }
-    },
-    getRuntimeTip: async () => {
-      const status = await restClient.healthcheck();
-      return new Date(status.tips.runtimeChain.slotTimeUTC);
-    },
-  };
-};
-
-type GetApplicableActionsDI = GetContinuationDI & GetContractDetailsDI & ChainTipDI;
+type GetApplicableActionsDI = GetContinuationDI & ChainTipDI;
 
 /**
  * @hidden
  */
 export function getApplicableActions(di: GetApplicableActionsDI) {
-  return async function (contractId: ContractId, environment?: Environment): Promise<GetApplicableActionsResponse> {
-    const contractDetails = await di.getContractDetails(contractId);
+  return async function (contractDetails: ContractDetails, environment?: Environment): Promise<ApplicableAction[]> {
     // If the contract is closed there are no applicable actions
-    if (contractDetails.type === "closed") return { contractDetails, actions: [] };
+    if (contractDetails.type === "closed") return [];
 
     const env = environment ?? (await computeEnvironment(di, contractDetails.currentContract));
 
@@ -502,7 +467,7 @@ export function getApplicableActions(di: GetApplicableActionsDI) {
     let applicableActions: ApplicableAction[] = initialReduce.reduced
       ? [
           {
-            actionType: "Advance",
+            type: "Advance",
             environment: env,
           },
         ]
@@ -521,10 +486,7 @@ export function getApplicableActions(di: GetApplicableActionsDI) {
         )
       );
     }
-    return {
-      contractDetails,
-      actions: applicableActions,
-    };
+    return applicableActions;
   };
 }
 
@@ -698,7 +660,7 @@ const flattenChoices = {
   concat: (fst: CanChoose, snd: CanChoose): CanChoose => {
     const mergedBounds = mergeBounds(fst.choice.choose_between.concat(snd.choice.choose_between));
     return {
-      actionType: "Choice",
+      type: "Choice",
       environment: fst.environment,
       choice: {
         for_choice: fst.choice.for_choice,
@@ -723,7 +685,10 @@ const mergeApplicableActionAccumulator: Monoid<ApplicableActionAccumulator> = {
   },
 };
 
-type GetContinuationDI = {
+/**
+ * @hidden
+ */
+export type GetContinuationDI = {
   getContractContinuation: (sourceId: ContractSourceId) => Promise<Contract>;
 };
 
@@ -731,7 +696,7 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
   if (isDepositAction(aCase.case)) {
     const deposit = aCase.case;
     return accumulatorFromDeposit(env, state, {
-      actionType: "Deposit",
+      type: "Deposit",
       deposit,
       environment: env,
     });
@@ -739,7 +704,7 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
     const choice = aCase.case;
 
     return accumulatorFromChoice({
-      actionType: "Choice",
+      type: "Choice",
       choice,
       environment: env,
     });
@@ -750,42 +715,8 @@ function getApplicableActionFromCase(env: Environment, state: MarloweState, aCas
     }
 
     return accumulatorFromNotify({
-      actionType: "Notify",
+      type: "Notify",
       environment: env,
     });
   }
 }
-
-// #region High level Contract Details
-/**
- * @category New ContractsAPI
- */
-export type ClosedContract = {
-  type: "closed";
-};
-
-/**
- * @category New ContractsAPI
- */
-export type ActiveContract = {
-  type: "active";
-  contractId: ContractId;
-  currentState: MarloweState;
-  currentContract: Contract;
-  roleTokenMintingPolicyId: PolicyId;
-};
-
-/**
- * This is the start of a high level API to get the contract details.
- * The current restAPI is not clear wether the details that you get are
- * from a closed or active contract. This API is just the start to get
- * getApplicableInputs ready in production, but as part of a ContractsAPI
- * refactoring, the whole contract details should be modeled.
- * @category New ContractsAPI
- */
-export type ContractDetails = ClosedContract | ActiveContract;
-
-type GetContractDetailsDI = {
-  getContractDetails: (contractId: ContractId) => Promise<ContractDetails>;
-};
-// #endregion

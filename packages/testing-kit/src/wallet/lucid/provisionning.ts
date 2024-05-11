@@ -132,7 +132,7 @@ const mkPolicyWithDeadlineAndOneAuthorizedSigner =
 
 const toAssetsToTransfer = (assets: RuntimeCore.Assets): LucidAssets => {
   var lucidAssets: { [key: string]: bigint } = {};
-  lucidAssets["lovelace"] = assets.lovelaces;
+  lucidAssets["lovelace"] = assets.lovelaces ?? 0n;
   assets.tokens.map(
     (token) => (lucidAssets[toUnit(token.assetId.policyId, fromText(token.assetId.assetName))] = token.quantity)
   );
