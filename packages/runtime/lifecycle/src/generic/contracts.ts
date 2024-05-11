@@ -13,7 +13,7 @@ import {
   StakeAddressBech32,
   Metadata,
   Tags,
-  accountDeposits,
+  AccountDeposits,
 } from "@marlowe.io/runtime-core";
 
 import { FPTSRestAPI, RestClient, RestDI, ItemRange, DeprecatedRestDI } from "@marlowe.io/runtime-rest-client";
@@ -93,10 +93,10 @@ export interface CreateContractRequestBase {
    * Assets will be withdrawn from the creator's wallet and deposited into the participant's accounts when the contract is created.
    * </p>
    * @see
-   *  - {@link @marlowe.io/runtime-core!accountDeposits}
+   *  - {@link @marlowe.io/runtime-core!index.AccountDeposits}
    */
 
-  accountDeposits?: accountDeposits;
+  accountDeposits?: AccountDeposits;
   /**
    * Role Token Configuration for the new contract passed in the `contract` field.
    *
