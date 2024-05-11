@@ -100,11 +100,7 @@ export function formatValidationErrors(errors: Errors): string {
   }).join("\n");
 }
 
-export function dynamicAssertType<G extends t.Any>(
-  guard: G,
-  value: unknown,
-  message?: string
-): t.TypeOf<G> {
+export function dynamicAssertType<G extends t.Any>(guard: G, value: unknown, message?: string): t.TypeOf<G> {
   const result = guard.decode(value);
   if (Either.isLeft(result)) {
     throw new InvalidTypeError(guard, value, result.left, message);
@@ -123,9 +119,7 @@ export class InvalidTypeError extends Error {
     public readonly errors: Errors,
     message?: string
   ) {
-    const msg =
-      message ??
-      `Unexpected type for value:\n${formatValidationErrors(errors)}`;
+    const msg = message ?? `Unexpected type for value:\n${formatValidationErrors(errors)}`;
     super(msg);
   }
 }

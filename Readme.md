@@ -79,8 +79,3 @@ Prototypes have been also built on top of this sdk:
 To report a bug or request a new feature, please look through existing [Github Issues](https://github.com/input-output-hk/marlowe-ts-sdk/issues) before opening a new one.
 
 To help in the development of this SDK, please refer to [this document](./doc/howToDevelop.md).
-
-
-
-
-

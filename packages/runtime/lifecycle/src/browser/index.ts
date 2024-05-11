@@ -80,11 +80,7 @@ export async function mkRuntimeLifecycle(
   strict = true
 ): Promise<RuntimeLifecycle> {
   dynamicAssertType(BrowserRuntimeLifecycleOptionsGuard, options);
-  dynamicAssertType(
-    t.boolean,
-    strict,
-    "Invalid type for argument 'strict', expected boolean"
-  );
+  dynamicAssertType(t.boolean, strict, "Invalid type for argument 'strict', expected boolean");
 
   const { runtimeURL, walletName } = options;
   const wallet = await mkBrowserWallet(walletName);

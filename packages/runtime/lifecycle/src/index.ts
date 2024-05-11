@@ -42,12 +42,11 @@ export interface RuntimeLifecycleOptions {
 /**
  * @hidden
  */
-export const RuntimeLifecycleOptionsGuard: t.Type<RuntimeLifecycleOptions> =
-  t.type({
-    runtimeURL: t.string,
-    // TODO: Create a shallow guard for the wallet that checks that all methods are present as t.function.
-    wallet: t.any,
-  });
+export const RuntimeLifecycleOptionsGuard: t.Type<RuntimeLifecycleOptions> = t.type({
+  runtimeURL: t.string,
+  // TODO: Create a shallow guard for the wallet that checks that all methods are present as t.function.
+  wallet: t.any,
+});
 
 /**
  * Creates an instance of RuntimeLifecycle.
@@ -55,16 +54,9 @@ export const RuntimeLifecycleOptionsGuard: t.Type<RuntimeLifecycleOptions> =
  * @param strict Whether to perform runtime checking to provide helpful error messages. May have a slight negative performance impact. Default value is `true`.
  * @category RuntimeLifecycle
  */
-export function mkRuntimeLifecycle(
-  options: RuntimeLifecycleOptions,
-  strict = true
-): RuntimeLifecycle {
+export function mkRuntimeLifecycle(options: RuntimeLifecycleOptions, strict = true): RuntimeLifecycle {
   dynamicAssertType(RuntimeLifecycleOptionsGuard, options);
-  dynamicAssertType(
-    t.boolean,
-    strict,
-    "Invalid type for argument 'strict', expected boolean"
-  );
+  dynamicAssertType(t.boolean, strict, "Invalid type for argument 'strict', expected boolean");
   const { runtimeURL, wallet } = options;
   const deprecatedRestAPI = mkFPTSRestClient(runtimeURL);
   const restClient = mkRestClient(runtimeURL, strict);

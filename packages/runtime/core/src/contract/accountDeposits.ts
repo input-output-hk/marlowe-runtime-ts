@@ -6,6 +6,7 @@ export type AddressOrRole = string;
 export const AddressOrRoleGuard = t.string;
 /**
  * A map of tags to their content. The key is a string, the value can be anything.
+ * New feature from runtime v1.0.0 (initial account deposits))
  */
 export type AccountDeposits = { [key in AddressOrRole]: AssetsMap };
 /**
