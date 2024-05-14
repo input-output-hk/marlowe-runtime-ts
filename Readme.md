@@ -12,9 +12,14 @@
   <a href=""><img src="https://img.shields.io/badge/stability-beta-33bbff.svg" alt="Beta"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"></a>
   <a href="https://discord.com/invite/cmveaxuzBn"><img src="https://img.shields.io/discord/826816523368005654?label=Chat%20on%20Discord"></a>
-  <a href="https://iohk.zendesk.com/hc/en-us/requests/new"><img src="https://img.shields.io/badge/Support-orange"></a>
-
 </div>
+
+> [!IMPORTANT] 
+> This Marlowe repository will soon be moved to https://github.com/marlowe-lang. The new repositories will be administered by an independent vehicle, a not-for-profit organization currently being set up by the transition team.<br> 
+> This will allow us to ensure community representation and stewardship. Future developments and support for Marlowe are transitioning to a community-driven model initially led by [Simon Thompson](https://github.com/simonjohnthompson), [Nicolas Henin](https://github.com/nhenin) and [Tomasz Rybarczyk](https://github.com/paluh). <br>
+> See [here](https://github.com/marlowe-lang/.github/blob/main/profile/transition.md) for details.
+
+
 
 The **Marlowe TS-SDK** is a suite of _TypeScript/JavaScript_ libraries for developing Web-Dapp in the Cardano Blockchain using Marlowe Technologies.
 
