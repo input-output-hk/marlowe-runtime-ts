@@ -140,11 +140,11 @@ export interface CreateContractRequestBase {
    *   { "closed_Role_A_NFT" : mintRole(anAddressBech32)
    *   , "closed_Role_B_FT" :
    *        mintRole(
-   *          anAddressBech32,
+   *          anAddressBech32, // Closed Role Token
    *          5, // Quantities
    *          { "name": "closed_Role_B_FT Marlowe Role Token",
    *            "description": "These are metadata for closedRoleB",
-   *            image": "ipfs://QmaQMH7ybS9KmdYQpa4FMtAhwJH5cNaacpg4fTwhfPvcwj",
+   *            "image": "ipfs://QmaQMH7ybS9KmdYQpa4FMtAhwJH5cNaacpg4fTwhfPvcwj",
    *            "mediaType": "image/png",
    *            "files": [
    *                {
@@ -154,12 +154,13 @@ export interface CreateContractRequestBase {
    *                }
    *              ]
    *          })
-   *   , "open_Role_C" : mkMintOpenRoleToken()
-   *   , "open_Role_D" : mkMintOpenRoleToken(
+   *   , "open_Role_C" : mintRole("OpenRole")
+   *   , "open_Role_D" : mintRole(
+   *          "OpenRole", // Open Role Token
    *          2, // Quantities
    *          { "name": "open_Role_D Marlowe Role Token",
    *            "description": "These are metadata for closedRoleB",
-   *            image": "ipfs://QmaQMH7ybS9KmdYQpa4FMtAhwJH5cNaacpg4fTwhfPvcwj",
+   *            "image": "ipfs://QmaQMH7ybS9KmdYQpa4FMtAhwJH5cNaacpg4fTwhfPvcwj",
    *            "mediaType": "image/png",
    *            "files": [
    *                {
