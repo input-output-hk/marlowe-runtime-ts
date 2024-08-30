@@ -63,10 +63,10 @@ Inside the [examples folder](./examples/Readme.md) you can find a set of minimal
 Prototypes have been also built on top of this sdk:
 
 - Payouts
-  - [Github Repository](https://github.com/input-output-hk/marlowe-payouts)
+  - [GitHub Repository](https://github.com/input-output-hk/marlowe-payouts)
   - [Deployed DApp](https://payouts-preprod.prod.scdev.aws.iohkdev.io/)
 - Token Plans
-  - [Github Repository](https://github.com/input-output-hk/marlowe-vesting)
+  - [GitHub Repository](https://github.com/input-output-hk/marlowe-vesting)
   - Vesting Contract
     - [Implementation](https://github.com/input-output-hk/marlowe-ts-sdk/blob/main/packages/language/examples/src/vesting.ts)
     - [Documentation](https://input-output-hk.github.io/marlowe-ts-sdk/modules/_marlowe_io_language_examples.vesting.html)
@@ -82,6 +82,6 @@ Prototypes have been also built on top of this sdk:
 
 ## Contributing
 
-To report a bug or request a new feature, please look through existing [Github Issues](https://github.com/input-output-hk/marlowe-ts-sdk/issues) before opening a new one.
+To report a bug or request a new feature, please look through existing [GitHub Issues](https://github.com/input-output-hk/marlowe-ts-sdk/issues) before opening a new one.
 
 To help in the development of this SDK, please refer to [this document](./doc/howToDevelop.md).
