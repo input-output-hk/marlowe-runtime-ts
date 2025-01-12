@@ -32,12 +32,14 @@
     }
   },
   "dependencies": {
-    "@marlowe.io/wallet": "0.4.0-beta",
-    "@marlowe.io/runtime-core": "0.4.0-beta",
-    "@marlowe.io/runtime-rest-client": "0.4.0-beta",
     "@marlowe.io/adapter": "0.4.0-beta",
     "@marlowe.io/language-core-v1": "0.4.0-beta",
+    "@marlowe.io/runtime-core": "0.4.0-beta",
+    "@marlowe.io/runtime-rest-client": "0.4.0-beta",
+    "@marlowe.io/wallet": "0.4.0-beta",
     "bip39": "3.1.0",
-    "fp-ts": "2.16.1"
+    "fp-ts": "2.16.1",
+    "json-bigint": "^1.0.0",
+    "lucid-cardano": "^0.10.11"
   }
 }

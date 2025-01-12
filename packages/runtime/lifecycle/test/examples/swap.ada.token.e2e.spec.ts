@@ -38,8 +38,9 @@ describe("swap", () => {
     "can execute the nominal case",
     async () => {
       try {
-        const { bank, mkLifecycle, participants } = await readTestConfiguration().then(
-          mkTestEnvironment({
+        logInfo("Starting Test");
+        const { bank, mkLifecycle, participants } = await readTestConfiguration().then((config) => {
+          return mkTestEnvironment({
             seller: {
               walletSeedPhrase: generateSeedPhrase("24-words"),
               scheme: {
@@ -54,8 +55,8 @@ describe("swap", () => {
                 assetsToMint: { tokenB: 10n },
               },
             },
-          })
-        );
+          })(config);
+        });
 
         const { seller, buyer } = participants;
 
@@ -64,6 +65,66 @@ describe("swap", () => {
         const sellerLifecycle = mkLifecycle(seller.wallet);
         const buyerLifecycle = mkLifecycle(buyer.wallet);
         const anyoneLifecycle = mkLifecycle(bank);
+
+
+        // when:
+        // - case:
+        //     party:
+        //       role_token: Ada provider
+        //     deposits:
+        //       multiply: 1000000
+        //       times: 30
+        //     of_token:
+        //       currency_symbol: ''
+        //       token_name: ''
+        //     into_account:
+        //       role_token: Ada provider
+        //   then:
+        //     when:
+        //     - case:
+        //         party:
+        //           role_token: Other provider
+        //         deposits:
+        //           multiply: 1000000
+        //           times: 25
+        //         of_token:
+        //           currency_symbol: ''
+        //           token_name: ''
+        //         into_account:
+        //           role_token: Other provider
+        //       then:
+        //         pay:
+        //           multiply: 1000000
+        //           times: 30
+        //         token:
+        //           currency_symbol: ''
+        //           token_name: ''
+        //         from_account:
+        //           role_token: Ada provider
+        //         to:
+        //           party:
+        //             role_token: Other provider
+        //         then:
+        //           pay:
+        //             multiply: 1000000
+        //             times: 25
+        //           token:
+        //             currency_symbol: ''
+        //             token_name: ''
+        //           from_account:
+        //             role_token: Other provider
+        //           to:
+        //             party:
+        //               role_token: Ada provider
+        //           then: close
+        //     timeout: 1961123625000
+        //     timeout_continuation: close
+        // timeout: 1929587625000
+        // timeout_continuation: close
+
+
+
+
 
         const scheme: AtomicSwap.Scheme = {
           offer: {
@@ -138,7 +199,7 @@ describe("swap", () => {
         await logWalletInfo("seller", seller.wallet);
         await logWalletInfo("buyer", buyer.wallet);
       } catch (e) {
-        logError(`Error occured while Executing the Tests : ${MarloweJSON.stringify(e, null, 4)}`);
+        logError(`Error occurred while Executing the Tests : ${MarloweJSON.stringify(e, null, 4)}`);
         const error = e as AxiosError;
         logError(`Details : ${MarloweJSON.stringify(error.response?.data, null, 4)}`);
         expect(true).toBe(false);

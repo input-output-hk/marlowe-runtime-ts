@@ -410,7 +410,13 @@ export const createContract =
     const buildCreateContractTxResponse = await restClient.buildCreateContractTx(restClientRequest);
     const contractId = buildCreateContractTxResponse.contractId;
 
-    const hexTransactionWitnessSet = await wallet.signTx(buildCreateContractTxResponse.tx.cborHex);
+    let hexTransactionWitnessSet;
+    try {
+      hexTransactionWitnessSet = await wallet.signTx(buildCreateContractTxResponse.tx.cborHex);
+    } catch (e) {
+      console.error("Error signing transaction cbor: ", buildCreateContractTxResponse.tx.cborHex);
+      throw e;
+    };
 
     await restClient.submitContract({
       contractId,

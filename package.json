@@ -23,6 +23,7 @@
     "clean": "npm run clean --workspaces && shx rm -rf dist",
     "test": "tsc --build tsconfig.test.json && NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --config ./jest.unit.config.js --verbose",
     "test:e2e": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --runInBand --config ./jest.e2e.config.js --verbose",
+    "vitest:e2e": "vitest run --config vitest.e2e.config.ts",
     "docs": "typedoc . --treatWarningsAsErrors --options ./typedoc.json",
     "serve": "ws --port 1337 --rewrite '/importmap -> https://cdn.jsdelivr.net/gh/input-output-hk/marlowe-ts-sdk@0.3.0-beta/jsdelivr-npm-importmap.js'",
     "serve-dev": "ws --port 1337 --rewrite '/importmap -> /dist/local-importmap.js'",
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@blockfrost/blockfrost-js": "5.2.0",
     "@blockfrost/openapi": "0.1.54",
+    "@dcspark/cardano-multiplatform-lib-nodejs": "^6.0.1",
     "@relmify/jest-fp-ts": "^2.0.2",
     "@rollup/plugin-commonjs": "^25.0.3",
     "@rollup/plugin-json": "^6.0.0",
@@ -75,7 +77,8 @@
     "ts-node": "^10.9.1",
     "typedoc": "^0.24.8",
     "typescript": "^4.9.5",
-    "typescript-language-server": "^3.1.0"
+    "typescript-language-server": "^3.1.0",
+    "vitest": "^2.1.8"
   },
   "packageManager": "npm@9.3.1"
 }

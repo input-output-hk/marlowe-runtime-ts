@@ -47,7 +47,7 @@ export const HexTransactionWitnessSetGuard: t.Type<HexTransactionWitnessSet> = t
 export const transactionWitnessSetTextEnvelope: (hexTransactionWitnessSet: HexTransactionWitnessSet) => TextEnvelope = (
   hexTransactionWitnessSet
 ) => ({
-  type: "ShelleyTxWitness BabbageEra",
+  type: "ShelleyTxWitness ConwayEra",
   description: "",
   cborHex: hexTransactionWitnessSet,
 });

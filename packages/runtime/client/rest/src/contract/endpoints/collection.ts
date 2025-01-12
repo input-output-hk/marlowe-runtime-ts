@@ -1,4 +1,4 @@
-import { AxiosInstance } from "axios";
+import { AxiosInstance, isAxiosError } from "axios";
 
 import * as t from "io-ts/lib/index.js";
 import * as TE from "fp-ts/lib/TaskEither.js";
@@ -41,6 +41,9 @@ import {
 import { ContractHeader, ContractHeaderGuard } from "../header.js";
 import { RolesConfiguration, RolesConfigurationGuard } from "../rolesConfigurations.js";
 import { ItemRange, ItemRangeGuard, Page, PageGuard } from "../../pagination.js";
+import { APIResponse, mkDecodingError } from "../../apiResponse.js";
+import { left, match, right } from "fp-ts/lib/Either.js";
+import { Errors } from "io-ts/lib/index.js";
 
 /**
  * Request options for the {@link index.RestClient#getContracts | Get contracts } endpoint
@@ -510,7 +513,7 @@ export type BuildCreateContractTxEndpoint = (
   postContractsRequest: PostContractsRequest,
   addressesAndCollaterals: AddressesAndCollaterals,
   stakeAddress?: StakeAddressBech32
-) => TE.TaskEither<Error | DecodingError, BuildCreateContractTxResponse>;
+) => Promise<APIResponse<string, BuildCreateContractTxResponse>>;
 
 /**
  * @hidden
@@ -577,20 +580,39 @@ export const PostResponse = t.type({
  * @see {@link https://docs.marlowe.iohk.io/api/create-contracts}
  */
 export const postViaAxios: (axiosInstance: AxiosInstance) => BuildCreateContractTxEndpoint =
-  (axiosInstance) => (postContractsRequest, addressesAndCollaterals, stakeAddress) =>
-    pipe(
-      HTTP.Post(axiosInstance)("/contracts", postContractsRequest, {
-        headers: {
-          Accept: "application/vendor.iog.marlowe-runtime.contract-tx-json",
-          "Content-Type": "application/json",
-          ...(stakeAddress && {
-            "X-Stake-Address": unStakeAddressBech32(stakeAddress),
-          }),
-          "X-Change-Address": addressesAndCollaterals.changeAddress,
-          "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) => a.join(",")),
-          "X-Collateral-UTxO": pipe(addressesAndCollaterals.collateralUTxOs, A.map(unTxOutRef), (a) => a.join(",")),
-        },
-      }),
-      TE.chainW((data) => TE.fromEither(E.mapLeft(formatValidationErrors)(PostResponse.decode(data)))),
-      TE.map((payload) => payload.resource)
-    );
+  (axiosInstance) => async (postContractsRequest, addressesAndCollaterals, stakeAddress) => {
+    return await axiosInstance.post("/contracts", postContractsRequest, {
+      headers: {
+        Accept: "application/vendor.iog.marlowe-runtime.contract-tx-json",
+        "Content-Type": "application/json",
+        ...(stakeAddress && {
+          "X-Stake-Address": unStakeAddressBech32(stakeAddress),
+        }),
+        "X-Change-Address": addressesAndCollaterals.changeAddress,
+        "X-Address": pipe(addressesAndCollaterals.usedAddresses, (a) => a.join(",")),
+        "X-Collateral-UTxO": pipe(addressesAndCollaterals.collateralUTxOs, A.map(unTxOutRef), (a) => a.join(",")),
+      },
+    }).then((response) => {
+      return match(
+        (errors: Errors) => left(mkDecodingError(errors)),
+        (payload: { links: {}, resource: BuildCreateContractTxResponse}) => right(payload.resource)
+      )(PostResponse.decode(response.data));
+    }).catch((error) => {
+      if(isAxiosError(error) && error.response) {
+        if(error.response) {
+          const body = error.response.data;
+          return left({
+            type: 'http',
+            status: error.response.status,
+            message: error.message,
+            body,
+          });
+        }
+        return left({
+          type: 'network',
+          message: error.message
+        });
+      }
+      throw error;
+    });
+}

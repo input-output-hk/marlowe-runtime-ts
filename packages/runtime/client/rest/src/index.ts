@@ -9,7 +9,6 @@
  */
 
 import axios from "axios";
-import * as TE from "fp-ts/lib/TaskEither.js";
 import * as O from "fp-ts/lib/Option.js";
 import * as t from "io-ts/lib/index.js";
 
@@ -27,11 +26,12 @@ import * as Transactions from "./contract/transaction/endpoints/collection.js";
 import * as Sources from "./contract/endpoints/sources.js";
 import * as Next from "./contract/next/endpoint.js";
 import { unsafeTaskEither } from "@marlowe.io/adapter/fp-ts";
-import { ContractDetails } from "./contract/details.js";
 import { TransactionDetails } from "./contract/transaction/details.js";
 import { RuntimeStatus, healthcheck } from "./runtime/status.js";
 import { CompatibleRuntimeVersionGuard, RuntimeVersion } from "./runtime/version.js";
 import { dynamicAssertType } from "@marlowe.io/adapter/io-ts";
+import { APIResponse } from "./apiResponse.js";
+// import { ContractId } from "@marlowe.io/runtime-core";
 
 export { Page, ItemRange, ItemRangeGuard, ItemRangeBrand, PageGuard } from "./pagination.js";
 
@@ -80,7 +80,7 @@ export interface RestClient {
    */
   buildCreateContractTx(
     request: Contracts.BuildCreateContractTxRequest
-  ): Promise<Contracts.BuildCreateContractTxResponse>;
+  ): Promise<APIResponse<string, Contracts.BuildCreateContractTxResponse>>;
 
   /**
    * Uploads a marlowe-object bundle to the runtime, giving back the hash of the main contract and the hashes of the intermediate objects.
@@ -126,13 +126,13 @@ export interface RestClient {
    * @throws DecodingError - If the response from the server can't be decoded
    * @see {@link https://docs.marlowe.iohk.io/api/get-contract-by-id | The backend documentation}
    */
-  getContractById(request: Contract.GetContractByIdRequest): Promise<ContractDetails>;
+  getContractById(request: Contract.GetContractByIdRequest): Promise<Contract.GetContractByIdResponse>;
 
   /**
    * Submits a signed contract creation transaction
    * @see {@link https://docs.marlowe.iohk.io/api/submit-contract-to-chain | The backend documentation}
    */
-  submitContract(request: Contract.SubmitContractRequest): Promise<void>;
+  submitContract(request: Contract.SubmitContractRequest): Promise<Contract.SubmitContractResponse>;
 
   /**
    * Gets a paginated list of  {@link contract.TxHeader } for a given contract.
@@ -154,14 +154,14 @@ export interface RestClient {
   //             contract, rather it is creating the transaction to be signed
   applyInputsToContract(
     request: Transactions.ApplyInputsToContractRequest
-  ): Promise<Transactions.TransactionTextEnvelope>;
+  ): Promise<Transactions.ApplyInputsToContractResponse>;
 
   //   getTransactionById: Transaction.GET; // - https://docs.marlowe.iohk.io/api/get-transaction-by-id
   /**
    * Submit a signed transaction (generated with {@link @marlowe.io/runtime-rest-client!index.RestClient#applyInputsToContract} and signed with the {@link @marlowe.io/wallet!api.WalletAPI#signTx} procedure) that applies inputs to a contract.
    * @see {@link https://docs.marlowe.iohk.io/api/submit-contract-input-application | The backend documentation}
    */
-  submitContractTransaction(request: Transaction.SubmitContractTransactionRequest): Promise<void>;
+  submitContractTransaction(request: Transaction.SubmitContractTransactionRequest): Promise<Transaction.SubmitContractTransactionResponse>
 
   /**
    * Gets full transaction details for a specific applyInput transaction of a contract
@@ -256,8 +256,9 @@ export function mkRestClient(baseURL: string, strict = true): RestClient {
     healthcheck() {
       return healthcheck(axiosInstance);
     },
-    version() {
-      return healthcheck(axiosInstance).then((status) => status.version);
+    async version() {
+      const status = await healthcheck(axiosInstance);
+        return status.version;
     },
     getContracts: withDynamicTypeCheck(strict, Contracts.GetContractsRequestGuard, (request) => {
       const range = request?.range;
@@ -299,9 +300,7 @@ export function mkRestClient(baseURL: string, strict = true): RestClient {
           usedAddresses: request.usedAddresses ?? [],
           collateralUTxOs: request.collateralUTxOs ?? [],
         };
-        return unsafeTaskEither(
-          Contracts.postViaAxios(axiosInstance)(postContractsRequest, addressesAndCollaterals, request.stakeAddress)
-        );
+        return Contracts.postViaAxios(axiosInstance)(postContractsRequest, addressesAndCollaterals, request.stakeAddress)
       }
     ),
     createContractSources: withDynamicTypeCheck(strict, Sources.CreateContractSourcesRequestGuard, (request) => {
@@ -326,7 +325,7 @@ export function mkRestClient(baseURL: string, strict = true): RestClient {
     getNextStepsForContract: withDynamicTypeCheck(strict, Next.GetNextStepsForContractRequestGuard, (request) => {
       return Next.getNextStepsForContract(axiosInstance)(request);
     }),
-    submitContract: withDynamicTypeCheck(strict, Contract.SubmitContractRequestGuard, (request) => {
+    submitContract: withDynamicTypeCheck(strict, Contract.SubmitContractRequestGuard, async (request):Promise<Contract.SubmitContractResponse> => {
       const { contractId, txEnvelope } = request;
       return Contract.submitContract(axiosInstance)(contractId, txEnvelope);
     }),
@@ -343,9 +342,7 @@ export function mkRestClient(baseURL: string, strict = true): RestClient {
       Transaction.SubmitContractTransactionRequestGuard,
       (request) => {
         const { contractId, transactionId, hexTransactionWitnessSet } = request;
-        return unsafeTaskEither(
-          Transaction.putViaAxios(axiosInstance)(contractId, transactionId, hexTransactionWitnessSet)
-        );
+        return Transaction.submitContractTransaction(axiosInstance)(contractId, transactionId, hexTransactionWitnessSet)
       }
     ),
     getContractTransactionById: withDynamicTypeCheck(
@@ -374,27 +371,25 @@ export function mkRestClient(baseURL: string, strict = true): RestClient {
     getWithdrawals: withDynamicTypeCheck(strict, Withdrawals.GetWithdrawalsRequestGuard, (request) => {
       return unsafeTaskEither(Withdrawals.getHeadersByRangeViaAxios(axiosInstance)(request));
     }),
-    applyInputsToContract: withDynamicTypeCheck(strict, Transactions.ApplyInputsToContractRequestGuard, (request) => {
+    applyInputsToContract: (request: Transactions.ApplyInputsToContractRequest) => {
       const { contractId, changeAddress, invalidBefore, invalidHereafter, inputs } = request;
-      return unsafeTaskEither(
-        Transactions.postViaAxios(axiosInstance)(
-          contractId,
-          {
-            invalidBefore,
-            invalidHereafter,
-            version: request.version ?? "v1",
-            metadata: request.metadata ?? {},
-            tags: request.tags ?? {},
-            inputs,
-          },
-          {
-            changeAddress,
-            usedAddresses: request.usedAddresses ?? [],
-            collateralUTxOs: request.collateralUTxOs ?? [],
-          }
-        )
+      return Transactions.applyInputsToContract(axiosInstance)(
+        contractId,
+        {
+          invalidBefore,
+          invalidHereafter,
+          version: request.version ?? "v1",
+          metadata: request.metadata ?? {},
+          tags: request.tags ?? {},
+          inputs,
+        },
+        {
+          changeAddress,
+          usedAddresses: request.usedAddresses ?? [],
+          collateralUTxOs: request.collateralUTxOs ?? [],
+        }
       );
-    }),
+    },
     submitWithdrawal: withDynamicTypeCheck(strict, Withdrawal.SubmitWithdrawalRequestGuard, (request) => {
       const { withdrawalId, hexTransactionWitnessSet } = request;
       return unsafeTaskEither(Withdrawal.putViaAxios(axiosInstance)(withdrawalId, hexTransactionWitnessSet));
@@ -458,56 +453,56 @@ export interface WithdrawalsAPI {
   };
 }
 
-// TODO: Move to Contracts?
-/**
- * @hidden
- */
-export interface ContractsAPI {
-  /**
-   * @see {@link https://docs.marlowe.iohk.io/api/get-contracts}
-   */
-  getHeadersByRange: Contracts.GETHeadersByRange;
-  /**
-   * @see {@link https://docs.marlowe.iohk.io/api/create-contracts}
-   */
-  post: Contracts.BuildCreateContractTxEndpoint;
-  contract: {
-    /**
-     * Get a single contract by id
-     * @see {@link https://docs.marlowe.iohk.io/api/get-contracts-by-id}
-     */
-    get: Contract.GET;
-    /**
-     * @see {@link https://docs.marlowe.iohk.io/api/create-contracts-by-id}
-     */
-    put: Contract.PUT;
-    /**
-     * @see {@link }
-     */
-    next: Next.GET;
-    transactions: {
-      /**
-       * @see {@link }
-       */
-      getHeadersByRange: Transactions.GETHeadersByRange;
-      /**
-       * @see {@link }
-       */
-      post: Transactions.POST;
-      transaction: {
-        /**
-         * @see {@link }
-         */
-        get: Transaction.GET;
-        /**
-         * @see {@link }
-         */
-        put: Transaction.PUT;
-      };
-    };
-  };
-}
-
+// // TODO: Move to Contracts?
+// /**
+//  * @hidden
+//  */
+// export interface ContractsAPI {
+//   /**
+//    * @see {@link https://docs.marlowe.iohk.io/api/get-contracts}
+//    */
+//   getHeadersByRange: Contracts.GETHeadersByRange;
+//   /**
+//    * @see {@link https://docs.marlowe.iohk.io/api/create-contracts}
+//    */
+//   post: Contracts.BuildCreateContractTxEndpoint;
+//   contract: {
+//     /**
+//      * Get a single contract by id
+//      * @see {@link https://docs.marlowe.iohk.io/api/get-contracts-by-id}
+//      */
+//     get: (contractId: ContractId) => Promise<Contract.GetContractByIdResponse>;
+//     /**
+//      * @see {@link https://docs.marlowe.iohk.io/api/create-contracts-by-id}
+//      */
+//     put: Contract.PUT;
+//     /**
+//      * @see {@link }
+//      */
+//     next: Next.GET;
+//     transactions: {
+//       /**
+//        * @see {@link }
+//        */
+//       getHeadersByRange: Transactions.GETHeadersByRange;
+//       /**
+//        * @see {@link }
+//        */
+//       post: (Transactions.ApplyInputsToContractRequest) => Promise<Transactions.ApplyInputsToContractResponse>;
+//       transaction: {
+//         /**
+//          * @see {@link }
+//          */
+//         get: Transaction.GET;
+//         /**
+//          * @see {@link }
+//          */
+//         put: Transaction.PUT;
+//       };
+//     };
+//   };
+// }
+//
 /**
  *
  * @description Dependency Injection for the Rest Client API
@@ -520,63 +515,63 @@ export type RestDI = { restClient: RestClient };
  * @description Dependency Injection for the Wallet API
  * @hidden
  */
-export type DeprecatedRestDI = { deprecatedRestAPI: FPTSRestAPI };
+// export type DeprecatedRestDI = { deprecatedRestAPI: FPTSRestAPI };
 
-/**
- * @hidden
- */
-export interface FPTSRestAPI {
-  // NOTE: In FP-TS this should probably be T.Task<boolean>, the current implementation returns true or Error.
-  /**
-   * @see {@link }
-   */
-  healthcheck: () => TE.TaskEither<Error, RuntimeStatus>;
-  payouts: PayoutsAPI;
-  withdrawals: WithdrawalsAPI;
-  contracts: ContractsAPI;
-}
-
+// /**
+//  * @hidden
+//  */
+// export interface FPTSRestAPI {
+//   // NOTE: In FP-TS this should probably be T.Task<boolean>, the current implementation returns true or Error.
+//   /**
+//    * @see {@link }
+//    */
+//   healthcheck: () => TE.TaskEither<Error, RuntimeStatus>;
+//   payouts: PayoutsAPI;
+//   withdrawals: WithdrawalsAPI;
+//   contracts: ContractsAPI;
+// }
+//
 /**
  * Legacy FP-TS version
  * @hidden
  */
-export function mkFPTSRestClient(baseURL: string): FPTSRestAPI {
-  const axiosInstance = axios.create({
-    baseURL: baseURL,
-    transformRequest: MarloweJSONCodec.encode,
-    transformResponse: MarloweJSONCodec.decode,
-  });
-
-  return {
-    healthcheck: () => TE.fromTask<RuntimeStatus, Error>(() => healthcheck(axiosInstance)),
-    payouts: {
-      getHeadersByRange: Payouts.getHeadersByRangeViaAxios(axiosInstance),
-      get: Payout.getViaAxios(axiosInstance),
-    },
-    withdrawals: {
-      getHeadersByRange: Withdrawals.getHeadersByRangeViaAxios(axiosInstance),
-      post: Withdrawals.postViaAxios(axiosInstance),
-      withdrawal: {
-        get: Withdrawal.getViaAxios(axiosInstance),
-        put: Withdrawal.putViaAxios(axiosInstance),
-      },
-    },
-    contracts: {
-      getHeadersByRange: Contracts.getHeadersByRangeViaAxios(axiosInstance),
-      post: Contracts.postViaAxios(axiosInstance),
-      contract: {
-        get: (contractId) => TE.fromTask(() => Contract.getContractById(axiosInstance, contractId)),
-        put: Contract.putViaAxios(axiosInstance),
-        next: Next.getViaAxios(axiosInstance),
-        transactions: {
-          getHeadersByRange: Transactions.getHeadersByRangeViaAxios(axiosInstance),
-          post: Transactions.postViaAxios(axiosInstance),
-          transaction: {
-            get: Transaction.getViaAxios(axiosInstance),
-            put: Transaction.putViaAxios(axiosInstance),
-          },
-        },
-      },
-    },
-  };
-}
+// export function mkFPTSRestClient(baseURL: string): FPTSRestAPI {
+//   const axiosInstance = axios.create({
+//     baseURL: baseURL,
+//     transformRequest: MarloweJSONCodec.encode,
+//     transformResponse: MarloweJSONCodec.decode,
+//   });
+//
+//   return {
+//     healthcheck: () => TE.fromTask<RuntimeStatus, Error>(() => healthcheck(axiosInstance)),
+//     payouts: {
+//       getHeadersByRange: Payouts.getHeadersByRangeViaAxios(axiosInstance),
+//       get: Payout.getViaAxios(axiosInstance),
+//     },
+//     withdrawals: {
+//       getHeadersByRange: Withdrawals.getHeadersByRangeViaAxios(axiosInstance),
+//       post: Withdrawals.postViaAxios(axiosInstance),
+//       withdrawal: {
+//         get: Withdrawal.getViaAxios(axiosInstance),
+//         put: Withdrawal.putViaAxios(axiosInstance),
+//       },
+//     },
+//     contracts: {
+//       getHeadersByRange: Contracts.getHeadersByRangeViaAxios(axiosInstance),
+//       post: Contracts.postViaAxios(axiosInstance),
+//       contract: {
+//         get: (contractId) => Contract.getContractById(axiosInstance, contractId),
+//         put: Contract.putViaAxios(axiosInstance),
+//         next: Next.getViaAxios(axiosInstance),
+//         transactions: {
+//           getHeadersByRange: Transactions.getHeadersByRangeViaAxios(axiosInstance),
+//           post: Transactions.applyInputsToContract(axiosInstance),
+//           transaction: {
+//             get: Transaction.getViaAxios(axiosInstance),
+//             put: Transaction.submitContractTransaction(axiosInstance),
+//           },
+//         },
+//       },
+//     },
+//   };
+// }

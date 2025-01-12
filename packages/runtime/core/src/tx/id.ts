@@ -16,3 +16,4 @@ export type TxId = t.Branded<string, TxIdBrand>;
 export const TxIdGuard = t.brand(t.string, (s): s is t.Branded<string, TxIdBrand> => true, "TxId");
 
 export const txId = (s: string) => unsafeEither(TxIdGuard.decode(s));
+

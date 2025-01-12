@@ -1,4 +1,3 @@
-import { mkLucidWallet } from "@marlowe.io/wallet";
 import { generateSeedPhrase } from "../index.js";
 import { MarloweJSON } from "@marlowe.io/adapter/codec";
 

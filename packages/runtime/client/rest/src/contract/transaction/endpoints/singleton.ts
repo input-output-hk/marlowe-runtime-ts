@@ -3,7 +3,7 @@ import * as E from "fp-ts/lib/Either.js";
 import { pipe } from "fp-ts/lib/function.js";
 import * as t from "io-ts/lib/index.js";
 
-import { AxiosInstance } from "axios";
+import { AxiosInstance, isAxiosError } from "axios";
 import { formatValidationErrors } from "jsonbigint-io-ts-reporters";
 
 import * as HTTP from "@marlowe.io/adapter/http";
@@ -16,11 +16,14 @@ import {
   TxId,
   TxIdGuard,
   transactionWitnessSetTextEnvelope,
+  TextEnvelope,
 } from "@marlowe.io/runtime-core";
 
 import { TransactionDetailsGuard, TransactionDetails } from "../details.js";
 import { ContractId } from "@marlowe.io/runtime-core";
 import { assertGuardEqual, proxy } from "@marlowe.io/adapter/io-ts";
+import { left, right } from "fp-ts/lib/Either.js";
+import { APIResponse } from "../../../apiResponse.js";
 
 export type GET = (
   contractId: ContractId,
@@ -81,12 +84,64 @@ export const SubmitContractTransactionRequestGuard = assertGuardEqual(
   })
 );
 
+export type InvalidTextEnvelope = {
+  payload: string;
+  envelope: TextEnvelope;
+};
+
+export type SubmitContractTransactionResponse = APIResponse<InvalidTextEnvelope|string, null>
+
+export const submitContractTransaction = (axiosInstance: AxiosInstance) => async (contractId: ContractId, transactionId: TxId, hexTransactionWitnessSet: HexTransactionWitnessSet): Promise<SubmitContractTransactionResponse> => {
+  const envelope = transactionWitnessSetTextEnvelope(hexTransactionWitnessSet);
+  return axiosInstance
+    .put(endpointURI(contractId, transactionId), envelope, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+    .then((_) => {
+      return right(null);
+    }).catch((error) => {
+      if(isAxiosError(error)) {
+        if(error.response) {
+          const body = (() => {
+            if(error.response.status === 400)
+              return {
+                payload: error.response.data,
+                envelope: envelope
+              }
+            return error.response.data;
+          })();
+          return left({
+            type: 'http',
+            status: error.response.status,
+            message: error.message,
+            body,
+          });
+        }
+        return left({
+          type: 'network',
+          message: error.message
+        });
+      }
+      throw error;
+    });
+};
+
+
+/**
+ * @deprecated
+ */
 export type PUT = (
   contractId: ContractId,
   transactionId: TxId,
   hexTransactionWitnessSet: HexTransactionWitnessSet
 ) => TE.TaskEither<Error, void>;
 
+/**
+ * @deprecated
+ */
 export const putViaAxios: (axiosInstance: AxiosInstance) => PUT =
   (axiosInstance) => (contractId, transactionId, hexTransactionWitnessSet) =>
     pipe(

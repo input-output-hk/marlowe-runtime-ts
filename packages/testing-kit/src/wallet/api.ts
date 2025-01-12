@@ -10,11 +10,11 @@ import { RestClient } from "@marlowe.io/runtime-rest-client";
 import { SeedPhrase } from "./seedPhrase.js";
 import * as RuntimeCore from "@marlowe.io/runtime-core";
 
-/**
- * The WalletTestAPI is an extended {@link @marlowe.io/wallet!api.WalletAPI} for interacting with a Cardano wallet in a
+/** TODO: paluh
+ * The BankWalletAPI is an extended {@link @marlowe.io/wallet!api.WalletAPI} for interacting with a Cardano wallet in a
  * Test Environment.
  */
-export interface WalletTestAPI extends WalletAPI {
+export interface BankWalletAPI extends WalletAPI {
   /**
    * Execute a Provisioning Scheme from this current WalletTestAPI instance for the simulated participants of a Test:
    *  - Minting Tokens with a basic policy id to Participants
@@ -22,21 +22,29 @@ export interface WalletTestAPI extends WalletAPI {
    * @param request
    */
   provision(request: ProvisionRequest): Promise<ProvisionResponse>;
-  /**
-   * Wait if the runtime is behind the current slot of the wallet Test.
-   * @remarks
-   * Wallets and Marlowe Runtimes are potentially connected to 2 differents Cardano Nodes.
-   * In our test environment, in order to avoid inconsistencies when building Tx, we need
-   * to provide some synchronization mechanism. Depending on which component is performing the last
-   * Tx, we need to wait for the other one to catch up to have a consustent behaviour.
-   * @param client
-   */
-  waitRuntimeSyncingTillCurrentWalletTip(client: RestClient): Promise<void>;
-  // TODO : waitWalletSyncingTillCurrentRuntimeTip
 }
 
+/* TODO: paluh */
+export interface DAppWalletAPI extends WalletAPI {
+  restClient: RestClient;
+}
+
+//  /** TODO: paluh
+//   * Wait if the runtime is behind the current slot of the wallet Test.
+//   * @remarks
+//   * Wallets and Marlowe Runtimes are potentially connected to 2 differents Cardano Nodes.
+//   * In our test environment, in order to avoid inconsistencies when building Tx, we need
+//   * to provide some synchronization mechanism. Depending on which component is performing the last
+//   * Tx, we need to wait for the other one to catch up to have a consustent behaviour.
+//   * @param client
+//   */
+//  waitRuntimeSyncingTillCurrentWalletTip(client: RestClient): Promise<void>;
+//  // TODO : waitWalletSyncingTillCurrentRuntimeTip
+//
+
+
 /**
- * Provision Request on a given WalletTestAPI instance
+ * Provision Request on a given BankWalletAPI instance
  */
 export type ProvisionRequest = {
   [participant: string]: {
@@ -51,17 +59,17 @@ export type ProvisionRequest = {
   };
 };
 
-/**
+/** TODO: paluh
  * Provision Response on a given WalletTestAPI instance (see Request)
  */
 export type ProvisionResponse = {
   [participant: string]: {
-    wallet: WalletTestAPI;
+    wallet: DAppWalletAPI,
     assetsProvisioned: RuntimeCore.Assets;
   };
 };
 
-/**
+/** TODO: paluh
  * Provisionnibg Scheme on a given WalletTestAPI instance
  */
 export type ProvisionScheme = {
@@ -69,7 +77,7 @@ export type ProvisionScheme = {
   assetsToMint: MintingScheme;
 };
 
-/**
+/** TODO: paluh
  * Minting Scheme on a given WalletTestAPI instance
  */
 export type MintingScheme = {

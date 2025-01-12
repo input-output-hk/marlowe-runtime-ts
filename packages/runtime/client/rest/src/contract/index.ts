@@ -54,6 +54,8 @@ export {
 export {
   GetTransactionsForContractResponse,
   ApplyInputsToContractRequest,
+  ApplyInputsToContractResponsePayload,
+  ApplyInputsToContractResponse,
   GetTransactionsForContractRequest,
 } from "./transaction/endpoints/collection.js";
 

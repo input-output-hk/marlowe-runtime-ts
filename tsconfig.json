@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "types": ["node"]
+  },
   "files": [],
   "references": [
     { "path": "./packages/adapter/src" },

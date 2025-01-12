@@ -1,19 +1,18 @@
-import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle";
+// import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle";
 import { mkRestClient } from "@marlowe.io/runtime-rest-client";
 
-import { Lucid, Blockfrost } from "lucid-cardano";
+import { Blockfrost } from "lucid-cardano";
 
-import { RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
+// import { RuntimeLifecycle } from "@marlowe.io/runtime-lifecycle/api";
 import { Assets } from "@marlowe.io/runtime-core";
 import {
   TestConfiguration,
   logDebug,
   logInfo,
   logWalletInfo,
-  logWarning,
-  mkLucidWalletTest,
+  mkLucidBankWallet,
 } from "@marlowe.io/testing-kit";
-import { ProvisionRequest, WalletTestAPI } from "../wallet/api.js";
+import { ProvisionRequest, BankWalletAPI, DAppWalletAPI } from "../wallet/api.js";
 
 /**
  * List of Participants available for a test
@@ -22,7 +21,7 @@ export type TestEnvironment = {
   /**
    * Bank Wallet
    */
-  bank: WalletTestAPI;
+  bank: BankWalletAPI;
   /**
    * List of Participants available for the test
    */
@@ -30,23 +29,25 @@ export type TestEnvironment = {
   /**
    * Access to runtime client and the runtime lifecycle api
    */
-  mkLifecycle: (wallet: WalletTestAPI) => RuntimeLifecycle;
+  // mkLifecycle: (wallet: DAppWalletAPI) => RuntimeLifecycle;
+};
+
+export type ParticipantInfo = {
+  /**
+   * Wallet Test instance
+   */
+  wallet: DAppWalletAPI;
+  /**
+   * List of Assets provisionned By the Bank Wallet
+   */
+  assetsProvisioned: Assets;
 };
 
 /**
  * List of Participants available for a test
  */
 export type Participants = {
-  [participant: string]: {
-    /**
-     * Wallet Test instance
-     */
-    wallet: WalletTestAPI;
-    /**
-     * List of Assets provisionned By the Bank Wallet
-     */
-    assetsProvisioned: Assets;
-  };
+  [participant: string]: ParticipantInfo;
 };
 
 /**
@@ -60,34 +61,29 @@ export const mkTestEnvironment =
   async (testConfiguration: TestConfiguration): Promise<TestEnvironment> => {
     logInfo("Test Environment : Initiating");
 
-    const bankLucid = await Lucid.new(
-      new Blockfrost(testConfiguration.lucid.blockfrostUrl, testConfiguration.lucid.blockfrostProjectId),
-      testConfiguration.network
-    );
+    const provider = new Blockfrost(testConfiguration.lucid.blockfrostUrl, testConfiguration.lucid.blockfrostProjectId);
 
-    bankLucid.selectWalletFromSeed(testConfiguration.bank.seedPhrase);
-
-    const bank = mkLucidWalletTest(bankLucid);
+    const runtimeClient = mkRestClient(testConfiguration.runtimeURL);
+    const bank = await mkLucidBankWallet(runtimeClient, provider, testConfiguration.network, testConfiguration.bank.seedPhrase);
 
     await logWalletInfo("bank", bank);
-
     const bankBalance = await bank.getLovelaces();
+    console.log("WT")
     if (bankBalance <= 100_000_000n) {
-      throw { message: "Bank is not sufficiently provisionned (< 100 Ada)" };
+      throw { message: "Bank is not sufficiently provisioned (< 100 Ada)" };
     }
-    logDebug("Bank is provisionned enough to run tests");
+    logDebug("Bank is provisioned enough to run tests");
     const participants = await bank.provision(provisionRequest);
-    logDebug("Participants provisionned");
-    await bank.waitRuntimeSyncingTillCurrentWalletTip(mkRestClient(testConfiguration.runtimeURL));
+    logDebug("Participants provisioned");
 
     logInfo("Test Environment : Ready");
     return {
       bank,
       participants: participants,
-      mkLifecycle: (wallet: WalletTestAPI) =>
-        mkRuntimeLifecycle({
-          runtimeURL: testConfiguration.runtimeURL,
-          wallet,
-        }),
+      // mkLifecycle: (wallet: DAppWalletAPI) =>
+      //   mkRuntimeLifecycle({
+      //     runtimeURL: testConfiguration.runtimeURL,
+      //     wallet,
+      //   }),
     };
   };

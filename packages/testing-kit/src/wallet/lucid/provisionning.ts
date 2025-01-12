@@ -1,4 +1,4 @@
-import { Lucid, toUnit, fromText, NativeScript, Script, Assets as LucidAssets } from "lucid-cardano";
+import { toUnit, fromText, NativeScript, Script, Assets as LucidAssets } from "lucid-cardano";
 import { addDays } from "date-fns";
 
 import { mergeAssets } from "@marlowe.io/adapter/lucid";
@@ -6,15 +6,16 @@ import { mergeAssets } from "@marlowe.io/adapter/lucid";
 import * as RuntimeCore from "@marlowe.io/runtime-core";
 import { pipe } from "fp-ts/lib/function.js";
 import * as A from "fp-ts/lib/Array.js";
-import { MarloweJSON } from "@marlowe.io/adapter/codec";
-import { logDebug, logInfo } from "../../logging.js";
+import { logDebug, logInfo, safeStringify } from "../../logging.js";
 
-import { WalletTestDI, mkLucidWalletTest } from "./index.js";
-import { ProvisionRequest, ProvisionResponse, ProvisionScheme, WalletTestAPI } from "../api.js";
+import { DAppWalletAPI, ProvisionRequest, ProvisionResponse, ProvisionScheme } from "../api.js";
+import { RestClient } from "@marlowe.io/runtime-rest-client";
+import { LucidBasedWallet, mkLucidBasedWallet } from "@marlowe.io/wallet/lucid";
+import { sleep, waitForPredicatePromise } from "@marlowe.io/adapter/time";
 
 type RequestWithWallets = {
   [participant: string]: {
-    wallet: WalletTestAPI;
+    wallet: LucidBasedWallet;
     scheme: ProvisionScheme;
   };
 };
@@ -26,34 +27,26 @@ type RequestWithWallets = {
  * @hidden
  */
 export const provision =
-  (di: WalletTestDI) =>
+  (runtimeClient: RestClient, sponsor: LucidBasedWallet) =>
   async (request: ProvisionRequest): Promise<ProvisionResponse> => {
     if (Object.entries(request).length === 0) {
       logInfo("No Participants Involved");
       return Promise.resolve({});
     }
-    const { lucid, wallet } = di;
     let requestWithWallets: RequestWithWallets = {};
     await Promise.all(
-      Object.entries(request).map(([participant, { walletSeedPhrase, scheme }]) => {
-        return Lucid.new(lucid.provider, lucid.network).then((newLucidInstance) => {
-          const wallet = mkLucidWalletTest(newLucidInstance.selectWalletFromSeed(walletSeedPhrase.join(` `)));
-          requestWithWallets[participant] = { wallet, scheme };
-        });
+      Object.entries(request).map(async ([participant, { walletSeedPhrase, scheme }]) => {
+        const wallet = await mkLucidBasedWallet(sponsor.lucid.provider, sponsor.lucid.network, walletSeedPhrase.join(` `));
+        requestWithWallets[participant] = { wallet, scheme };
       })
     );
-
-    logInfo(`Provisionning Request : ${MarloweJSON.stringify(requestWithWallets, null, 4)}`);
-
     const mintingDeadline = addDays(Date.now(), 1);
-
-    const [script, policyId] = await mkPolicyWithDeadlineAndOneAuthorizedSigner(di)(mintingDeadline);
-
+    const [script, policyId] = await mkPolicyWithDeadlineAndOneAuthorizedSigner(sponsor)(mintingDeadline);
     const distributions = await Promise.all(
       Object.entries(requestWithWallets).map(([participant, x]) =>
         x.wallet.getChangeAddress().then(
-          (address) =>
-            [
+          (address: string) => {
+            return [
               participant,
               x.wallet,
               RuntimeCore.addressBech32(address),
@@ -64,8 +57,8 @@ export const provision =
                   assetId: { assetName, policyId },
                 })),
               },
-            ] as [string, WalletTestAPI, RuntimeCore.AddressBech32, RuntimeCore.Assets]
-        )
+            ] as [string, LucidBasedWallet, RuntimeCore.AddressBech32, RuntimeCore.Assets]
+        })
       )
     );
 
@@ -75,19 +68,20 @@ export const provision =
       A.reduce(mergeAssets.empty, mergeAssets.concat)
     );
 
-    logDebug(`Distribution : ${MarloweJSON.stringify(distributions, null, 4)}`);
-    logDebug(`Assets to mint : ${MarloweJSON.stringify(assetsToMint, null, 4)}`);
+    logDebug(`Distribution : ${safeStringify(distributions, 4)}`);
+    logDebug(`Assets to mint : ${safeStringify(assetsToMint, 4)}`);
 
-    const mintTx = lucid
+    const mintTx = sponsor
+      .lucid
       .newTx()
       .mintAssets(assetsToMint)
       .validTo(Date.now() + 100000)
       .attachMintingPolicy(script);
 
-    const transferTx = await pipe(
+    const transferTx = pipe(
       distributions,
       A.reduce(
-        lucid.newTx(),
+        sponsor.lucid.newTx(),
         (tx, aDistribution) =>
           tx
             .payToAddress(aDistribution[2], toAssetsToTransfer(aDistribution[3]))
@@ -96,37 +90,42 @@ export const provision =
             .payToAddress(aDistribution[2], { lovelace: 5_000_000n }) // add a Collateral
       )
     );
-    const result: ProvisionResponse = Object.fromEntries(
-      distributions.map(([participant, wallet, , assetsProvisioned]) => [participant, { wallet, assetsProvisioned }])
-    );
+    const result: ProvisionResponse = await (async () => {
+      const entries = await Promise.all(distributions.map(async ([participant, lucidBasedWallet, , assetsProvisioned]) => {
+        const wallet = await mkDAppWallet(lucidBasedWallet)(runtimeClient);
+        return [participant, { wallet, assetsProvisioned }];
+      }));
+      return Object.fromEntries(entries);
+    })();
 
-    logDebug(`result : ${MarloweJSON.stringify(result, null, 4)}`);
+    logDebug(`Provision response: ${safeStringify(result, 4)}`);
     const provisionTx = await mintTx.compose(transferTx).complete();
 
     await provisionTx
       .sign()
       .complete()
       .then((tx) => tx.submit())
-      .then((txHashSubmitted) => wallet.waitConfirmation(txHashSubmitted));
+      .then((txHashSubmitted: string) => sponsor.waitConfirmation(txHashSubmitted));
     return result;
   };
 
 const mkPolicyWithDeadlineAndOneAuthorizedSigner =
-  ({ lucid }: WalletTestDI) =>
+  (sponsor: LucidBasedWallet) =>
   async (deadline: Date): Promise<[Script, RuntimeCore.PolicyId]> => {
-    const { paymentCredential } = lucid.utils.getAddressDetails(await lucid.wallet.address());
+    const address = await sponsor.lucid.wallet.address();
+    const { paymentCredential } = sponsor.lucid.utils.getAddressDetails(address);
     const json: NativeScript = {
       type: "all",
       scripts: [
         {
           type: "before",
-          slot: lucid.utils.unixTimeToSlot(deadline.valueOf()),
+          slot: sponsor.lucid.utils.unixTimeToSlot(deadline.valueOf()),
         },
         { type: "sig", keyHash: paymentCredential?.hash! },
       ],
     };
-    const script = lucid.utils.nativeScriptFromJson(json);
-    const policyId = lucid.utils.mintingPolicyToId(script);
+    const script = sponsor.lucid.utils.nativeScriptFromJson(json);
+    const policyId = sponsor.lucid.utils.mintingPolicyToId(script);
     return [script, RuntimeCore.policyId(policyId)];
   };
 
@@ -146,3 +145,48 @@ const toAssetsToMint = (assets: RuntimeCore.Assets): LucidAssets => {
   );
   return lucidAssets;
 };
+
+
+/** TODO: paluh
+ * `mkDAppWallet` implementation using a Lucid Wallet
+ * @remarks
+ * This implementation is approximative because we are waiting for the runtime chain to sync and
+ * not the runtime itself. The Runtime doesn't provide a tip representing the last slot read but
+ * it provides the last slot where a contract Tx activity has been read.
+ * We are adding a sleep at the end, to artificially wait the runtime to sync on a synced Runtime Chain.
+ * @param client
+ * @param aSlotNo
+ * @returns
+ * @hidden
+ */
+const mkDAppWallet =
+  (wallet: LucidBasedWallet) =>
+  async (client: RestClient): Promise<DAppWalletAPI> => {
+    logInfo("Waiting for Runtime to sync with the Wallet");
+    const currentLucidSlot = BigInt(wallet.lucid.currentSlot());
+    logInfo(`Setting up a synchronization point with Runtime at slot  ${currentLucidSlot}`);
+    await waitForPredicatePromise(isRuntimeChainMoreAdvancedThan(client, currentLucidSlot));
+    logInfo(`Runtime and Wallet passed both ${currentLucidSlot} slot.`);
+    // This sleep will be removed when we have a better tip for runtime...
+    sleep(20);
+    return {...wallet, restClient: client};
+  };
+
+/**
+ * Predicate that verify is the Runtime Chain Tip >= to a givent slot
+ * @param client
+ * @param aSlotNo
+ * @returns
+ */
+export const isRuntimeChainMoreAdvancedThan = (client: RestClient, aSlotNo: bigint) => () =>
+  client.healthcheck().then((status) => {
+    logDebug(`Runtime Chain Tip SlotNo : ${status.tips.runtimeChain.blockHeader.slotNo}`);
+    logDebug(`Wallet Chain Tip SlotNo  : ${aSlotNo}`);
+    if (status.tips.runtimeChain.blockHeader.slotNo >= aSlotNo) {
+      return true;
+    } else {
+      const delta = aSlotNo - status.tips.runtimeChain.blockHeader.slotNo;
+      logDebug(`Waiting Runtime to reach that point (${delta} slots behind (~${delta}s)) `);
+      return false;
+    }
+  });
